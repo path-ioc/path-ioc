@@ -1,7 +1,7 @@
 <div align="center">
   <h1>@path-ioc/unplugin</h1>
   <p><b>Universal Dev Plugin for Path-IoC (Virtual Container & Type Generator)</b></p>
-  <p>Cross-bundler virtual module injector & automated TypeScript type generator for Vite, Rolldown, Webpack 5, Rspack, Rollup, and Esbuild</p>
+  <p>跨构建工具（Vite / Rolldown / Webpack / Rspack / Rollup / Esbuild）的通用虚拟模块注入与 TypeScript 类型自动推导插件</p>
 
   <p>
     <a href="https://www.npmjs.com/package/@path-ioc/unplugin"><img src="https://img.shields.io/npm/v/@path-ioc/unplugin.svg" alt="NPM version"></a>
@@ -14,30 +14,30 @@
   </p>
 
   <p>
-    <b>English</b> | <a href="./README.zh-CN.md">简体中文</a> | <a href="https://path-ioc.dev/api/unplugin">Official Docs</a>
+    <a href="./README.md">English</a> | <b>简体中文</b> | <a href="https://path-ioc.dev/zh/api/unplugin">官方文档</a>
   </p>
 </div>
 
-> 💡 **Architectural Positioning**: `@path-ioc/unplugin` is the companion build-time engine for [`@path-ioc/core`](../core). In production projects, both work as one: `unplugin` scans physical module directories at build time and synthesizes real-time `.d.ts` definitions, while `core` executes lock-free DAG topological scheduling at runtime.  
-> **For the full architecture manifesto, design principles, and end-to-end guide:**  
-> 📖 **[Read the @path-ioc/core Guide](../core/README.md)** or visit **[https://path-ioc.dev](https://path-ioc.dev)**.
+> 💡 **核心定位**：`@path-ioc/unplugin` 是 [`@path-ioc/core`](../core) 的编译期伴生驱动引擎。在真实生产工程中，两者密不可分：`unplugin` 负责在构建期自动扫描物理目录并实时生成 `.d.ts` 类型推导，`core` 负责在运行时进行极速无锁 DAG 拓扑装配。  
+> **完整的架构设计哲学、模块编写规范、依赖查找与端到端完整指南，请直接查阅：**  
+> 📖 **[`@path-ioc/core` 官方指南](../core/README.zh-CN.md)** 或访问官方主站 **[https://path-ioc.dev/zh/](https://path-ioc.dev/zh/)**。
 
 ---
 
-## Key Responsibilities
+## 核心职能 (Key Responsibilities)
 
-- **Universal Bundler Support**:
-  Built on the `unplugin` standard to natively support **Vite**, **Rolldown (Rust)**, **Webpack 5**, **Rspack**, **Rollup**, and **Esbuild** with a unified configuration API.
-- **`virtual:modular-container` Streaming Module Injection**:
-  Automatically scans `src/modules/**/index.{ts,tsx}` during development/build to generate the complete module registry. Injected purely in-memory for Vite/Rolldown/Rollup, and dynamically bridged for Webpack/Rspack.
-- **Zero-Config TypeScript Type Synthesis**:
-  Generates `ignore.modular.d.ts` in milliseconds during dev mode and HMR, augmenting the global `ModularContainer` interface with 100% accurate IDE auto-completion.
-- **Automatic `.gitignore` Self-Healing**:
-  Appends `ignore.*` rules to your project's `.gitignore` automatically to prevent ephemeral declaration files from polluting version control.
+- **全构建器原生支持 (Universal Bundler Support)**：
+  基于 `unplugin` 规范，一套逻辑原生适配 **Vite**、**Rolldown (Rust)**、**Webpack 5**、**Rspack**、**Rollup** 与 **Esbuild**。
+- **`virtual:modular-container` 虚拟模块流式注入**：
+  构建期自动扫描 `src/modules/**/index.{ts,tsx}`，动态生成全量模块注册表。在 Vite/Rolldown/Rollup 环境下纯内存流式注入，在 Webpack/Rspack 下自动创建临时代理桥接。
+- **TypeScript 零配置类型合成**：
+  开发时与 HMR 热更新时毫秒级生成 `ignore.modular.d.ts`，自动扩充全局 `ModularContainer` 接口，解构享 100% 准确 IDE 提示。
+- **Git 规避自愈 (`.gitignore` 自动维护)**：
+  自动向项目 `.gitignore` 补充 `ignore.*` 规则，防止生成的临时声明污染版本控制。
 
 ---
 
-## Installation
+## 安装 (Installation)
 
 ```bash
 pnpm add -D @path-ioc/unplugin
@@ -46,7 +46,7 @@ pnpm add @path-ioc/core
 
 ---
 
-## Bundler Quick Reference
+## 构建工具集成速查 (Bundler Quick Reference)
 
 ### 1. Vite (`vite.config.ts`)
 ```typescript
@@ -96,23 +96,23 @@ import { esbuildPlugin as pathIoc } from "@path-ioc/unplugin";
 
 ---
 
-## Plugin Options
+## 插件配置项 (Plugin Options)
 
-| Option | Type | Default | Description |
+| 配置项 | 类型 | 默认值 | 描述 |
 | :--- | :--- | :--- | :--- |
-| **`modulesPath`** | `string` | `'src/modules'` | Root directory scanned for modular IoC entrypoints (`index.ts/tsx`). |
-| **`typeFileOutput`** | `string` | `'types'` | Target directory where `ignore.modular.d.ts` is generated. |
+| **`modulesPath`** | `string` | `'src/modules'` | 模块扫描的物理根目录路径。 |
+| **`typeFileOutput`** | `string` | `'types'` | 自动生成的类型声明文件 `ignore.modular.d.ts` 存放相对目录。 |
 
 ---
 
-## Production Usage & Module Writing
+## 真实应用与模块编写
 
-For practical guidance on creating modules with `main`, declaring dependencies, and igniting the container, please see:  
-👉 **[Read @path-ioc/core Documentation](../core/README.md)**
+关于如何编写 `main` 纯函数模块、声明依赖、在应用入口一行唤醒容器，请参阅：  
+👉 **[查看 @path-ioc/core 完整实战指南](../core/README.zh-CN.md)**
 
 ---
 
-## License
+## 许可证 (License)
 
 Released under the [MIT License](./LICENSE).  
-Copyright © 2026-present [Path-IoC Organization](https://github.com/path-ioc) & Lian HanLin.
+Copyright © 2026 [Path-IoC Organization](https://github.com/path-ioc) & Lian HanLin.

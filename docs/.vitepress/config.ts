@@ -30,11 +30,12 @@ export default defineConfig({
           { text: "Pro Boilerplate", link: "/templates/pro-boilerplate" },
           { text: "Sponsor", link: "/sponsor" },
           {
-            text: "v0.1.0",
+            text: "v0.1.1",
             items: [
               { text: "Changelog", link: "https://github.com/path-ioc/path-ioc/releases" },
               { text: "Contributing", link: "https://github.com/path-ioc/path-ioc/blob/main/CONTRIBUTING.md" },
               { text: "GitHub Sponsors", link: "https://github.com/sponsors/path-ioc" },
+              { text: "Ko-fi Support", link: "https://ko-fi.com/pathioc" },
             ],
           },
         ],
@@ -116,12 +117,13 @@ export default defineConfig({
           { text: "商业脚手架", link: "/zh/templates/pro-boilerplate" },
           { text: "赞助支持", link: "/zh/sponsor" },
           {
-            text: "v0.1.0",
+            text: "v0.1.1",
             items: [
               { text: "更新日志", link: "https://github.com/path-ioc/path-ioc/releases" },
               { text: "贡献指南", link: "https://github.com/path-ioc/path-ioc/blob/main/CONTRIBUTING.md" },
               { text: "GitHub 赞助", link: "https://github.com/sponsors/path-ioc" },
               { text: "爱发电赞助", link: "https://afdian.com/a/path-ioc" },
+              { text: "Ko-fi 赞助", link: "https://ko-fi.com/pathioc" },
             ],
           },
         ],

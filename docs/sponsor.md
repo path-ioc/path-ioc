@@ -34,6 +34,12 @@ You can support Path-IoC across several global and regional funding platforms:
 </div>
 
 <div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1.25rem; background: var(--vp-c-bg-soft);">
+  <h3 style="margin-top: 0; font-size: 1.1rem;">Ko-fi</h3>
+  <p style="font-size: 0.9rem; color: var(--vp-c-text-2);">Quick one-off micro-donations to buy the core maintainers a coffee (PayPal & credit cards).</p>
+  <a href="https://ko-fi.com/pathioc" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 0.4rem 1rem; border-radius: 6px; background: var(--vp-c-brand-1); color: #fff; font-size: 0.875rem; text-decoration: none; font-weight: 600;">Support on Ko-fi &rarr;</a>
+</div>
+
+<div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1.25rem; background: var(--vp-c-bg-soft);">
   <h3 style="margin-top: 0; font-size: 1.1rem;">Afdian (爱发电)</h3>
   <p style="font-size: 0.9rem; color: var(--vp-c-text-2);">Convenient funding channel for developers and teams based in Greater China (Alipay / WeChat).</p>
   <a href="https://afdian.com/a/path-ioc" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 0.4rem 1rem; border-radius: 6px; background: var(--vp-c-brand-1); color: #fff; font-size: 0.875rem; text-decoration: none; font-weight: 600;">爱发电支持 &rarr;</a>

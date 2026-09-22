@@ -1,60 +1,66 @@
 <div align="center">
   <h1>@path-ioc/core</h1>
-  <p><b>Spring 有 Bean，Nest 有 Provider，Path-IoC 有 Mesh。</b></p>
-  <p><b>像 lodash-es 一样纯粹通用的 TypeScript/JavaScript 路径依赖查找引擎 (IoC-DL)</b></p>
-  <p><b>JavaScript/TypeScript 动态语言模块控制反转的原生正解</b></p>
+  <p><b>Spring has Beans, Nest has Providers, Path-IoC has Meshes.</b></p>
+  <p><b>A pure, universal TypeScript/JavaScript Dependency Lookup (IoC-DL) engine as lightweight as lodash-es</b></p>
+  <p><b>The native Inversion-of-Control solution designed specifically for dynamic languages</b></p>
 
   <p>
     <a href="https://www.npmjs.com/package/@path-ioc/core"><img src="https://img.shields.io/npm/v/@path-ioc/core.svg" alt="NPM version"></a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/npm/l/@path-ioc/core.svg" alt="License"></a>
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
+    <a href="https://path-ioc.dev"><img src="https://img.shields.io/badge/docs-path--ioc.dev-8A2BE2.svg" alt="Docs"></a>
+    <a href="https://github.com/sponsors/path-ioc"><img src="https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-EA4AAA.svg" alt="Sponsor"></a>
+  </p>
+
+  <p>
+    <b>English</b> | <a href="./README.zh-CN.md">简体中文</a> | <a href="https://path-ioc.dev">Official Docs</a>
   </p>
 </div>
 
-> **什么是 Path-IoC (IoC-DL)？**  
-> 告别原始 `import` 泥潭与传统重型黑盒 DI 在 JS 异步生态里的死锁与元数据包袱。Path-IoC 采用 **Dependency Lookup (依赖查找)** 范式——物理路径即抽象契约，静态图启动期预编译，原生 `async/await` 拓扑并发。零反射、零概念包袱，组件面向 `container` 极简解构。
+> **What is Path-IoC (IoC-DL)?**  
+> Say goodbye to explicit `import` hell and the deadlocks, reflection penalties, and metadata bloat of legacy DI containers in asynchronous JavaScript. Path-IoC adopts the **Dependency Lookup (IoC-DL)** paradigm: physical file paths serve as abstract contracts, static topology graphs are compiled once, and modules awaken through native `async/await` DAG concurrency. Zero decorators, zero `reflect-metadata`, and zero framework intrusion.
 
 ---
 
-## 快速上手 (Quick Start)
+## Quick Start
 
-在真实的现代前端与全栈工程中，`@path-ioc/core` 与编译期插件 `@path-ioc/unplugin` 深度协同（Compiler-Runtime Co-design）。
+In production applications, `@path-ioc/core` works in tandem with the compiler plugin `@path-ioc/unplugin` (Compiler-Runtime Co-design).
 
-### 1. 安装核心与构建插件
+### 1. Install Runtime & Bundler Plugin
 
 ```bash
-# 运行时核心
+# Runtime Core
 pnpm add @path-ioc/core
 
-# 通用构建插件 (开发依赖)
+# Universal Bundler Plugin (Dev Dependency)
 pnpm add -D @path-ioc/unplugin
 ```
 
-### 2. 配置构建工具 (支持 Vite / Rolldown / Webpack / Rspack / Rollup / Esbuild)
+### 2. Configure Bundler (Vite / Rolldown / Webpack / Rspack / Rollup / Esbuild)
 
-在你的构建配置文件中引入 `@path-ioc/unplugin`：
+Add `@path-ioc/unplugin` to your build configuration:
 
 ```typescript
-// vite.config.ts (或 rolldown.config.ts)
+// vite.config.ts (or rolldown.config.ts)
 import { defineConfig } from "vite";
 import { vitePlugin as pathIoc } from "@path-ioc/unplugin";
-// 若使用 Rolldown: import { rolldownPlugin as pathIoc } from "@path-ioc/unplugin";
+// If using Rolldown: import { rolldownPlugin as pathIoc } from "@path-ioc/unplugin";
 
 export default defineConfig({
   plugins: [
     pathIoc({
-      modulesPath: "src/modules", // 模块扫描根目录 (默认: 'src/modules')
-      typeFileOutput: "types",    // 自动生成的全局类型输出目录
+      modulesPath: "src/modules", // Directory scanned for modules (default: 'src/modules')
+      typeFileOutput: "types",    // Output directory for auto-generated TypeScript definitions
     }),
   ],
 });
 ```
 
-*注：Webpack 5 请使用 `webpackPlugin`，Rspack 使用 `rspackPlugin`，Rollup 使用 `rollupPlugin`，Esbuild 使用 `esbuildPlugin`。*
+*Note: For Webpack 5 use `webpackPlugin`, Rspack use `rspackPlugin`, Rollup use `rollupPlugin`, and Esbuild use `esbuildPlugin`.*
 
-### 3. 创建业务模块 (无需 import，物理路径即契约)
+### 3. Create Business Modules (Zero imports; Physical Paths as Contracts)
 
-在 `src/modules` 下自由创建模块目录并导出 `main` 纯函数：
+Create module directories inside `src/modules` and export a pure `main` function:
 
 ```typescript
 // src/modules/infra/db/index.ts
@@ -65,20 +71,21 @@ export const main = () => {
 };
 
 // src/modules/biz/user/index.ts
-export const dependencies = ["db"]; // 声明正向依赖
+export const dependencies = ["db"]; // Declare forward dependencies
 
 export const main = (container: any) => {
-  const { db } = container; // 依赖查找 (DL)，由拓扑引擎保障前置就绪
+  const { db } = container; // Dependency Lookup (DL), guaranteed resolved by DAG topological scheduler
   return {
     getUser: (id: string) => db.query(`SELECT * FROM users WHERE id = ${id}`),
   };
 };
 ```
 
-### 4. 编写应用启动模块 (`src/modules/start-app/index.ts`)
+### 4. Create App Bootstrap Module (`src/modules/start-app/index.ts`)
 
 ```typescript
-// 一切业务皆模块：初始调用收敛在 IoC 模块内，天然保障 AOP 切面与依赖拓扑就绪
+// Everything is a module: Bootstrap logic stays within the IoC container,
+// guaranteeing AOP aspect interception and topological readiness.
 export const main = (container: any) => {
   const { user } = container;
   console.log(user.getUser("1001"));
@@ -87,30 +94,30 @@ export const main = (container: any) => {
 export const dependencies = ["user"];
 ```
 
-### 5. 应用入口点火唤醒 (`src/main.ts`)
+### 5. Ignite the Container (`src/main.ts`)
 
-在应用入口（如 `src/main.ts`），一行代码唤醒全量无锁拓扑流：
+In your application entrypoint (e.g. `src/main.ts`), ignite the lock-free topological engine with a single line:
 
 ```typescript
 // src/main.ts
 import { createModularContainer } from "virtual:modular-container";
 
-// 入口保持绝对纯粹：仅充当容器点火器，零业务逻辑污染
+// Pure ignite: zero business logic contamination
 createModularContainer();
 ```
 
-插件会自动为全量模块生成 `ignore.modular.d.ts`，享受 100% 静态类型安全与 IDE 自动补全！
+The plugin automatically generates `ignore.modular.d.ts` in the background, providing 100% static type safety and intelligent IDE autocompletion!
 
 ---
 
-### 6. 原生 Core 独立运行模式 (无打包器 / 纯单测模式)
+### 6. Standalone / Pure Node.js & Testing Mode
 
-若在纯 Node.js 脚本、无打包工具或编写隔离单元测试时，亦可直接使用 `@path-ioc/core` 原生纯函数接口：
+When writing isolated unit tests, CLI scripts, or running without a bundler, you can directly invoke the pure function runtime of `@path-ioc/core`:
 
 ```typescript
 import { compileModuleGraph, instantiateModuleContainer } from "@path-ioc/core";
 
-// 1. 显式定义模块列表 (短名称声明依赖与依赖查找)
+// 1. Explicitly define modules (declaring dependencies via keys / short-keys)
 const modules = [
   { key: "/infra/db", module: { main: () => "PostgreSQL Connection" } },
   {
@@ -122,72 +129,74 @@ const modules = [
   },
 ];
 
-// 2. 纯同步编译拓扑图 (单次纳秒级)
+// 2. Synchronous topology graph compilation (sub-millisecond)
 const compiledGraph = compileModuleGraph(modules);
 
-// 3. 动态填充容器
+// 3. Instantiate and populate container
 const container: Record<string, unknown> = {};
 await instantiateModuleContainer(compiledGraph, container);
+
+console.log(container.userService.getUser("1001"));
 ```
 
 ---
 
-## 核心设计哲学：向 Spring 致敬与动态语言范式应答 (Architecture Philosophy)
+## Core Architecture & Philosophy
 
-Path-IoC 的底层设计建立在对 **Java Spring 经典控制反转 (IoC) 哲学** 的深切致敬上。它让 Spring 的伟大解耦思想在 JavaScript/TypeScript 的单线程 `async`、动态语言特性与纯函数语境下得到了原生的继承与演进：
+Path-IoC pays deep homage to **Java Spring's classic Inversion-of-Control (IoC) principles**, while advancing its decoupled vision natively for JavaScript/TypeScript's single-threaded, asynchronous, and functional execution model:
 
-### 1. 动态语言范式应答：单线程 Event Loop 下的原生 DAG 拓扑并发
+### 1. The Dynamic Language Paradigm: Native DAG Topological Concurrency
+- **Mirroring Physical Models (Multi-threaded Serial vs. Single-threaded Concurrent)**:  
+  In Java, despite OS-level multi-threading, Spring must strictly fall back to a **serial pipeline** during container initialization to avoid race conditions, memory visibility bugs (JMM), and thread deadlocks during bean creation.
+- **Embracing JavaScript's Strengths**:  
+  JavaScript's single-threaded Event Loop **naturally eliminates shared-memory data races and lock deadlocks**. Path-IoC leverages this advantage by building a **reactive Directed Acyclic Graph (DAG)** with native `async/await`, activating all independent nodes in the same topological tier in **parallel/concurrent batches**. This bypasses single-thread queuing bottlenecks while fully exploiting non-blocking I/O throughput.
 
-并非 Path-IoC 创造了神迹，而是 Path-IoC 彻底顺应了 JavaScript 单线程非阻塞 Event Loop 的物理特性：
+### 2. Path as Contract (Dependency Inversion Principle)
+- **Strings are Interfaces**: Whether Java's `interface UserData`, `Class.forName("com.xxx.UserService")`, or Path-IoC's physical path coordinates, both decouple clients by **depending upon abstractions rather than concrete implementations** (true DIP).
+- **Physical Features as Service Discovery**: File paths provide natural coordinates for service discovery. For instance, filtering by `name.includes("/entity/orm/")` allows dynamic, zero-configuration discovery of all ORM entity modules.
 
-- **物理特性的镜像差异（多线程串行 vs 单线程并行/并发）**：Java 虽然拥有物理多线程，但为了规避并发创建 Bean 带来的共享内存竞争、内存可见性与死锁隐患（JMM 模型限制），Spring 容器初始化阶段在框架底层只能退守于**严谨的单线程严格串行装配（Serial Pipeline）**；
-- **利用 JS 天然优势**：JavaScript 的单线程 Event Loop **天然消除了共享内存竞态条件与锁死锁**。Path-IoC 利用这一天然物理优势建立 **原生 `async/await` 反应式拓扑有向无环图 (DAG)**，在初始化阶段实现同层无依赖节点的**全量并行/并发级联点火（Parallel / Concurrent Activation）**——既消除了单线程串行排队的吞吐瓶颈，又发挥了事件驱动非阻塞 I/O 的极高吞吐优势。
+### 3. Aspect-Oriented Programming (AOP) via Pure Closures
+- **Zero Framework Primitives**: Path-IoC avoids heavy specialized abstractions (`Guards`, `Interceptors`, `Pipes`, `Filters`, or JVM byte-code manipulation). In dynamic languages, higher-order functions and proxy wrappers represent the purest form of AOP.
+- **Natural Aspect Meshes**: An aspect module simply declares dependencies matching the path patterns of target modules. The topological engine guarantees target instances are created first; the aspect then wraps target methods via higher-order proxies without intrusive annotations.
 
-### 2. 字符串即接口表征：物理特征即为抽象契约 (Path as Contract)
+### 4. Circular Dependency & Fail-Fast Engineering
+- **Theory of Dependency Sensing**: Dynamic dependency resolution and circular dependency unwinding are two perspectives of the same underlying mechanism. While dynamic resolution can break cycles, it frequently conceals architecture rot and breaks native `async` DAG preheating.
+- **Core's Standpoint**: `@path-ioc/core` remains strictly rigorous—DFS static cycle analysis enforces **Fail-Fast** error reporting with full cycle chain traces. (For legacy synchronous cycles, the companion `@path-ioc/container` provides a Turbo mode with dynamic getter proxies).
 
-- **字符串也是接口的一种表达形式**：无论是 Java 传统的 `interface UserData`、`Class.forName("com.xxx.UserService")` 包路径，还是 Path-IoC 中的全限定路径与短名称，本质上都是在**依赖抽象而非依赖具体**，这正是依赖倒置原则 (DIP) 的终极真相。
-- **物理路径特征契约**：路径不仅是坐标，更是服务发现的天然接口。例如在服务端开发中，只需通过路径特征过滤函数 `name.includes("/entity/orm/")`，即可零配置全自动感知并收集所有 ORM 实体（如 `orm-entities` 模块），达到浑然天成的解耦与热插拔。
-
-### 3. AOP 切面机制：零学习成本的原生切面 (DL-based Aspect)
-
-- **不内置多余特权概念**：Path-IoC 不内置任何繁重的特权概念工具（如 `Guards`、`Interceptors`、`Pipes`、`Filters` 或复杂的 JDK 动态代理）。Path-IoC 认为在 JavaScript 动态语言下，高阶函数与解构代理本身就是最纯粹的 AOP。
-- **完全 AOP 能力 & 零学习成本**：凭借底层的依赖查找 (DL) 能力与动态语言直觉，切面模块（Aspect Mesh）只需在自身的 `dependencies` 函数中声明它要切入的目标模块路径模式（物理上正向依赖目标模块）。拓扑引擎保证目标模块优先完成实例化，切面模块随后唤醒并对 `container` 上的目标对象施加高阶代理包装，无需学习任何框架特有概念，即可具备完全的非侵入式 AOP 切面能力。
-
-### 4. 循环依赖与“依赖感知”理论哲学 (Circular Dependency & Dependency Sensing)
-
-- **纯理论提炼**：**“依赖感知”与“循环依赖解环”本质上是同一物理能力的不同理解角度**。
-  - **“依赖感知”是核心能力**；
-  - **正面作用一**：运行时循环依赖解环；
-  - **正面作用二**：按需子图懒加载 (Lazy Loading)；
-  - **伴生副作用**：遮蔽系统设计缺陷、导致架构隐式腐烂、以及无法原生支持 `async` 异步初始化。
-- **Core 引擎的工程立场**：`@path-ioc/core` 保持严谨正义——用 DFS 静态深搜 Fail-Fast 抛错，拒绝用隐式解环遮蔽系统架构漏洞。
-- **Container 的 Turbo 机制对比**：若因历史包袱需解环，在纯同步全模块场景下，扩展层 `@path-ioc/container` 的 Turbo 模式通过 Proxy Dynamic Getter 实现按需“依赖感知”，在运行期无痛完成无锁解环。
-
-### 5. 全局类型补齐：开发期 DX 与静态类型的殊途同归
-
-Java 在编译期拥有原生的 class 类型，而 JS/TS 字符串路径在静态阶段缺乏推导。Path-IoC 通过构建插件（`@path-ioc/unplugin`）在开发期（DX 阶段）自动扫描物理目录并实时生成 `ModularContainer` 全局类型接口（`ignore.modular.d.ts`），**完美补齐了动态语言在静态类型推导上的短板**，达到了与 Java 静态编译完全一致的类型安全与智能补全体验。
-
-### 6. 零运行期反射与两阶段图编译 (Two-Stage Separation)
-
-彻底摆脱 `reflect-metadata` 重型反射包袱。架构上将 **静态图编译 (`compileModuleGraph`)** 与 **动态容器填充 (`instantiateModuleContainer`)** 彻底分离。在 Node.js / Workers 高频 HTTP 请求场景中，服务启动时仅编译一次拓扑图，单次请求到来时直通填充容器，彻底免去每次请求重复解析依赖树与反射的开销，大流量下实测可降低 80% 以上的框架层 CPU 开销。
+### 5. Two-Stage Execution & Edge Serverless Readiness
+By completely eliminating `reflect-metadata`, Path-IoC cleanly separates **Static Graph Compilation (`compileModuleGraph`)** from **Dynamic Container Instantiation (`instantiateModuleContainer`)**. In Cloudflare Workers or serverless Node.js endpoints, the module graph is compiled once on worker cold-start and permanently cached; subsequent requests instantiate lightweight containers directly, reducing framework CPU overhead by over 80%.
 
 ---
 
-## 主流 IoC 框架选型对比矩阵 (Selection Matrix)
+## Hardware-Verified Benchmarks
 
-| 对比维度 | **TS 装饰器派**<br>(NestJS / Inversify / TSyringe) | **正则 Proxy 派**<br>(Awilix) | **JVM 反射派**<br>(Java Spring) | **@path-ioc/core** *(及 container 扩展)* |
+Tested on Apple Silicon under Node.js v24 (`pnpm bench`):
+
+| Target Function | Complexity | Mean Duration | Evaluation |
+| :--- | :--- | :--- | :--- |
+| **`instantiateModuleContainer`** | **50 Nodes** | **`21.2 µs`** | Microsecond direct resolution; zero request-time latency |
+| **`compileModuleGraph`** | **50 Nodes** | **`90.8 µs`** | Sub-millisecond cycle validation |
+| **`instantiateModuleContainer`** | **500 Nodes** | **`227 µs`** | Ultra-large module graphs resolve with negligible cost |
+| **`compileModuleGraph`** | **500 Nodes** | **`1.72 ms`** | Executed once on process cold boot, cached permanently |
+| **`compileModuleGraph`** | **2,000 Nodes** | **`15.5 ms`** | Industrial-grade deep topology limit |
+
+---
+
+## Selection Matrix
+
+| Comparison Dimension | **TS Decorator Stack**<br>(NestJS / Inversify / TSyringe) | **Regex Proxy Stack**<br>(Awilix) | **JVM Reflection Stack**<br>(Java Spring) | **@path-ioc/core** *(with container)* |
 | :--- | :--- | :--- | :--- | :--- |
-| **底层依据** | `reflect-metadata` + TS Decorator | 函数 `.toString()` 正则 + Proxy | Java 反射 + 字节码 + 缓存 (静态语言工业标杆) | **物理路径契约 + 纯闭包工厂 + DAG 图编译** |
-| **编译/环境兼容性** | 差 (强依赖元数据，纯类型擦除转译即崩溃) | 良好 | JVM 物理机原生支持 | **极致** (纯 ES Module 函数闭包，零元数据) |
-| **初始化装配机制** | 串行主导 / Class 构造纯同步，async Provider 阻塞 | 不支持异步初始化 | 严格单线程串行装配 (出于 JMM 线程安全考量) | **原生 DAG 拓扑并行/并发点火** (利用单线程天然安全，无锁级联调度) |
-| **AOP 切面机制** | 概念繁杂 & 强绑定且仅限 Controller | 无内置 AOP 能力 | 划时代声明式代理 (AspectJ) | **完全 AOP 能力 & 零学习成本** (基于 DL 依赖查找与 JS 高阶代理) |
-| **循环依赖与解环机制** | 死锁重灾区 (`forwardRef` 遇 async 死锁) | 受限 (仅限纯同步) | 辩证支持 (三级缓存解环，易诱发隐蔽 Bug) | **底层 DFS Fail-Fast 拦截** (拒绝遮蔽漏洞)<br>扩展层 Turbo 模式 (Dynamic Getter 解环) |
-| **高并发 / 运行期性能** | 高频元数据反射损耗 | Proxy 属性访问开销 | 工业级高可靠 (受限 JVM 物理模型) | **极高** (静态图编译与填充分离，提升 80% CPU 性能) |
-| **架构解耦与侵入性** | 强侵入 (代码处处与框架类和注解绑定) | 中度 (绑定参数名) | 低侵入 (支持 JSR-330 标准注解) | **零侵入** (模块仅为纯函数，脱离框架完全可跑) |
+| **Core Contract** | `reflect-metadata` + TS Decorators | Function `.toString()` parsing + Proxy | Reflection + Bytecode + Caching (Enterprise benchmark) | **Physical Path Contract + Pure Closures + DAG Compilation** |
+| **Bundler Compatibility** | Poor (breaks on pure AST type-erasure bundlers) | Good | Native JVM support | **Universal** (Pure ES Modules & closures; zero reflection) |
+| **Initialization & Concurrency** | Serial pipeline; async providers block sequentially | Synchronous only | Strict single-thread serial assembly (JMM thread safety) | **Native DAG Topological Concurrency** (Lock-free cascading activation) |
+| **AOP Mechanism** | Complex & restricted to HTTP controller layers | None built-in | Declarative bytecode proxy (AspectJ) | **Complete Native AOP** (Zero extra concepts; pure DL & higher-order wrappers) |
+| **Cycle Handling** | Deadlock hazard (`forwardRef` + async hangs) | Limited (Sync only) | Three-level cache unwinding | **Fail-Fast Cycle Interception** (Turbo mode available for legacy sync graphs) |
+| **Edge / Serverless Performance** | High CPU overhead due to dynamic metadata reflection | Proxy traversal overhead | Heavy memory footprint | **Ultra-lightweight** (Two-stage separation, 80%+ lower CPU cost) |
+| **Code Intrusion** | High (pervasive framework decorators) | Moderate (binds parameter names) | Low (supports JSR-330 standard) | **Zero** (Pure ES functions; runs completely independently) |
 
 ---
 
-## 形式化 API 规范 (Formal API Specification)
+## Formal API Reference
 
 ### 1. `compileModuleGraph`
 
@@ -212,8 +221,8 @@ export function compileModuleGraph(
 ): CompiledModuleGraph;
 ```
 
-- **算法复杂度**：时间复杂度 $O(V + E)$，空间复杂度 $O(V + E)$（基于 Kahn 拓扑排序算法）；
-- **异常捕获**：若检测到环路依赖，立即抛出附带完整环路链路路径的错误；若检测到短名称命名冲突，抛出明确的提示。
+- **Complexity**: Time $O(V + E)$, Space $O(V + E)$ (Kahn's Topological Algorithm);
+- **Fail-Fast Error Handling**: Throws descriptive errors with full cycle paths upon detecting cyclic dependencies, or on short-key collisions.
 
 ### 2. `instantiateModuleContainer`
 
@@ -224,14 +233,14 @@ export function instantiateModuleContainer(
 ): Promise<void>;
 ```
 
-- **行为规范**：
-  - 按 `compiledGraph.sortedKeys` 顺序依次唤醒模块 `main` 函数；
-  - 自动将模块执行返回值挂载到 `container[fullKey]` 与 `container[shortKey]`；
-  - 若模块的 `main` 为异步 Promise，引擎自动 `await` 并级联唤醒后续依赖它的子节点。
+- **Execution Semantics**:
+  - Iterates through `compiledGraph.sortedKeys` in validated topological order;
+  - Mounts return values to both `container[fullKey]` and `container[shortKey]`;
+  - Awaits asynchronous `main` promises before triggering dependent child nodes.
 
 ---
 
-## 许可证 (License)
+## License
 
 Released under the [MIT License](./LICENSE).  
-Copyright © 2026 [Path-IoC Organization](https://github.com/path-ioc) & Lian HanLin.
+Copyright © 2026-present [Path-IoC Organization](https://github.com/path-ioc) & Lian HanLin.

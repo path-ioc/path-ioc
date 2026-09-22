@@ -1,7 +1,7 @@
 <div align="center">
   <h1>@path-ioc/pack</h1>
   <p><b>Mesh Registry Distribution Bundler for Path-IoC</b></p>
-  <p>专为微前端、组件库分发与 Mesh 网格化依赖设计的物理打包与发布构建插件</p>
+  <p>Physical bundling and publishing plugin designed for microfrontends, component distribution, and Mesh registry architectures</p>
 
   <p>
     <a href="https://www.npmjs.com/package/@path-ioc/pack"><img src="https://img.shields.io/npm/v/@path-ioc/pack.svg" alt="NPM version"></a>
@@ -9,42 +9,46 @@
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
     <a href="https://vite.dev"><img src="https://img.shields.io/badge/powered%20by-Vite-646CFF?logo=vite&logoColor=white" alt="Vite"></a>
   </p>
+
+  <p>
+    <b>English</b> | <a href="./README.zh-CN.md">简体中文</a> | <a href="https://path-ioc.dev/api/pack">Official Docs</a>
+  </p>
 </div>
 
 ---
 
-## 核心特性 (Features)
+## Features
 
-- **物理入口自动生成 (Physical Entrypoint Generation)**：
-  在 Vite 构建流程中，自动深度扫描 `src/modules` 下所有包含 `index.ts/tsx` 的物理子目录，并在磁盘上自动生成/更新干净的入口文件（默认 `.modular-plugin-entry.ts`）。
-- **Mesh 注册表与类型全导出**：
-  自动生成统一的模块导入别名与导出，并导出标准运行期注册表数组 `modules`：
+- **Physical Entrypoint Generation**:
+  During Vite builds, automatically scans `src/modules` for physical directories containing `index.ts/tsx` and synthesizes clean on-disk entrypoints (default `.modular-plugin-entry.ts`).
+- **Full Mesh Registry & Type Exports**:
+  Generates unified module import aliases and exports the canonical runtime module registry array `modules`:
   ```typescript
   export const modules = [
     { key: "/math/add", module: _Modular_Mod_0 },
     { key: "/math/isEven", module: _Modular_Mod_1 },
   ];
   ```
-- **静态类型映射提取 (`sharedMappings`)**：
-  自动填充 `sharedMappings` 与 `sharedContainerMappings` 集合，为构建跨包 SDK 或微前端网格映射提供准确的类型描述。
-- **物理隔离与代码混淆兼容**：
-  物理生成的入口文件可直接用于 npm 打包流程，完美兼容各类 AST 物理打散与防篡改混淆工具。
+- **Static Type Mapping Extraction (`sharedMappings`)**:
+  Fills `sharedMappings` and `sharedContainerMappings` to provide accurate type descriptions for cross-package SDKs or microfrontend mesh topologies.
+- **Physical Isolation & Bundler Obfuscation Compatibility**:
+  Generated physical entrypoint files integrate seamlessly into standard npm packaging pipelines, fully compatible with downstream AST transformers and code protection tools.
 
 ---
 
-## 安装 (Installation)
+## Installation
 
 ```bash
 pnpm add -D @path-ioc/pack
-# 或
+# or
 npm install -D @path-ioc/pack
 ```
 
 ---
 
-## 快速上手 (Quick Start)
+## Quick Start
 
-### Vite 配置 (`vite.config.ts`)
+### Vite Configuration (`vite.config.ts`)
 
 ```typescript
 import { defineConfig } from "vite";
@@ -57,7 +61,7 @@ export default defineConfig({
   plugins: [
     modularPackPlugin({
       modulesPath: "src/modules",
-      // 可选：自定义生成的入口文件路径（默认存放在 node_modules/.path-ioc/.modular-plugin-entry.ts）
+      // Optional: Custom on-disk entrypoint path (default: node_modules/.path-ioc/.modular-plugin-entry.ts)
       entryFile: "node_modules/.path-ioc/.modular-plugin-entry.ts",
       sharedMappings,
       sharedContainerMappings,
@@ -68,18 +72,18 @@ export default defineConfig({
 
 ---
 
-## 配置选项 (PackPluginOptions)
+## Configuration Options (`PackPluginOptions`)
 
-| 配置项 | 类型 | 默认值 | 描述 |
+| Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| **`modulesPath`** | `string` | `'src/modules'` | 模块扫描的物理根目录路径。 |
-| **`entryFile`** | `string` | `'node_modules/.path-ioc/.modular-plugin-entry.ts'` | 物理生成的入口文件路径。 |
-| **`sharedMappings`** | `string[]` | `[]` *(可选)* | 接收生成的类型映射字符串数组引用。 |
-| **`sharedContainerMappings`** | `string[]` | `[]` *(可选)* | 接收生成的容器类型映射字符串数组引用。 |
+| **`modulesPath`** | `string` | `'src/modules'` | Root directory scanned for modular IoC entrypoints. |
+| **`entryFile`** | `string` | `'node_modules/.path-ioc/.modular-plugin-entry.ts'` | Target physical path for the generated entrypoint file. |
+| **`sharedMappings`** | `string[]` | `[]` *(optional)* | Reference to an array that receives generated type mapping strings. |
+| **`sharedContainerMappings`** | `string[]` | `[]` *(optional)* | Reference to an array that receives generated container type mapping strings. |
 
 ---
 
-## 导出的 API
+## Exported API
 
 ```typescript
 import { modularPackPlugin, type PackPluginOptions } from "@path-ioc/pack";
@@ -87,7 +91,7 @@ import { modularPackPlugin, type PackPluginOptions } from "@path-ioc/pack";
 
 ---
 
-## 开源协议 (License)
+## License
 
 Released under the [MIT License](./LICENSE).  
-Copyright © 2026 [Path-IoC Organization](https://github.com/path-ioc) & Lian HanLin.
+Copyright © 2026-present [Path-IoC Organization](https://github.com/path-ioc) & Lian HanLin.

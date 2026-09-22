@@ -39,6 +39,12 @@ Path-IoC 是一套遵循 MIT 开源协议的纯同步拓扑依赖查找引擎（
   <a href="https://opencollective.com/path-ioc" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 0.4rem 1rem; border-radius: 6px; background: var(--vp-c-brand-1); color: #fff; font-size: 0.875rem; text-decoration: none; font-weight: 600;">Open Collective &rarr;</a>
 </div>
 
+<div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1.25rem; background: var(--vp-c-bg-soft);">
+  <h3 style="margin-top: 0; font-size: 1.1rem;">Ko-fi</h3>
+  <p style="font-size: 0.9rem; color: var(--vp-c-text-2);">适合海外用户通过 PayPal 或信用卡为核心维护者请一杯咖啡。</p>
+  <a href="https://ko-fi.com/pathioc" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 0.4rem 1rem; border-radius: 6px; background: var(--vp-c-brand-1); color: #fff; font-size: 0.875rem; text-decoration: none; font-weight: 600;">通过 Ko-fi 支持 &rarr;</a>
+</div>
+
 </div>
 
 ---
