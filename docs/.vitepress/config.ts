@@ -10,6 +10,21 @@ export default defineConfig({
     ["meta", { property: "og:description", content: "Zero decorators, zero reflection, microsecond-level dependency resolution based on physical file paths for Vite, Webpack, and Cloudflare Workers." }],
     ["meta", { property: "og:url", content: "https://path-ioc.dev" }],
     ["meta", { property: "og:image", content: "https://path-ioc.dev/og-image.png" }],
+    [
+      "script",
+      {
+        async: "",
+        src: "https://www.googletagmanager.com/gtag/js?id=G-ZK9F76DH0Z",
+      },
+    ],
+    [
+      "script",
+      {},
+      `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-ZK9F76DH0Z');`,
+    ],
   ],
 
   locales: {
