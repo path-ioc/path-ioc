@@ -61,6 +61,7 @@ gtag('config', 'G-ZK9F76DH0Z');`,
               items: [
                 { text: "What is Path-IoC?", link: "/guide/what-is-path-ioc" },
                 { text: "Quick Start", link: "/guide/quick-start" },
+                { text: "Migration from lianhanlin-modular", link: "/guide/migration" },
               ],
             },
             {
@@ -149,6 +150,7 @@ gtag('config', 'G-ZK9F76DH0Z');`,
               items: [
                 { text: "什么是 Path-IoC？", link: "/zh/guide/what-is-path-ioc" },
                 { text: "快速上手", link: "/zh/guide/quick-start" },
+                { text: "从 lianhanlin-modular 迁移", link: "/zh/guide/migration" },
               ],
             },
             {
