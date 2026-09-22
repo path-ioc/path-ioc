@@ -1,6 +1,5 @@
 # Supported funding model platforms for Path-IoC
 
-github: [path-ioc, lianhanlin]
+github: path-ioc
 open_collective: path-ioc
-ko_fi: pathioc
 custom: ['https://afdian.com/a/path-ioc']
