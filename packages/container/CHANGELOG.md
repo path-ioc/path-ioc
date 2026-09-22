@@ -1,5 +1,13 @@
 # @path-ioc/container
 
+## 0.1.2
+
+### Patch Changes
+
+- docs: standardize package documentation with comprehensive bilingual English & Chinese READMEs
+- Updated dependencies
+  - @path-ioc/core@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

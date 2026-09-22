@@ -1,6 +1,6 @@
 {
   "name": "@path-ioc/container",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "High-level Container extensions, demand proxy and turbo mode for Path-IoC",
   "keywords": [
     "ioc",

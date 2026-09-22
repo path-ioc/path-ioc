@@ -30,7 +30,7 @@ export default defineConfig({
           { text: "Pro Boilerplate", link: "/templates/pro-boilerplate" },
           { text: "Sponsor", link: "/sponsor" },
           {
-            text: "v0.1.1",
+            text: "v0.1.2",
             items: [
               { text: "Changelog", link: "https://github.com/path-ioc/path-ioc/releases" },
               { text: "Contributing", link: "https://github.com/path-ioc/path-ioc/blob/main/CONTRIBUTING.md" },
@@ -117,7 +117,7 @@ export default defineConfig({
           { text: "商业脚手架", link: "/zh/templates/pro-boilerplate" },
           { text: "赞助支持", link: "/zh/sponsor" },
           {
-            text: "v0.1.1",
+            text: "v0.1.2",
             items: [
               { text: "更新日志", link: "https://github.com/path-ioc/path-ioc/releases" },
               { text: "贡献指南", link: "https://github.com/path-ioc/path-ioc/blob/main/CONTRIBUTING.md" },
