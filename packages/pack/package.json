@@ -1,0 +1,61 @@
+{
+  "name": "@path-ioc/pack",
+  "version": "0.1.0",
+  "description": "Mesh registry distribution bundler & obfuscator for Path-IoC",
+  "keywords": [
+    "ioc",
+    "bundler",
+    "obfuscator",
+    "distribution",
+    "vite-plugin"
+  ],
+  "homepage": "https://path-ioc.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/path-ioc/path-ioc.git",
+    "directory": "packages/pack"
+  },
+  "bugs": {
+    "url": "https://github.com/path-ioc/path-ioc/issues"
+  },
+  "author": "Lian HanLin",
+  "license": "MIT",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch"
+  },
+  "dependencies": {
+    "javascript-obfuscator": "^4.1.0",
+    "lodash-es": "^4.17.21"
+  },
+  "peerDependencies": {
+    "vite": "*"
+  },
+  "peerDependenciesMeta": {
+    "vite": { "optional": true }
+  },
+  "devDependencies": {
+    "@path-ioc/unplugin": "workspace:*",
+    "@types/node": "^18.0.0",
+    "vite": "^8.2.2",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.5"
+  }
+}

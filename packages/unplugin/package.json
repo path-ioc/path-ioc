@@ -1,0 +1,109 @@
+{
+  "name": "@path-ioc/unplugin",
+  "version": "0.1.0",
+  "description": "Universal dev plugin for Path-IoC generating virtual modular container and TypeScript typings",
+  "keywords": [
+    "unplugin",
+    "vite-plugin",
+    "webpack-plugin",
+    "rspack-plugin",
+    "rollup-plugin",
+    "ioc",
+    "dependency-injection",
+    "code-generation"
+  ],
+  "homepage": "https://path-ioc.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/path-ioc/path-ioc.git",
+    "directory": "packages/unplugin"
+  },
+  "bugs": {
+    "url": "https://github.com/path-ioc/path-ioc/issues"
+  },
+  "author": "Lian HanLin",
+  "license": "MIT",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./vite": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./webpack": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./rspack": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./rollup": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./esbuild": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./rolldown": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./virtual": {
+      "types": "./virtual.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "virtual.d.ts"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch"
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.2",
+    "lodash-es": "^4.17.21",
+    "unplugin": "^3.3.0",
+    "webpack-virtual-modules": "^0.6.2"
+  },
+  "peerDependencies": {
+    "vite": "*",
+    "webpack": "*",
+    "esbuild": "*",
+    "rollup": "*",
+    "rspack": "*",
+    "rolldown": "*"
+  },
+  "peerDependenciesMeta": {
+    "vite": { "optional": true },
+    "webpack": { "optional": true },
+    "esbuild": { "optional": true },
+    "rollup": { "optional": true },
+    "rspack": { "optional": true },
+    "rolldown": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.5",
+    "vite": "^8.2.2"
+  }
+}

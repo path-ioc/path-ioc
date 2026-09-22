@@ -1,0 +1,46 @@
+name: "Feature Request"
+description: "Suggest an idea or new feature for Path-IoC"
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We appreciate your proposal to make Path-IoC better! Please explain the problem you are solving and the proposed solution.
+  - type: dropdown
+    id: package
+    attributes:
+      label: Target Package / Domain
+      description: Which area does this feature proposal target?
+      options:
+        - "@path-ioc/core (Engine / DAG / Algorithm)"
+        - "@path-ioc/unplugin (Vite / Webpack / Rspack)"
+        - "@path-ioc/container (Proxy / Slicing)"
+        - "@path-ioc/pack (Distribution / Obfuscation)"
+        - "Commercial Boilerplate / Cloudflare Workers"
+        - "Documentation / Developer Experience"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Use Case
+      description: Is your feature request related to a problem? Please describe it.
+      placeholder: |
+        A clear and concise description of the motivation or problem.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution / API Design
+      description: Describe the solution or new API you'd like to see implemented.
+      placeholder: |
+        // Proposed API example
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or workarounds you've considered?

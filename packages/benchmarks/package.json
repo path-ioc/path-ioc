@@ -1,0 +1,13 @@
+{
+  "name": "@path-ioc/benchmarks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "tsx src/index.ts"
+  },
+  "devDependencies": {
+    "@path-ioc/core": "workspace:*",
+    "mitata": "^0.1.11",
+    "typescript": "^5.4.5"
+  }
+}

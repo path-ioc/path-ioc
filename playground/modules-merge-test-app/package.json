@@ -1,0 +1,23 @@
+{
+  "name": "modules-merge-test-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@path-ioc/core": "workspace:*",
+    "@path-ioc/container": "workspace:*",
+    "full-test-app": "workspace:*"
+  },
+  "devDependencies": {
+    "@path-ioc/unplugin": "workspace:*",
+    "@path-ioc/pack": "workspace:*",
+    "jsdom": "^26.0.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.2"
+  }
+}

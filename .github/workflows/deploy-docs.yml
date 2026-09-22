@@ -1,0 +1,87 @@
+name: Deploy Documentation (Cloudflare Workers)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "packages/**"
+      - ".github/workflows/deploy-docs.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - ".github/workflows/deploy-docs.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and Deploy to Cloudflare Workers
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build All Monorepo Packages
+        run: pnpm build
+
+      - name: Build Documentation Site
+        run: pnpm docs:build
+
+      - name: Deploy to Cloudflare Workers (Production)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: docs
+          command: deploy
+
+      - name: Deploy Preview to Cloudflare Workers
+        if: github.event_name == 'pull_request'
+        id: preview_deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: docs
+          command: versions upload
+        continue-on-error: true
+
+      - name: Comment PR with Preview Information
+        if: github.event_name == 'pull_request' && steps.preview_deploy.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commentBody = `### 🚀 Documentation Preview Deployed\n\nDocs changes for commit \`${context.sha.substring(0, 7)}\` have been processed via Cloudflare Workers Static Assets.\n\n- **Target**: Cloudflare Workers Edge CDN\n- **Triggered by**: @${context.actor}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });

@@ -1,0 +1,51 @@
+{
+  "name": "@path-ioc/container",
+  "version": "0.1.0",
+  "description": "High-level Container extensions, demand proxy and turbo mode for Path-IoC",
+  "keywords": [
+    "ioc",
+    "container",
+    "dependency-injection",
+    "proxy",
+    "lazy-load"
+  ],
+  "homepage": "https://path-ioc.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/path-ioc/path-ioc.git",
+    "directory": "packages/container"
+  },
+  "bugs": {
+    "url": "https://github.com/path-ioc/path-ioc/issues"
+  },
+  "author": "Lian HanLin",
+  "license": "MIT",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch"
+  },
+  "peerDependencies": {
+    "@path-ioc/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.5"
+  }
+}

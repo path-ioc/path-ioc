@@ -1,0 +1,17 @@
+{
+  "name": "container-test-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "pnpm exec tsx src/index.ts"
+  },
+  "dependencies": {
+    "@path-ioc/core": "workspace:*",
+    "@path-ioc/container": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "~6.0.2"
+  }
+}
