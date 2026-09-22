@@ -1,6 +1,6 @@
 {
   "name": "@path-ioc/pack",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Mesh registry distribution bundler & obfuscator for Path-IoC",
   "keywords": [
     "ioc",
