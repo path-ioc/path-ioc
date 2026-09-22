@@ -1,0 +1,61 @@
+name: "Bug Report"
+description: "Report a bug or unexpected behavior in Path-IoC"
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this issue! Please provide sufficient details to help reproduce and diagnose the bug.
+  - type: dropdown
+    id: package
+    attributes:
+      label: Affected Package
+      description: Which package does this bug relate to?
+      options:
+        - "@path-ioc/core"
+        - "@path-ioc/unplugin"
+        - "@path-ioc/container"
+        - "@path-ioc/pack"
+        - "@path-ioc/benchmarks"
+        - "Documentation Site (path-ioc.dev)"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Path-IoC Version
+      description: What version of the package are you using? (e.g. 0.1.0)
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Node.js version, OS, Bundler (Vite / Webpack / Rspack), etc.
+      placeholder: e.g. Node 20.12.0, macOS 15, Vite 5.2.0
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps or Minimal Code
+      description: Provide a minimal code snippet or repository link that reproduces the issue.
+      placeholder: |
+        // Minimal reproducing code
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true

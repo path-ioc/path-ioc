@@ -1,0 +1,49 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build Outputs & Bundler Bundles
+dist
+dist-*
+build
+*.tsbuildinfo
+**/.vitepress/cache
+**/.vitepress/dist
+
+# Path-IoC Generated Artifacts & Virtual Modules
+.path-ioc
+.virtual-modular-container.js
+**/types/ignore.modular.d.ts
+**/src/types/modular-container.d.ts
+
+# Logs & Diagnostics
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test Coverage & Temp
+coverage
+.vitest
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & Editor Files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+graphify-out/
+.graphifyignore

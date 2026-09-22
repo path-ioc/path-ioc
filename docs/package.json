@@ -1,0 +1,14 @@
+{
+  "name": "docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev --host",
+    "build": "vitepress build",
+    "preview": "vitepress preview --host",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}
