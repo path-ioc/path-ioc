@@ -1,6 +1,6 @@
 {
   "name": "@path-ioc/pack",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Mesh registry distribution bundler & obfuscator for Path-IoC",
   "keywords": [
     "ioc",
@@ -49,13 +49,15 @@
     "vite": "*"
   },
   "peerDependenciesMeta": {
-    "vite": { "optional": true }
+    "vite": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@path-ioc/unplugin": "workspace:*",
     "@types/node": "^20.0.0",
-    "vite": "^8.2.2",
     "tsup": "^8.0.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vite": "^8.2.2"
   }
 }

@@ -30,19 +30,17 @@ jobs:
       issues: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version-file: ".nvmrc"
           cache: "pnpm"
 
       - name: Install Dependencies
@@ -76,7 +74,7 @@ jobs:
 
       - name: Comment PR with Preview Information
         if: github.event_name == 'pull_request' && steps.preview_deploy.outcome == 'success'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const commentBody = `### 🚀 Documentation Preview Deployed\n\nDocs changes for commit \`${context.sha.substring(0, 7)}\` have been processed via Cloudflare Workers Static Assets.\n\n- **Target**: Cloudflare Workers Edge CDN\n- **Triggered by**: @${context.actor}`;
