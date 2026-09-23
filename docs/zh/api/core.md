@@ -39,7 +39,7 @@
   ```
 - **参数说明**：
   - `compiledGraph`: 由 `compileModuleGraph` 生成的编译图。
-  - `container`: 需要注入实例的目标对象（例如 `{ varContext: c }`）。
+  - `container`: 需要注入实例的目标对象（例如 `{ requestContext: c }`）。
 - **性能指标**：
   - 若全模块为同步装配，直通耗时仅 **21.2 µs**。
 

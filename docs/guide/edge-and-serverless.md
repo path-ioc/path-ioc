@@ -20,7 +20,7 @@ sequenceDiagram
     Note over Engine: Executes Kahn DAG sorting and validation once (~1.7ms)<br>Generates an immutable CompiledGraph cache
     
     Request->>Engine: 2. instantiateModuleContainer(compiledGraph, reqContainer)
-    Note over Engine: Instantiates the per-request container in 21.2 µs<br>Injects request context into c.varContext
+    Note over Engine: Instantiates the per-request container in 21.2 µs<br>Injects request context into c.requestContext
     Engine-->>Request: Returns isolated container (Zero repeated graph computation)
 ```
 
@@ -45,7 +45,7 @@ const app = new Hono<AppEnv>();
 // Mount isolated container per HTTP request inside middleware
 app.use("*", async (c, next) => {
   const reqContainer = {
-    varContext: c, // Inject request context (headers, auth, environment bindings)
+    requestContext: c, // Inject request context (headers, auth, environment bindings)
   } as any;
 
   // Reuses pre-compiled DAG graph under the hood. Instantiation takes only 21.2 µs!
@@ -55,11 +55,11 @@ app.use("*", async (c, next) => {
   await next();
 });
 
-// Route handlers consume services cleanly
-app.get("/api/orders", async (c) => {
-  const { orderService } = c.get("modularContainer");
-  const data = await orderService.listMyOrders();
-  return c.json({ result: true, data });
+// Wildcard API Gateway: Like Spring MVC DispatcherServlet, delegates all routing to the container
+// Business endpoints live under src/modules/api/** where physical paths serve as contracts
+app.all("*", async (c) => {
+  const { apiAggregator } = c.get("modularContainer");
+  return await apiAggregator();
 });
 
 export default app;
@@ -87,9 +87,9 @@ export const memoizeModule = <T extends (...args: any[]) => any>(fn: T): T => {
 
 // src/modules/infra/db-pool/index.ts
 export const main = memoizeModule((container: ModularContainer) => {
-  const { varContext } = container;
+  const { requestContext } = container;
   // Connection pool initialized once on first cold request, reused by all subsequent requests
-  const pool = createDbPool(varContext.env.DATABASE_URL);
+  const pool = createDbPool(requestContext.env.DATABASE_URL);
   return pool;
 });
 ```

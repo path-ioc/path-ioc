@@ -112,7 +112,7 @@ Path-IoC does not reinvent computation; it aligns strictly with the physical rea
 Whether in Java's `interface UserService`, `Class.forName("com.company.UserService")`, or Path-IoC's fully-qualified path `/domain/user` and alias `user`, the fundamental mechanism is **depending on abstractions rather than concrete implementations**—the ultimate realization of the Dependency Inversion Principle (DIP).
 
 ### File Paths as Natural Service Discovery Protocols
-Paths are not merely coordinates; they serve as a decentralized service discovery contract. In backend runtimes, filtering by path signatures like `name.includes("/entity/orm/")` automatically discovers all database entities (e.g. `orm-entities`) with zero manual imports or boilerplate registry declarations.
+Paths are not merely coordinates; they serve as a decentralized service discovery contract. In backend runtimes, filtering by path signatures like `name.startsWith("/entities/")` automatically discovers all domain entity models (e.g. `entities` aggregator module) with zero manual imports or boilerplate registry declarations.
 
 ---
 

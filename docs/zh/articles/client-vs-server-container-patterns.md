@@ -39,21 +39,21 @@
 - 所有的 UI 组件、页面路由、状态管理直接共享同一个全局容器实例。
 
 ### 客户端标准模式
+在客户端工程中，依托 `@path-ioc/unplugin` 对 `src/modules` 目录的自动扫描，入口处只需调用一次虚拟模块进行全局容器点火，无需手动收集或维护任何模块导入清单：
+
 ```typescript
-import { createModularContainer } from "@path-ioc/core";
+// src/main.tsx
+import { createModularContainer } from "virtual:modular-container";
 
-// 收集所有前端模块（UI State, HTTP Client, Local Storage, Analytics）
-export const container = await createModularContainer({
-  modules: [
-    httpClientModule,
-    userStateModule,
-    analyticsModule
-  ]
-});
+// 一键唤醒全局拓扑容器
+createModularContainer();
+```
 
-// 在任何 React / Vue 组件中直接解构使用
+在组件或业务逻辑中直接解构使用：
+```tsx
+// 在 React / Vue 组件函数体内直接解构使用
 export function UserProfile() {
-  const { userState } = container;
+  const { userState } = modularContainer;
   return <div>Welcome, {userState.name}</div>;
 }
 ```
@@ -92,7 +92,7 @@ export function UserProfile() {
 
 Path-IoC 拒绝在框架核心内引入复杂的“作用域元数据”概念，而是通过**动态语言原生的高阶函数闭包（Higher-Order Closure）**优雅达成两全其美：
 
-1. **容器本身按请求实例化（Per-Request Container）**：每个 HTTP 请求分配一个独立的轻量容器，注入专属的 `varContext`（如 Hono 的 `c` 上下文、Express 的 `req`），杜绝并发污染；
+1. **容器本身按请求实例化（Per-Request Container）**：每个 HTTP 请求分配一个独立的轻量容器，注入专属的 `requestContext`（如 Hono 的 `c` 上下文、Express 的 `req`），杜绝并发污染；
 2. **重型模块通过纯函数闭包缓存（Memoization）**：数据库连接池、Redis 客户端、ORM 实体元数据等重量级资源，在进程生命周期内通过闭包保证只初始化一次。
 
 ### 1. 实现通用重型模块单例原语：`memoizeModule`
@@ -163,11 +163,10 @@ import type { Context } from "hono";
 export const dependencies = ["database"];
 
 export const main = (container: ModularContainer) => {
-  const { database, varContext } = container;
-  // 直接从当前请求的 varContext 中安全获取专属状态
-  const c = varContext as Context;
-  const requestId = c.req.header("x-request-id");
-  const currentUser = c.get("user");
+  // 零 any、无需 as Context 类型断言，直接享受专属上下文的 100% 智能提示！
+  const { database, requestContext } = container;
+  const requestId = requestContext.req.header("x-request-id");
+  const currentUser = requestContext.get("user");
 
   return {
     async createOrder(item: string) {
@@ -185,36 +184,27 @@ export const main = (container: ModularContainer) => {
 
 ## 五、在 Web 框架中的无缝集成 (Hono / Express / Koa)
 
-以现代全栈高性能框架 **Hono** 为例，在中间件中只需 3 行代码即可将隔离容器赋予每一个请求：
+以现代全栈高性能框架 **Hono** 为例，在网关入口处通过 TypeScript 声明合并与容器实例化，即可完成极致请求隔离：
 
 ```typescript
 // src/index.ts
-import { Hono } from "hono";
-import { createModularContainer } from "@path-ioc/core";
-import { serverModules } from "./modules"; // 汇聚所有服务端模块
+import { Hono, type Context } from "hono";
+import { createModularContainer } from "virtual:modular-container";
+
+// 💡 声明合并 (Declaration Merging)：为容器扩展当前环境专属的请求上下文强类型
+// 自动与构建插件生成的 ignore.modular.d.ts 合并，业务解构享受 100% 智能补全与静态校验
+declare global {
+  interface ModularContainer {
+    requestContext: Context;
+  }
+}
 
 const app = new Hono();
 
-// 全局前置中间件：为每个请求点火专属容器
-app.use("*", async (c, next) => {
-  const container = await createModularContainer({
-    modules: serverModules,
-    varContext: c // 将当前 Hono 上下文注入容器
-  });
-
-  c.set("container", container);
-  await next();
-});
-
-// 业务路由：直接通过请求容器调用业务逻辑
-app.post("/api/orders", async (c) => {
-  const container = c.get("container");
-  const { orderService } = container;
-
-  const body = await c.req.json();
-  const result = await orderService.createOrder(body.item);
-
-  return c.json({ success: true, data: result });
+// 通配网关：为每个请求注入专属容器并调度 (单次填充仅耗时 20µs)
+app.all("*", async (c) => {
+  const container = await createModularContainer({ requestContext: c });
+  return await container.apiAggregator();
 });
 
 export default app;
@@ -224,7 +214,7 @@ export default app;
 1. **冷启动与重型资源**：
    - 无论打进来多少万次请求，数据库连接池和 Redis 哨兵只会在初次请求时建立一次，并在单线程闭包中稳定复用，连接数严格受控；
 2. **零跨请求污染**：
-   - 每个请求拥有纯净独立的 `orderService` 和 `varContext`，用户凭证与请求链路 ID 绝不会相互泄露；
+   - 每个请求拥有纯净独立的 `orderService` 和 `requestContext`，用户凭证与请求链路 ID 绝不会相互泄露；
 3. **微秒级轻量开销**：
    - Path-IoC 的拓扑编译在打包期预先计算或在初次加载后高度复用，每次请求实例化轻量级服务仅需数十微秒，比 NestJS 的 `Scope.REQUEST` 快整整两个数量级！
 
@@ -234,7 +224,7 @@ export default app;
 
 | 对比维度 | 传统全栈做法 (NestJS Scope.REQUEST) | Path-IoC 生产模式 (多例容器 + 闭包缓存) |
 | :--- | :--- | :--- |
-| **请求隔离机制** | 框架元数据反射 + 动态遍历注入子树 | 原生 `varContext` + 轻量级请求容器 |
+| **请求隔离机制** | 框架元数据反射 + 动态遍历注入子树 | 原生 `requestContext` + 轻量级请求容器 |
 | **重型资源管理** | 繁琐的 `@Injectable({ scope: DEFAULT })` 概念侵入 | 纯函数高阶闭包 `memoizeModule` |
 | **单请求开销** | 毫秒级反射解析与 GC 停顿 | **微秒级纯函数调用，极低内存驻留** |
 | **适用环境** | 仅限特定 Node.js 框架 | **Node.js, Bun, Cloudflare Workers 全平台通用** |

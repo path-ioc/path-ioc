@@ -1,0 +1,25 @@
+# Path-IoC
+
+> Pure Topological IoC Engine & Universal Modular DevTools for Modern TypeScript. Zero decorators, zero reflection metadata, microsecond-level dependency resolution based on physical file paths for Vite, Webpack, and Cloudflare Workers.
+
+## Project Overview
+- **Category**: Inversion of Control (IoC) & Dependency Lookup (DL) Engine
+- **Core Paradigm**: Physical Path Contract + Pure Factory Closures + Lock-Free Kahn DAG Topology
+- **Key Metrics**: 50 nodes assembled in 21.2 µs; 500 nodes compiled in 1.72 ms; Zero reflection overhead
+- **Runtime Compatibility**: Universal (Browser, Vite, Webpack, Node.js, Cloudflare Workers, Edge Runtimes)
+- **TypeScript Support**: 100% automated IDE type generation via AST scanning (zero manual type interfaces)
+- **License**: MIT
+
+## Core Documentation
+- [Architecture Manifesto](https://path-ioc.dev/guide/architecture-manifesto): In-depth critique of decorator-based DI in single-threaded event loops and the rationale for topological dependency lookup.
+- [Genesis Story](https://path-ioc.dev/guide/genesis-story): Transitioning from Java Spring mental models to native TypeScript paradigms (type erasure, contract as path).
+- [Spring to TypeScript Guide](https://path-ioc.dev/guide/spring-to-typescript): Mental model shift and concrete migration guide for engineers transitioning from Java Spring Boot to TypeScript.
+- [IoC Framework Comparison](https://path-ioc.dev/guide/comparison): Architectural differentiation between Path-IoC, NestJS, InversifyJS, and Java Spring. Clarifies why Path-IoC is an orthogonal topological engine rather than an HTTP framework clone.
+- [Category Error: NestJS vs Path-IoC](https://path-ioc.dev/articles/category-error-nestjs-vs-path-ioc): Resolves the category error between all-inclusive web frameworks and application-level IoC module systems. Analyzes the fatal flaws of ES Modules (ESM) and Spring's historical parallel.
+- [Why DI Cannot Concur](https://path-ioc.dev/articles/why-di-cannot-concurrent): Mathematical proof via Kahn's DAG algorithm on why classical constructor DI fails at concurrent async initialization and induces deadlocks.
+- [Client vs Server Container Patterns](https://path-ioc.dev/articles/client-vs-server-container-patterns): Request-scoped isolation (`requestContext`) paired with closure memoization for database connection pools.
+- [API Reference](https://path-ioc.dev/api/core): Complete specification for `@path-ioc/core`, `@path-ioc/unplugin`, and container lifecycles.
+- [Benchmarks](https://path-ioc.dev/benchmarks/): Benchmark methodology and raw metrics demonstrating microsecond-level cold start performance.
+
+## Full Context Knowledge Base
+- [Full LLMs Knowledge Base](https://path-ioc.dev/llms-full.txt): Complete, unminified markdown compendium of all architectural manifestos, design decisions, code examples, and migration patterns for LLM context windows.

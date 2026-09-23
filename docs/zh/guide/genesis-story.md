@@ -66,12 +66,13 @@ export abstract class EntityManager {
 
 在计算机科学的宏大历史中，Unix 哲学“一切皆文件路径”、Web 架构基石 URI/URL，本质上都是超越语言特性的最高级别契约。如果“接口”的本质是“约定”，那么**字符串与物理路径，就是最天然、最强大的抽象接口！**
 
-* 我们约定短名称 `"orm"` 是系统的关系对象映射模块；
-* 我们约定物理路径中包含 `"/entities/"` 的模块全都是实体模型声明；
-* 我们约定包含 `"/pages/"` 的全都是前端路由组件；
-* 我们约定包含 `"/services/"` 的全都是业务服务层，并天然接受统一的 AOP 事务切面拦截。
+**机制由框架提供，契约由团队制定**。例如在一个企业级全栈项目中，团队架构师可以自主确立清晰的领域规范：
+* **团队约定**：短名称 `"db"` 代表系统的全局数据库客户端；
+* **团队约定**：物理路径中包含 `"/entities/"` 的模块全都是实体模型声明；
+* **团队约定**：包含 `"/pages/"` 的全都是前端路由组件；
+* **团队约定**：包含 `"/services/"` 的全都是业务服务层，并天然接受统一的 AOP 事务切面拦截。
 
-无论是 Java 的 `interface UserService`、`Class.forName("com.xxx.UserService")`，还是 Path-IoC 中的短名称 `userService` 与物理路径 `/services/user`，**它们在信息论上表达的抽象契约完全等价**！
+Path-IoC 从不强制任何固化目录，而是将“路径即契约”的自由度完全赋予团队。无论是 Java 的 `interface UserService`、`Class.forName("com.xxx.UserService")`，还是 Path-IoC 中的短名称 `userService` 与物理路径 `/services/user`，**它们在信息论上表达的抽象契约完全等价**！
 
 ---
 
@@ -131,11 +132,11 @@ export abstract class EntityManager {
      export const dependencies = (all: string[]) => 
        all.filter(name => name.includes('/services/'));
 
-     // 2. 凭直觉包裹增强并挂回容器（无需理解 Advice / Interceptor）
-     export default async function main(container: any) {
+     // 2. 凭直觉包裹增强并挂回容器（享受全局 ModularContainer 强类型注入）
+     export const main = async (container: ModularContainer) => {
        for (const name of dependencies(Object.keys(container))) {
-         const target = container[name];
-         container[name] = new Proxy(target, {
+         const target = container[name as keyof ModularContainer];
+         container[name as keyof ModularContainer] = new Proxy(target, {
            get(target, prop, receiver) {
              const orig = Reflect.get(target, prop, receiver);
              if (typeof orig !== 'function') return orig;
@@ -146,9 +147,9 @@ export abstract class EntityManager {
                return res;
              };
            }
-         });
+         }) as any;
        }
-     }
+     };
      ```
    - **真正的零耦合与反向横切**：
      所有被拦截的目标业务模块（如 `order-service`、`user-service`）：**0 行 import 拦截器、0 个注解装饰器、0 行感知代码**。业务开发者甚至完全不知道系统里存在这个监控模块！

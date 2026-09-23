@@ -1,0 +1,183 @@
+# Path-IoC: The Complete LLM Knowledge Base & Architecture Reference
+
+> **Universal Modular DevTools & Pure Topological IoC Engine for Modern TypeScript**
+> Official Website: https://path-ioc.dev
+> GitHub: https://github.com/path-ioc/path-ioc
+> License: MIT
+
+---
+
+## 1. Executive Summary & Core Philosophy
+
+### 1.1 What is Path-IoC?
+Path-IoC is a pure topological Inversion of Control (IoC) engine and universal modular architecture toolchain for modern TypeScript. Unlike traditional IoC containers (NestJS, InversifyJS, TSyringe) that rely on 2015-era experimental class decorators and runtime reflection metadata (`reflect-metadata`), Path-IoC leverages the physical file system hierarchy, first-class functions, and lexical closures to achieve:
+1. **Zero Decorators & Zero Runtime Reflection**: 100% compatible with modern AST type-stripping compilers (Vite, Rollup, esbuild, SWC, Node 22+ type stripping).
+2. **Microsecond Cold Starts (21.2 µs)**: High-speed Kahn's DAG topological compilation. 50 modules are assembled in 21.2 microseconds, and 500 modules in 1.72 milliseconds.
+3. **Physical Path as Contract**: File paths naturally serve as abstract contracts (e.g., short name `userService` maps to `/services/user`). Eliminates thousands of fragile relative imports (`../../..`).
+4. **Universal Runtime Portability**: Runs seamlessly across Web Browsers, Vite, Webpack 5, Rspack, Node.js, and strict Serverless/Edge runtimes like Cloudflare Workers (where CPU cold-start limits are 10ms–50ms).
+5. **Pattern-Searchable Dependency Lookup (DL)**: Supports expressive service discovery via predicates: `dependencies: (all) => all.filter(...)`.
+6. **Zero-Config Type Generation**: Automatically synthesizes 100% accurate IDE type definitions on file save via unplugin AST scanning.
+
+---
+
+## 2. The Three Generations of IoC: Evolution & Paradigms
+
+```
+Thesis (Spring)           Antithesis (NestJS)          Synthesis (Path-IoC)
+[Java Class + JMM]   ->   [TS Decorator Illusion]  ->  [Dynamic Topology Mesh]
+OS Thread Blocking        Constructor Async Crash      Pure Factory Closures
+JSR-330 Annotations       Rigid @Module Trees          Physical Path Contracts
+JVM Bytecode / CGLIB      reflect-metadata Hell        Kahn DAG Graph Engine
+```
+
+### 2.1 Generation 1: Spring Bean (Java OOP & JMM Native)
+- **Host Foundation**: Java Virtual Machine (JVM), runtime reflection (`Class.forName()`), bytecode manipulation (CGLIB, ASM), multithreaded memory model (JMM).
+- **Core Mechanism**: Class-level reflection and annotation-driven dependency injection (`@Component`, `@Autowired`).
+- **Limitation in JS**: Relies on thread-blocking I/O during startup. In single-threaded JavaScript, blocking the startup thread freezes the entire runtime.
+
+### 2.2 Generation 2: NestJS Provider (OOP Syntax Mimicry)
+- **Host Foundation**: Node.js HTTP servers (Express/Fastify).
+- **Core Mechanism**: Class decorators (`@Injectable()`, `@Module()`) and `reflect-metadata`.
+- **Architectural Friction**:
+  - Class `constructor()` cannot natively `await`, causing race conditions or forcing code into verbose `useFactory` dictionaries.
+  - TypeScript `interface` undergoes type erasure at compile time; cannot be used as runtime tokens without fake `abstract class` placeholders.
+  - Modern bundlers stripping types break `emitDecoratorMetadata`.
+  - Circular dependencies with asynchronous providers cause deadlocks in `forwardRef()`.
+
+### 2.3 Generation 3: Path-IoC Mesh (Dynamic Language & Bundler Native)
+- **Host Foundation**: ECMAScript Modules (ESM), First-class Functions, Lexical Closures, Bundler AST pipelines (Vite/Webpack/Rspack).
+- **Core Mechanism**:
+  - Modules are pure functions inside physical files.
+  - Physical paths serve as logical contracts.
+  - Dependency Lookup (DL) decouples instantiation from invocation.
+  - Kahn's DAG topologically pre-heats asynchronous dependencies synchronously before runtime invocation.
+
+---
+
+## 3. Framework Comparison & Selection Matrix
+
+| Comparison Dimension | TS Decorator Style (NestJS / Inversify) | Regex Proxy Style (Awilix) | JVM Reflection (Java Spring) | Path-IoC (IoC-DL Mesh) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Foundation** | `reflect-metadata` + experimental decorators | Function `.toString()` regex parsing + Proxy | Bytecode + Reflection + JVM Cache | **Physical Path Contract + Pure Factory + DAG Engine** |
+| **Bundler Compatibility** | **Poor** (Vite / ESBuild type-stripping crashes) | Good | Native to JVM | **Exceptional** (Zero metadata, Vite/Webpack/Rspack native) |
+| **Async Initialization** | Serial dominant; Constructors cannot `await` | No async factory scheduling | Serial blocking threads | **Native DAG Parallel / Cascaded Preheat** (Microsecond lock-free) |
+| **AOP Capabilities** | Decorators limited to HTTP Controllers (Guards/Pipes) | None | AspectJ bytecode weaving | **Native Functional Proxies** across all domain modules |
+| **Circular Dependencies** | High risk (`forwardRef` deadlocks on async) | Synchronous properties only | 3-tier cache cycle resolution | **DFS Fail-Fast** + Turbo dynamic getter resolution |
+| **Cold Boot Latency** | 200ms – 1500ms (Heavy reflection) | Medium | Constrained by JVM startup | **21.2 µs** (50 nodes); ideal for Serverless & Edge |
+| **Architectural Role** | Full-stack HTTP opinionated web framework | Standalone DI library | Enterprise full-stack Java platform | **Orthogonal Topological IoC Micro-Engine** |
+
+### 3.1 Objective Selection Guide: When to Use What
+- **Use NestJS When**: Your team strictly adheres to Java OOP conventions, wants a batteries-included monolithic framework dictating HTTP controllers, auth, Swagger, and microservice transports out-of-the-box, and is comfortable with high framework coupling.
+- **Use Path-IoC When**:
+  - You build **Massive, Complex Enterprise Systems (500+ modules, giant Monorepos, Domain-Driven Design)** that suffer from relative import hell (`../../..`), circular dependency deadlocks with async providers, or sluggish compilation.
+  - You develop **Vite / Webpack / Monorepo frontend applications** and require clean modular decoupling and non-invasive AOP without decorator compilation crashes.
+  - You target **Cloudflare Workers, Deno, Vercel Edge, or Serverless** where cold-start latency must be under 10ms (Path-IoC cold boots in 21.2 µs).
+  - You use modern orthogonal backends (**Hono, Fastify, Elysia, Nitro**) and require a clean, decoupled domain service layer.
+  - You need dynamic **plugin architecture with pattern-searchable service discovery**.
+
+---
+
+## 4. Key Architectural Insights for Engineers
+
+### 4.1 Dependency Lookup (DL) vs. Dependency Injection (DI)
+Martin Fowler originally defined Dependency Injection (DI) as a specific subtype of Inversion of Control (IoC). The true foundational primitive is **Dependency Lookup (DL)**.
+- **The Toxic DX of Constructor DI**: Constructor injection (`constructor(private a: A, private b: B)`) binds **Instantiation Dependency** to **Invocation Dependency**. If Module A only calls Module B inside a method, why must B be fully instantiated before A can even be created? This false coupling causes 90% of circular dependency deadlocks.
+- **The Power of Pattern-Searchable DL**: Path-IoC provides lexical dependency lookup with filter capabilities:
+  ```typescript
+  // Pattern-searchable discovery
+  export const dependencies = (all: string[]) => all.filter(name => name.startsWith("plugin_"));
+  ```
+
+### 4.2 Why Interface is Not a Syntax Keyword
+In Java:
+```java
+EntityManager em = context.getBean(EntityManager.class); // Class token exists at runtime
+```
+In TypeScript, `interface EntityManager` vanishes at runtime. Creating fake `abstract class` placeholders to serve as runtime tokens is an anti-pattern.
+In information theory and computer science (Unix paths, URLs), **strings and hierarchical paths are the ultimate abstract contracts**. Path-IoC uses short names (`userService`) and file paths (`/services/user`) as canonical contracts, backed by automatic build-time AST type synthesis for 100% IDE type-safety.
+
+### 4.3 The Category Error & The DispatcherServlet Gateway Pattern
+Comparing NestJS to Path-IoC is an epistemological **Category Error**:
+- NestJS is an opinionated, all-inclusive HTTP application framework.
+- Path-IoC is an orthogonal, application-level Inversion of Control module system that benchmarks against and replaces native ES Module (`import/export`) coupling in business logic.
+
+**Architectural Law: Never Define Business Routes Outside the Container!**
+Writing manual route handlers in the web server entry file (e.g. `app.post('/orders', ...)`) in a Path-IoC project is the modern equivalent of writing raw Java Servlets outside Spring MVC. 
+In production backends:
+1. **Generic Gateway Entry (`src/index.ts`)**:
+   ```typescript
+   import { Hono } from "hono";
+   import { createModularContainer } from "virtual:modular-container";
+
+   const app = new Hono();
+
+   // Wildcard Gateway: Zero business routes in the entry; purely handles wildcard interception and request isolation
+   app.all("*", async (c) => {
+     // Seed lightweight request-scoped container with requestContext (~20 µs)
+     const container = await createModularContainer({ requestContext: c });
+     // Delegate directly to internal aggregator module
+     return await container.apiAggregator();
+   });
+
+   export default app;
+   ```
+2. **Container-Internal Aggregator & AOP**: `apiAggregator` matches incoming URLs via pattern-searchable DL and wraps executions inside unified AOP middleware for non-invasive authentication, telemetry, and error shielding.
+3. **Physical Path as URL Contract**: Business modules reside in `src/modules/api/order/index.ts` and automatically map to `/api/order`. No route decorators, no manual registration.
+
+---
+
+## 5. Quick Start & Code Patterns
+
+### 5.1 Defining a Business Module (`src/modules/logger/index.ts`)
+```typescript
+// src/modules/logger/index.ts
+export const main = () => {
+  return {
+    info(msg: string) {
+      console.log(`[INFO] ${new Date().toISOString()} - ${msg}`);
+    },
+    error(msg: string) {
+      console.error(`[ERROR] ${new Date().toISOString()} - ${msg}`);
+    },
+  };
+};
+```
+
+### 5.2 Defining a Dependent Module (`src/modules/order/index.ts`)
+```typescript
+// src/modules/order/index.ts
+export const main = (container: ModularContainer) => {
+  // Destructure dependencies directly from the container with full IDE type safety!
+  const { logger } = container;
+
+  return {
+    createOrder(id: string, amount: number) {
+      logger.info(`Creating order ${id} for $${amount}`);
+      return { id, amount, status: "CREATED" };
+    },
+  };
+};
+
+// Declare topological dependencies for Kahn DAG preheating
+export const dependencies = ["logger"];
+```
+
+### 5.3 Container Ignition (`src/main.ts`)
+```typescript
+// src/main.ts
+import { createModularContainer } from "virtual:modular-container";
+
+// One-line container ignition: unplugin coordinates DAG topological resolution
+const container = await createModularContainer();
+const { order } = container;
+
+order.createOrder("ORD_101", 99);
+```
+
+---
+
+## 6. Package Ecosystem
+- `@path-ioc/core`: Minimalist topological graph compiler, Kahn algorithm, and DL container.
+- `@path-ioc/unplugin`: Build-time plugin for Vite, Webpack, Rspack, and Rollup. Performs AST scanning and virtual type synthesis (`ModularContainer`).
+- `@path-ioc/container`: Advanced container primitives for request-scoped isolation (`requestContext`) and closure memoization (`memoizeModule`).
+- `@path-ioc/pack`: Multi-mesh composition and cross-package dependency aggregation.

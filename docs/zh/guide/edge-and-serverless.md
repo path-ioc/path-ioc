@@ -20,7 +20,7 @@ sequenceDiagram
     Note over Engine: 执行 1 次 Kahn 拓扑排序与校验 (约 1.7ms)<br>生成静态 CompiledGraph 全局缓存
     
     Request->>Engine: 2. instantiateModuleContainer(compiledGraph, reqContainer)
-    Note over Engine: 直通装配当前请求容器 (耗时仅 21.2 µs)<br>挂载 c.varContext 请求上下文
+    Note over Engine: 直通装配当前请求容器 (耗时仅 21.2 µs)<br>挂载 c.requestContext 请求上下文
     Engine-->>Request: 返回隔离后的请求容器 (零重复拓扑损耗)
 ```
 
@@ -45,7 +45,7 @@ const app = new Hono<AppEnv>();
 // 在 HTTP 中间件中挂载请求级隔离容器
 app.use("*", async (c, next) => {
   const reqContainer = {
-    varContext: c, // 注入当前请求的 Context (包含 Headers, Auth, Env 等)
+    requestContext: c, // 注入当前请求的 Context (包含 Headers, Auth, Env 等)
   } as any;
 
   // 内部自动复用启动期预编译的 DAG 静态图，填充仅耗时 21.2 微秒！
@@ -55,11 +55,11 @@ app.use("*", async (c, next) => {
   await next();
 });
 
-// 业务路由直接消费容器
-app.get("/api/orders", async (c) => {
-  const { orderService } = c.get("modularContainer");
-  const data = await orderService.listMyOrders();
-  return c.json({ result: true, data });
+// 通配 API 网关分发 (类似 SpringMVC DispatcherServlet，入口处绝不手写具体业务路由！)
+// 业务接口一律由 src/modules/api/** 物理路径模块承载，并由 apiAggregator 模块进行统一调度与 AOP 切面拦截
+app.all("*", async (c) => {
+  const { apiAggregator } = c.get("modularContainer");
+  return await apiAggregator();
 });
 
 export default app;
@@ -87,9 +87,9 @@ export const memoizeModule = <T extends (...args: any[]) => any>(fn: T): T => {
 
 // src/modules/infra/db-pool/index.ts
 export const main = memoizeModule((container: ModularContainer) => {
-  const { varContext } = container;
+  const { requestContext } = container;
   // 仅在首次请求时创建连接池，后续所有 HTTP 请求直接共享同一连接实例！
-  const pool = createDbPool(varContext.env.DATABASE_URL);
+  const pool = createDbPool(requestContext.env.DATABASE_URL);
   return pool;
 });
 ```

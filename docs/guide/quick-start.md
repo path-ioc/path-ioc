@@ -20,7 +20,7 @@ pnpm add -D @path-ioc/unplugin
 
 ## 2. Configure Bundler Plugin
 
-Inject the unplugin adapter into your bundler configuration:
+Inject the unplugin adapter into your bundler configuration (works out of the box with zero configuration):
 
 ### Vite (`vite.config.ts`)
 ```typescript
@@ -28,51 +28,47 @@ import { defineConfig } from "vite";
 import pathIoc from "@path-ioc/unplugin";
 
 export default defineConfig({
-  plugins: [
-    pathIoc.vite({
-      modulesPath: "src/modules",   // Physical module directory (default: src/modules)
-      typeFileOutput: "types",     // Directory for generated ignore.modular.d.ts
-    }),
-  ],
+  plugins: [pathIoc.vite()],
 });
 ```
 
 ### Rolldown (`rolldown.config.ts`)
 ```typescript
 import { defineConfig } from "rolldown";
-import { rolldownPlugin as pathIoc } from "@path-ioc/unplugin";
+import pathIoc from "@path-ioc/unplugin";
 
 export default defineConfig({
-  plugins: [
-    pathIoc({
-      modulesPath: "src/modules",
-      typeFileOutput: "types",
-    }),
-  ],
+  plugins: [pathIoc.rolldown()],
 });
 ```
 
 ### Webpack (`webpack.config.js`)
 ```javascript
-const { webpackPlugin: pathIoc } = require("@path-ioc/unplugin");
+const { webpackPlugin } = require("@path-ioc/unplugin");
 
 module.exports = {
-  plugins: [
-    pathIoc({
-      modulesPath: "src/modules",
-    }),
-  ],
+  plugins: [webpackPlugin()],
 };
 ```
 
 ### Rspack (`rspack.config.js`)
 ```javascript
-const { rspackPlugin: pathIoc } = require("@path-ioc/unplugin");
+const { rspackPlugin } = require("@path-ioc/unplugin");
 
 module.exports = {
-  plugins: [pathIoc()],
+  plugins: [rspackPlugin()],
 };
 ```
+
+::: tip 💡 Zero Configuration & Optional Parameters
+By default, the plugin scans the physical directory `src/modules` and outputs TypeScript declarations to `types/ignore.modular.d.ts`. To customize paths:
+```typescript
+pathIoc.vite({
+  modulesPath: "src/custom-modules", // Custom modules folder (default: 'src/modules')
+  typeFileOutput: "custom-types",    // Custom declaration directory (default: 'types')
+})
+```
+:::
 
 ---
 
@@ -114,22 +110,24 @@ export const main = (container: ModularContainer) => {
 export const dependencies = ["logger"];
 ```
 
-Next, create the application startup module `src/modules/start-app/index.ts` to coordinate initial workflows:
+Next, create the application startup aggregator module `src/modules/start-app/index.ts` to coordinate initial workflows:
 
 ```typescript
 // src/modules/start-app/index.ts
 export const main = (container: ModularContainer) => {
   const { order, logger } = container;
 
-  logger.info("Application initialized successfully, triggering startup workflow...");
+  logger.info("All services topologically ready, triggering startup workflow...");
   order.createOrder("ORD_999", 299);
 };
 
-// Declare topological dependencies: ensure order and logger are ready before startup
-export const dependencies = ["order", "logger"];
+// 🔥 Killer Feature: Dynamic Functional Dependencies (Aggregator Pattern & Intuitive AOP)
+// Automatically wait for all other business modules without hardcoding individual names
+export const dependencies = (allModules: string[]) =>
+  allModules.filter((path) => path !== "/startApp");
 ```
 
-> **Tip**: In frontend SPA projects, `start-app` typically executes `createRoot().render(<App />)`; in backend projects, it typically calls `app.listen(port)`.
+> **Tip**: `dependencies` natively accepts either string arrays or higher-order filter functions. This is Path-IoC's signature strength: with functional dependencies, developers can implement the **Aggregator Pattern** and **Intuitive AOP** using standard JavaScript array methods without learning convoluted pointcut syntax. In frontend projects, `start-app` typically executes `createRoot().render(<App />)`; in backend projects, it calls `app.listen(port)`.
 
 ---
 

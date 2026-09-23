@@ -20,7 +20,7 @@ pnpm add -D @path-ioc/unplugin
 
 ## 2. 配置构建插件
 
-根据你的工程构建工具，在对应配置文件中注入插件：
+根据你的工程构建工具，在对应配置文件中注入插件（开箱即用，零配置即可启动）：
 
 ### Vite (`vite.config.ts`)
 ```typescript
@@ -28,51 +28,47 @@ import { defineConfig } from "vite";
 import pathIoc from "@path-ioc/unplugin";
 
 export default defineConfig({
-  plugins: [
-    pathIoc.vite({
-      modulesPath: "src/modules",   // 模块所在物理目录 (默认 src/modules)
-      typeFileOutput: "types",     // 自动生成的 ignore.modular.d.ts 输出目录
-    }),
-  ],
+  plugins: [pathIoc.vite()],
 });
 ```
 
 ### Rolldown (`rolldown.config.ts`)
 ```typescript
 import { defineConfig } from "rolldown";
-import { rolldownPlugin as pathIoc } from "@path-ioc/unplugin";
+import pathIoc from "@path-ioc/unplugin";
 
 export default defineConfig({
-  plugins: [
-    pathIoc({
-      modulesPath: "src/modules",
-      typeFileOutput: "types",
-    }),
-  ],
+  plugins: [pathIoc.rolldown()],
 });
 ```
 
 ### Webpack (`webpack.config.js`)
 ```javascript
-const { webpackPlugin: pathIoc } = require("@path-ioc/unplugin");
+const { webpackPlugin } = require("@path-ioc/unplugin");
 
 module.exports = {
-  plugins: [
-    pathIoc({
-      modulesPath: "src/modules",
-    }),
-  ],
+  plugins: [webpackPlugin()],
 };
 ```
 
 ### Rspack (`rspack.config.js`)
 ```javascript
-const { rspackPlugin: pathIoc } = require("@path-ioc/unplugin");
+const { rspackPlugin } = require("@path-ioc/unplugin");
 
 module.exports = {
-  plugins: [pathIoc()],
+  plugins: [rspackPlugin()],
 };
 ```
+
+::: tip 💡 零配置与可选定制参数
+插件默认自动扫描 `src/modules` 物理目录，并在 `types/` 目录下生成 `ignore.modular.d.ts` 类型声明文件。若需按需定制目录，可传入可选参数：
+```typescript
+pathIoc.vite({
+  modulesPath: "src/custom-modules", // 自定义模块目录 (默认: 'src/modules')
+  typeFileOutput: "custom-types",    // 自定义类型输出目录 (默认: 'types')
+})
+```
+:::
 
 ---
 
@@ -114,22 +110,24 @@ export const main = (container: ModularContainer) => {
 export const dependencies = ["logger"];
 ```
 
-接着创建应用的启动模块 `src/modules/start-app/index.ts`，由它来承接首个业务逻辑或启动流程：
+接着创建应用的启动聚合模块 `src/modules/start-app/index.ts`，由它来承接首个业务逻辑或启动流程：
 
 ```typescript
 // src/modules/start-app/index.ts
 export const main = (container: ModularContainer) => {
   const { order, logger } = container;
 
-  logger.info("应用初始化成功，开始执行初始业务流程...");
+  logger.info("所有服务拓扑就绪，开始执行初始业务流程...");
   order.createOrder("ORD_999", 299);
 };
 
-// 声明拓扑依赖：确保 order 与 logger 就绪后再执行启动逻辑
-export const dependencies = ["order", "logger"];
+// 🔥 核心杀手锏：函数式依赖（聚合器模式与直觉 AOP 的基石）
+// 动态等待除自身之外的所有业务模块就绪，无需手动罗列，享受拓扑引擎自动编排
+export const dependencies = (allModules: string[]) =>
+  allModules.filter((path) => path !== "/startApp");
 ```
 
-> **提示**：在实际前端项目中，`start-app` 通常负责 `createRoot().render(<App />)` 挂载根节点；在服务端项目中，它通常负责 `app.listen(port)` 启动 HTTP 监听。
+> **提示**：`dependencies` 既支持字符串数组，也原生支持高阶过滤函数。这是 Path-IoC 的核心杀手锏：借助函数依赖，开发者无需学习复杂的 Pointcut 切入点语法，凭原生 JavaScript 数组过滤即可实现**聚合器模式**与**直觉 AOP**。在前端项目中，`start-app` 通常负责 `createRoot().render(<App />)` 挂载根节点；在服务端项目中，它通常负责 `app.listen(port)` 启动 HTTP 监听。
 
 ---
 

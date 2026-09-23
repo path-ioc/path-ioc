@@ -39,7 +39,7 @@ Instantiates modules in topological order by invoking their `main` factories and
   ```
 - **Parameters**:
   - `compiledGraph`: Pre-compiled graph produced by `compileModuleGraph`.
-  - `container`: Target mutable container object (e.g. `{ varContext: c }`).
+  - `container`: Target mutable container object (e.g. `{ requestContext: c }`).
 - **Performance**:
   - Pure synchronous factory graphs resolve directly in **21.2 microseconds**.
 

@@ -66,12 +66,13 @@ Frustration breeds breakthrough. Pausing the keyboard, I retreated to the philos
 
 Across the history of computing, the Unix philosophy ("Everything is a file path") and the foundation of the Web (URIs and URLs) stand as the supreme examples of language-agnostic abstract contracts. If an interface is fundamentally a convention, then **strings and physical file paths are the most natural, expressive contracts available.**
 
-* We establish a convention that the short name `"orm"` represents the database mapping client;
-* We establish a convention that paths matching `"/entities/*"` represent persistence models;
-* We establish a convention that paths matching `"/pages/*"` represent page route handlers;
-* We establish a convention that paths matching `"/services/*"` represent business logic intercepted by transactional AOP.
+**Mechanism belongs to the framework; contracts belong to the engineering team**. In an enterprise full-stack system, the team architecture can establish clean domain boundaries:
+* **Team Convention**: The short name `"db"` represents the global database client;
+* **Team Convention**: Paths matching `"/entities/*"` represent persistence models;
+* **Team Convention**: Paths matching `"/pages/*"` represent page route components;
+* **Team Convention**: Paths matching `"/services/*"` represent business logic intercepted by transactional AOP.
 
-Whether in Java's `interface UserService`, `Class.forName("com.xxx.UserService")`, or Path-IoC's short name `userService` and path `/services/user`, **their information-theoretic abstract contract is strictly equivalent.**
+Path-IoC enforces zero rigid directory mandates, granting full expressive freedom of "path is contract" to the development team. Whether in Java's `interface UserService`, `Class.forName("com.xxx.UserService")`, or Path-IoC's short name `userService` and path `/services/user`, **their information-theoretic abstract contract is strictly equivalent.**
 
 ---
 
@@ -130,11 +131,11 @@ From a pure runtime execution standpoint, NestJS can ultimately achieve asynchro
      export const dependencies = (all: string[]) => 
        all.filter(name => name.includes('/services/'));
 
-     // 2. Intuitively wrap with enhancement and remount to container (no Advice/Interceptor)
-     export default async function main(container: any) {
+     // 2. Intuitively wrap with enhancement and remount to container (typed via ModularContainer)
+     export const main = async (container: ModularContainer) => {
        for (const name of dependencies(Object.keys(container))) {
-         const target = container[name];
-         container[name] = new Proxy(target, {
+         const target = container[name as keyof ModularContainer];
+         container[name as keyof ModularContainer] = new Proxy(target, {
            get(target, prop, receiver) {
              const orig = Reflect.get(target, prop, receiver);
              if (typeof orig !== 'function') return orig;
@@ -145,9 +146,9 @@ From a pure runtime execution standpoint, NestJS can ultimately achieve asynchro
                return res;
              };
            }
-         });
+         }) as any;
        }
-     }
+     };
      ```
    - **Pure Zero-Coupling Reverse Cross-Cutting**:
      Target business modules (`order-service`, `user-service`): **0 imports, 0 decorators, 0 framework awareness**. Business developers never even need to know the profiler exists!

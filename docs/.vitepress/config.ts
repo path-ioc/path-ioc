@@ -3,6 +3,9 @@ import { defineConfig } from "vitepress";
 export default defineConfig({
   title: "Path-IoC",
   description: "Pure Topological IoC Engine & Universal Modular DevTools for Modern TypeScript",
+  sitemap: {
+    hostname: "https://path-ioc.dev",
+  },
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/logo.svg" }],
     ["meta", { name: "theme-color", content: "#FC6401" }],
@@ -10,6 +13,28 @@ export default defineConfig({
     ["meta", { property: "og:description", content: "Zero decorators, zero reflection, microsecond-level dependency resolution based on physical file paths for Vite, Webpack, and Cloudflare Workers." }],
     ["meta", { property: "og:url", content: "https://path-ioc.dev" }],
     ["meta", { property: "og:image", content: "https://path-ioc.dev/og-image.png" }],
+    [
+      "script",
+      { type: "application/ld+json" },
+      JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Path-IoC",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Universal",
+        "description": "Pure Topological IoC Engine & Universal Modular DevTools for Modern TypeScript. Zero decorators, zero reflection, microsecond-level dependency resolution based on physical file paths for Vite, Webpack, and Cloudflare Workers.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "author": {
+          "@type": "Person",
+          "name": "Lian HanLin",
+        },
+      }),
+    ],
     [
       "script",
       {
@@ -67,8 +92,9 @@ gtag('config', 'G-ZK9F76DH0Z');`,
             {
               text: "Architecture & Philosophy",
               items: [
-                { text: "Genesis Story (Author's Note)", link: "/guide/genesis-story" },
                 { text: "Architecture Manifesto (Spring & Event Loop)", link: "/guide/architecture-manifesto" },
+                { text: "Genesis Story (Author's Note)", link: "/guide/genesis-story" },
+                { text: "Spring to TypeScript Migration", link: "/guide/spring-to-typescript" },
                 { text: "Framework Comparison (Nest / Inversify)", link: "/guide/comparison" },
                 { text: "Aspect-Oriented Programming (AOP)", link: "/guide/aop-aspect" },
                 { text: "Cloudflare Workers & Edge Runtimes", link: "/guide/edge-and-serverless" },
@@ -85,6 +111,7 @@ gtag('config', 'G-ZK9F76DH0Z');`,
                 { text: "Async Preheat vs. Lazy Connection: Preventing Async Pollution", link: "/articles/async-preheat-vs-lazy-connection" },
                 { text: "Rethinking Veteran JS IoC Concepts & Path-IoC Stance", link: "/articles/rethinking-legacy-ioc-concepts" },
                 { text: "Anti-Pattern: Hardcoding Full Paths in Business Dependencies", link: "/articles/anti-pattern-full-path" },
+                { text: "Category Error: NestJS vs Path-IoC & ESM Modular Evolution", link: "/articles/category-error-nestjs-vs-path-ioc" },
               ],
             },
           ],
@@ -156,8 +183,9 @@ gtag('config', 'G-ZK9F76DH0Z');`,
             {
               text: "架构设计与核心哲学",
               items: [
-                { text: "创世手记：从 Java 惯性到 TS 原生顿悟", link: "/zh/guide/genesis-story" },
                 { text: "架构宣言：向 Spring 致敬与动态语言正解", link: "/zh/guide/architecture-manifesto" },
+                { text: "创世手记：从 Java 惯性到 TS 原生顿悟", link: "/zh/guide/genesis-story" },
+                { text: "Spring 转 TS 架构跃迁指南", link: "/zh/guide/spring-to-typescript" },
                 { text: "选型深度对比 (NestJS / Inversify)", link: "/zh/guide/comparison" },
                 { text: "面向切面编程 (真 AOP)", link: "/zh/guide/aop-aspect" },
                 { text: "Cloudflare Workers 边缘计算实战", link: "/zh/guide/edge-and-serverless" },
@@ -169,6 +197,7 @@ gtag('config', 'G-ZK9F76DH0Z');`,
               text: "深度思辨与专栏文章",
               items: [
                 { text: "专栏概览与目录", link: "/zh/articles/" },
+                { text: "范畴谬误：为什么拿 NestJS 和 Path-IoC 对比问错了问题？", link: "/zh/articles/category-error-nestjs-vs-path-ioc" },
                 { text: "图论视角：为什么 DI 无法实现拓扑并发？", link: "/zh/articles/why-di-cannot-concurrent" },
                 { text: "客户端全局单例 vs 服务端多例与闭包缓存", link: "/zh/articles/client-vs-server-container-patterns" },
                 { text: "初始化权衡：懒连接 vs 拓扑预热，终结异步染色", link: "/zh/articles/async-preheat-vs-lazy-connection" },

@@ -1,0 +1,29 @@
+User-agent: *
+Allow: /
+
+# AI Crawlers & LLM Agents
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Sitemaps and LLM Discovery
+Sitemap: https://path-ioc.dev/sitemap.xml
+# LLMs discovery file following llmstxt.org standard
+# https://path-ioc.dev/llms.txt

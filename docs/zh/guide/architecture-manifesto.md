@@ -113,7 +113,7 @@ export const main = (container: ModularContainer) => {
 
 ### 2. 物理路径特征即为服务发现协议
 - 路径不仅是文件坐标，更是服务发现的天然契约。
-- 例如在服务端开发中，通过路径特征过滤函数 `name.includes("/entity/orm/")`，即可零配置全自动感知并收集所有 ORM 实体（如 `orm-entities` 模块），达到浑然天成的解耦与热插拔。
+- 例如在服务端开发中，通过路径特征过滤函数 `name.startsWith("/entities/")`，即可零配置全自动感知并收集所有领域模型实体（如 `entities` 聚合模块），达到浑然天成的解耦与热插拔。
 
 ---
 

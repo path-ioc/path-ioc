@@ -40,21 +40,21 @@ In client-side applications, the entire JavaScript runtime is exclusively owned 
 - All UI components, page routers, and state managers share the identical container instance.
 
 ### Standard Client Pattern
+In client applications, unplugin automatically scans the `src/modules` directory. The application entry simply invokes the virtual module once during bootstrap without manually collecting or maintaining import lists:
+
 ```typescript
-import { createModularContainer } from "@path-ioc/core";
+// src/main.tsx
+import { createModularContainer } from "virtual:modular-container";
 
-// Collect all client modules (UI State, HTTP Client, Local Storage, Analytics)
-export const container = await createModularContainer({
-  modules: [
-    httpClientModule,
-    userStateModule,
-    analyticsModule
-  ]
-});
+// Ignite global topological container
+createModularContainer();
+```
 
+Inside components or views:
+```tsx
 // Directly destructure and consume inside React / Vue components
 export function UserProfile() {
-  const { userState } = container;
+  const { userState } = modularContainer;
   return <div>Welcome, {userState.name}</div>;
 }
 ```
@@ -93,7 +93,7 @@ When 1,000 HTTP requests arrive concurrently:
 
 Rather than introducing bloated `@Scope(Scope.REQUEST)` metadata abstractions, Path-IoC leverages the native strength of TypeScript: **Higher-Order Function Closures**.
 
-1. **Per-Request Container Instantiation**: Each HTTP request receives its own lightweight container seeded with a request-scoped `varContext` (e.g., Hono's `Context` or Express's `Request`);
+1. **Per-Request Container Instantiation**: Each HTTP request receives its own lightweight container seeded with a request-scoped `requestContext` (e.g., Hono's `Context` or Express's `Request`);
 2. **Memoized Heavy Singletons**: Resource-heavy components—such as database connection pools, Redis clients, and ORM entity schemas—are cached across the process lifetime using a pure higher-order closure.
 
 ### 1. Implementing the Universal `memoizeModule` Primitive
@@ -164,11 +164,10 @@ import type { Context } from "hono";
 export const dependencies = ["database"];
 
 export const main = (container: ModularContainer) => {
-  const { database, varContext } = container;
-  // Safely extract request-scoped state from varContext
-  const c = varContext as Context;
-  const requestId = c.req.header("x-request-id");
-  const currentUser = c.get("user");
+  // Zero 'any', zero 'as Context' type casting—enjoy 100% IDE auto-completion!
+  const { database, requestContext } = container;
+  const requestId = requestContext.req.header("x-request-id");
+  const currentUser = requestContext.get("user");
 
   return {
     async createOrder(item: string) {
@@ -186,36 +185,27 @@ export const main = (container: ModularContainer) => {
 
 ## 5. Web Framework Integration (Hono / Express / Koa)
 
-Using **Hono** as a modern high-performance example, integrating per-request containers takes just 3 lines of middleware:
+Using **Hono** as a modern high-performance example, integrating per-request containers with full TypeScript typing takes just a few lines:
 
 ```typescript
 // src/index.ts
-import { Hono } from "hono";
-import { createModularContainer } from "@path-ioc/core";
-import { serverModules } from "./modules"; // Aggregated server modules
+import { Hono, type Context } from "hono";
+import { createModularContainer } from "virtual:modular-container";
+
+// 💡 Declaration Merging: augment ModularContainer with runtime request context types
+// Merges seamlessly with plugin-generated ignore.modular.d.ts for 100% IDE auto-completion
+declare global {
+  interface ModularContainer {
+    requestContext: Context;
+  }
+}
 
 const app = new Hono();
 
-// Global Middleware: Spin up a fresh container per request
-app.use("*", async (c, next) => {
-  const container = await createModularContainer({
-    modules: serverModules,
-    varContext: c // Seed current Hono request context
-  });
-
-  c.set("container", container);
-  await next();
-});
-
-// Route Handlers: Consume request-isolated services
-app.post("/api/orders", async (c) => {
-  const container = c.get("container");
-  const { orderService } = container;
-
-  const body = await c.req.json();
-  const result = await orderService.createOrder(body.item);
-
-  return c.json({ success: true, data: result });
+// Wildcard Gateway: Handles request isolation and container delegation (assembly in ~20 µs)
+app.all("*", async (c) => {
+  const container = await createModularContainer({ requestContext: c });
+  return await container.apiAggregator();
 });
 
 export default app;
@@ -223,7 +213,7 @@ export default app;
 
 ### Performance & Safety Benchmarks
 1. **Connection Pool Stability**: Database and Redis pools are initialized once upon the first request and safely shared across the single thread without connection exhaustion;
-2. **Zero Request Bleed**: Every request possesses its own `orderService` and `varContext`; authorization tokens and trace headers can never leak across concurrent requests;
+2. **Zero Request Bleed**: Every request possesses its own `orderService` and `requestContext`; authorization tokens and trace headers can never leak across concurrent requests;
 3. **Microsecond Startup**: Instantiating lightweight business services in Path-IoC requires only tens of microseconds—two orders of magnitude faster than NestJS's `Scope.REQUEST`.
 
 ---
@@ -232,7 +222,7 @@ export default app;
 
 | Dimension | Traditional Full-Stack (NestJS Scope.REQUEST) | Path-IoC Production Pattern (Per-Request + Memoization) |
 | :--- | :--- | :--- |
-| **Request Isolation** | Reflection metadata scanning per request | Native `varContext` + lightweight container |
+| **Request Isolation** | Reflection metadata scanning per request | Native `requestContext` + lightweight container |
 | **Heavy Singletons** | Complex `@Injectable({ scope: DEFAULT })` annotations | Pure higher-order closure (`memoizeModule`) |
 | **Per-Request Overhead** | Milliseconds of reflection parsing + GC pressure | **Microsecond pure function execution** |
 | **Runtime Portability** | Tied to specific Node.js framework internals | **Universal across Node.js, Bun, Cloudflare Workers** |
