@@ -1,12 +1,18 @@
 import DefaultTheme from "vitepress/theme";
-import { onMounted, watch } from "vue";
+import { h, onMounted, watch } from "vue";
 import { useRoute, useData } from "vitepress";
+import HomeVideoShowcase from "./HomeVideoShowcase.vue";
 import "./custom.css";
 
 let cachedVersion: string | null = null;
 
 export default {
   extends: DefaultTheme,
+  Layout() {
+    return h(DefaultTheme.Layout, null, {
+      "home-hero-after": () => h(HomeVideoShowcase),
+    });
+  },
   setup() {
     if (typeof window === "undefined") return;
 
