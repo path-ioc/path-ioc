@@ -58,4 +58,4 @@ export const dependencies = (moduleNames: string[]) => {
 ### Why This Paradigm is Exceptionally Powerful
 1. **Zero Learning Curve**: Uses standard JavaScript higher-order functions and `Proxy`. No framework-specific APIs to memorize.
 2. **Universal Cross-Cutting**: Intercept anything—from HTTP handlers and database repositories to background task queues and UI lifecycle hooks.
-3. **Topologically Guaranteed Order**: By expressing target patterns in `dependencies`, Kahn's DAG algorithm guarantees that target modules are initialized first, eliminating lifecycle race conditions.
+3. **Topologically Guaranteed Order**: By expressing target patterns in `dependencies`, the DAG topological engine guarantees that target modules are initialized first, eliminating lifecycle race conditions.

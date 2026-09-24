@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Path-IoC"
   text: "Spring has Beans, Nest has Providers, Path-IoC has Mesh"
-  tagline: "Honoring Spring's foundational philosophy in native TypeScript. Zero decorators, zero reflection metadata, microsecond cold starts, and lock-free Kahn DAG topology."
+  tagline: "Honoring Spring's foundational philosophy in native TypeScript. Zero decorators, zero reflection metadata, microsecond cold starts, and lock-free DAG topology."
   image:
     src: https://cdn.path-ioc.dev/path-ioc/logo.svg
     alt: Path-IoC Logo
@@ -25,7 +25,7 @@ hero:
 features:
   - title: Physical Path as Contract
     details: Eliminate thousands of fragile relative import lines. File paths map directly to logical contracts with mathematical certainty, preventing circular dependency deadlocks.
-  - title: 21.2 µs Lock-Free Kahn DAG
+  - title: 21.2 µs Lock-Free DAG
     details: Pure synchronous topological scheduling. 50 nodes assembled in 21.2 microseconds, 500 nodes compiled in 1.72 milliseconds. Zero overhead during HTTP request lifecycles.
   - title: Zero-Config Type Generation
     details: AST scanning paired with virtual modules generates complete TypeScript interfaces on file save. Enjoy 100% accurate IDE auto-completion with zero manual typing.
@@ -163,7 +163,7 @@ export const main = (container: ModularContainer) => {
     <div class="benchmark-stat-card">
       <div class="stat-label">500-Node Graph Compilation</div>
       <div class="stat-value purple">1.72 ms</div>
-      <div class="stat-desc">Single cold-boot Kahn cycle validation, then 100% cached across high-frequency requests.</div>
+      <div class="stat-desc">Single cold-boot topological cycle validation, then 100% cached across high-frequency requests.</div>
     </div>
     <div class="benchmark-stat-card">
       <div class="stat-label">Core Engine Footprint</div>

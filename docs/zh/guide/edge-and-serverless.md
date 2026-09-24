@@ -17,7 +17,7 @@ sequenceDiagram
     participant Engine as @path-ioc/core
 
     Worker->>Engine: 1. compileModuleGraph(modules)
-    Note over Engine: 执行 1 次 Kahn 拓扑排序与校验 (约 1.7ms)<br>生成静态 CompiledGraph 全局缓存
+    Note over Engine: 执行 1 次 DFS 拓扑排序与校验 (约 1.7ms)<br>生成静态 CompiledGraph 全局缓存
     
     Request->>Engine: 2. instantiateModuleContainer(compiledGraph, reqContainer)
     Note over Engine: 直通装配当前请求容器 (耗时仅 21.2 µs)<br>挂载 c.requestContext 请求上下文
@@ -72,16 +72,26 @@ export default app;
 在多请求隔离模式下，数据库连接池（Connection Pool）或 Redis 客户端无需每次请求都重复创建。可以使用高阶函数闭包实现跨请求的全局单例复用：
 
 ```typescript
-// 辅助函数：进程级单例闭包
-export const memoizeModule = <T extends (...args: any[]) => any>(fn: T): T => {
-  let cache: any;
+// 辅助函数：进程级单例闭包 (生产推荐实现)
+export const memoizeModule = <
+  Result,
+  T extends (
+    modularContainer: ModularContainer,
+    moduleDeclarationNames: string[]
+  ) => Result
+>(
+  main: T
+): T => {
+  let result: Result;
   let initialized = false;
-  return ((...args: any[]) => {
-    if (!initialized) {
-      cache = fn(...args);
-      initialized = true;
+  return ((
+    modularContainer: ModularContainer,
+    moduleDeclarationNames: string[]
+  ) => {
+    if (!initialized && (initialized = true)) {
+      result = main(modularContainer, moduleDeclarationNames);
     }
-    return cache;
+    return result;
   }) as T;
 };
 
@@ -93,3 +103,10 @@ export const main = memoizeModule((container: ModularContainer) => {
   return pool;
 });
 ```
+
+> 💡 **边缘环境环境变量与跨请求单例说明**：  
+> 在 Cloudflare Workers / Hono 环境中，所有外部 Bindings 与环境变量（如 `DATABASE_URL`）均统一挂载在请求上下文 `c.env` 上，并不存在传统 Node.js 的全局 `process.env`。  
+> 
+> 由于同一个 Worker 实例内的基础设施配置（`c.env.DATABASE_URL`）跨请求是不可变的，因此利用 `memoizeModule` 在首个请求到达时提取配置、初始化全局连接池并在后续请求中持续复用，是完全顺应边缘物理运行时的设计范式。  
+> 
+> ⚠️ **安全边界**：请确保在 `memoizeModule` 闭包内部**仅提取跨请求不可变的基础设施配置（如 `requestContext.env`）**，绝不能在单例闭包中持有特定请求的动态数据（如 `requestContext.req.header` 或用户会话），以免引起跨请求上下文泄漏。

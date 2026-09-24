@@ -10,10 +10,10 @@
 
 | 旧版能力 | 对应的新版官方包 | 说明 |
 | :--- | :--- | :--- |
-| 核心依赖查找与 Kahn DAG 拓扑运行时 | **`@path-ioc/core`** | **运行时必需**。微秒级无锁依赖引擎 |
+| 核心依赖查找与拓扑调度运行时 | **`@path-ioc/core`** | **运行时必需**。微秒级无锁依赖引擎 |
 | Vite / Webpack / Rollup 编译器插件 | **`@path-ioc/unplugin`** | **开发依赖**。跨打包工具统一插件 |
-| 懒加载代理与高级容器扩展 | **`@path-ioc/container`** | **按需安装**。高级容器扩展功能 |
-| 依赖图清单装配与打包分析 | **`@path-ioc/pack`** | **按需安装**。构建拓扑分析与装配工具 |
+| 同步 getter 懒加载机制实验包 | **`@path-ioc/container`** | **实验性/对比用**。非生产推荐，仅用于机制评测 |
+| 模块独立 npm 插件包打包 | **`@path-ioc/pack`** | **按需使用**。将模块目录打包为可发布的 npm 产物 |
 
 ---
 
@@ -117,27 +117,37 @@ pnpm add -D @path-ioc/unplugin
 pnpm add -D @path-ioc/pack
 ```
 
-### 2. 在构建配置中挂载 `modularPackPlugin`
+### 2. 配置 `modularPackPlugin`（推荐独立配置）
 
-```diff
-  import { defineConfig } from "vite";
-  import pathIoc from "@path-ioc/unplugin";
-+ import { modularPackPlugin } from "@path-ioc/pack";
+> [!WARNING]
+> 由于 `@path-ioc/pack` 会主动接管构建流水线（强制配置 `build.lib`、指定输出目录为 `dist-plugin` 并在完成时自动执行 `npm pack`），**请勿将其无条件挂载在主应用的日常 `vite.config.ts` 中**，外部应根据项目实际需求自行控制激活时机。
 
-  export default defineConfig({
-    plugins: [
-      pathIoc.vite({
-        modulesPath: "src/modules",
-        typeFileOutput: "types",
-      }),
-+     // 启用注册表物理入口打包
-+     modularPackPlugin({
-+       modulesPath: "src/modules", // 模块扫描目录，默认为 "src/modules"
-+       // entryFile: "node_modules/.path-ioc/.modular-plugin-entry.ts", // 可选自定义物理入口生成路径
-+     }),
-    ],
-  });
+**推荐方案：建立独立的打包配置文件 `vite.config.pack.ts`**：
+```typescript
+// vite.config.pack.ts
+import { defineConfig } from "vite";
+import { modularPackPlugin } from "@path-ioc/pack";
+
+export default defineConfig({
+  plugins: [
+    modularPackPlugin({
+      modulesPath: "src/modules", // 模块扫描目录，默认为 "src/modules"
+      // entryFile: "node_modules/.path-ioc/.modular-plugin-entry.ts", // 可选自定义物理入口生成路径
+    }),
+  ],
+});
 ```
+
+在 `package.json` 中配置专用脚本：
+```json
+{
+  "scripts": {
+    "build": "vite build",
+    "build:pack": "vite build --config vite.config.pack.ts"
+  }
+}
+```
+*(亦可在常规 `vite.config.ts` 中根据自定义环境变量按需决定是否挂载插件，如 `process.env.BUILD_TARGET === 'pack'`)*
 
 ### 3. 生成的物理入口文件规范
 - 默认物理生成路径为：`node_modules/.path-ioc/.modular-plugin-entry.ts`；

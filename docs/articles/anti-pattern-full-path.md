@@ -193,7 +193,9 @@ In Path-IoC, directory conventions act as implicit category tags:
 export const dependencies = (allPaths: string[]) =>
   allPaths.filter((path) => path.startsWith("/pages/"));
 
-export const main = (container: ModularContainer, pagePaths: string[]) => {
+export const main = (container: ModularContainer, allModuleNames: string[]) => {
+  // Discover target page paths for this router
+  const pagePaths = dependencies(allModuleNames);
   // Zero maintenance: any new module under /pages is automatically wired
   const routes = pagePaths.map((path) => container[path]);
   return createRouter(routes);
@@ -217,7 +219,8 @@ In Path-IoC, you write a single, decoupled Aspect Mesh module:
 export const dependencies = (allPaths: string[]) =>
   allPaths.filter((path) => path.startsWith("/services/"));
 
-export const main = (container: ModularContainer, targetPaths: string[]) => {
+export const main = (container: ModularContainer, allModuleNames: string[]) => {
+  const targetPaths = dependencies(allModuleNames);
   for (const path of targetPaths) {
     const targetService = container[path] as Record<string, Function>;
     

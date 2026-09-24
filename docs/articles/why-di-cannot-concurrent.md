@@ -191,7 +191,7 @@ export const main = (container: ModularContainer) => {
 
 ### Why Path-IoC Achieves True Topological Concurrency
 1. **100% Mathematically Pure DAG**: The `dependencies` array expresses only physical startup sequencing (e.g., migrations must run before database connections). Runtime method calls never enter the bootstrap graph. The probability of cycles drops to zero.
-2. **Microsecond Kahn Compilation**: With a pure DAG, Path-IoC's compiler performs Kahn topological sorting and tier calculation in **21 microseconds** for 50+ nodes.
+2. **DFS Compilation & Reactive Promise Memoization**: With a pure DAG, Path-IoC's compiler performs DFS post-order topological compilation and cycle detection in **21 microseconds** for 50+ nodes. At runtime, the `initPromises` reactive cache automatically activates independent nodes concurrently via `Promise.all`.
 3. **Native Tier-Wise `Promise.all` Cascading Activation**:
    - Independent asynchronous nodes (DB, Redis, Config) in the same tier are dispatched simultaneously.
    - Bootstrap latency drops from cumulative `Sum(t)` to the bottleneck node duration: `Max(t)`.

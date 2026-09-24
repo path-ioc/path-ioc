@@ -8,7 +8,7 @@ description: Support the ongoing development, maintenance, and edge-native ecosy
 Path-IoC is an MIT-licensed, pure topological dependency lookup (IoC-DL) engine and universal modular utility for modern TypeScript—delivering lock-free, zero-reflection assembly with the foundational purity of utility libraries like Lodash.
 
 By sponsoring Path-IoC, you directly fund:
-- **Core Engine Performance & Research**: Continuous benchmarking, lock-free Kahn DAG optimization, and microsecond dependency resolution;
+- **Core Engine Performance & Research**: Continuous benchmarking, lock-free DAG optimization, and microsecond dependency resolution;
 - **Tooling & Bundler Ecosystem**: Maintaining first-class unplugin adapters for Vite, Rolldown, Webpack 5, Rspack, and Rollup;
 - **Documentation & Educational Deep Dives**: In-depth architectural essays, performance guides, and open bilingual resources;
 - **Long-Term Sustainability**: Independent maintenance free from corporate bias or opaque telemetry.

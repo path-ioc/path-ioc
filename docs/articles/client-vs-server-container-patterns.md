@@ -46,9 +46,13 @@ In client applications, unplugin automatically scans the `src/modules` directory
 // src/main.tsx
 import { createModularContainer } from "virtual:modular-container";
 
-// Ignite global topological container
-createModularContainer();
+// Robust bootstrap: Pre-bind the global container object reference to prevent undefined errors during sync lookups
+const container = (globalThis.modularContainer = {});
+await createModularContainer(container);
 ```
+
+> **Why Pre-Bind the Object Reference?**  
+> In frontend codebases, module initialization or early lifecycle hooks often directly access `globalThis.modularContainer`. If one writes `globalThis.modularContainer = await createModularContainer();`, the global reference remains `undefined` throughout the entire asynchronous bootstrap sequence. Pre-binding `const container = (globalThis.modularContainer = {})` and passing it to `createModularContainer(container)` ensures that the container object reference is synchronously accessible from tick zero while the engine fills module instances.
 
 Inside components or views:
 ```tsx

@@ -122,7 +122,7 @@ Leveraging two-stage graph compilation (zero graph compilation latency and 21 mi
 
 Path-IoC aligns directly with modern compiler and bundler evolution:
 1. **Compile-Time Automated Type Emission (DX)**: The unplugin scans physical module directories and generates global TypeScript declarations (`ignore.modular.d.ts`), providing 100% static type inference and autocompletion;
-2. **Runtime Microsecond Lock-Free Assembly (Runtime)**: The runtime engine inspects no reflection metadata and parses no function bodies. It feeds declared path strings directly into Kahn's topological sorting algorithm, triggering native `async/await` concurrent activation in milliseconds;
+2. **Runtime Microsecond Lock-Free Assembly (Runtime)**: The runtime engine inspects no reflection metadata and parses no function bodies. It feeds declared path strings directly into DAG topological sorting and dependency graph compilation, triggering native `async/await` concurrent activation in milliseconds;
 3. **Full Bundler & Edge Compatibility**: Operating as pure ES Module closures with zero reflection overhead, Path-IoC runs natively and seamlessly in Vite, Webpack, Rolldown, and Cloudflare Workers.
 
 ---
@@ -147,7 +147,7 @@ In mature modern full-stack architectures, plain data literals (Schema Objects) 
 | **Lifecycle** | `OnModuleDestroy`, `@preDestroy` framework hooks | Userland `onDestroy` contract + Native reverse topological sort | Lifecycle is not a container privilege; it is a standard graph computation |
 | **Module Isolation** | `@Module({ exports })` walls, container trees | Conway's Law: Physical package separation & directory boundaries | Organizational boundaries belong in engineering layout, not runtime decorator barriers |
 | **Scope Management** | `@Scope(Scope.REQUEST)` dynamic prototype trees, Proxy lookups | 21µs synchronous container assembly + `memoizeModule` closures | Containers only assemble dependencies; multi-instance & caching belong to functional intuition |
-| **Dependency Discovery** | `reflect-metadata` reflection, `fn.toString()` regex parsing | Physical Path as Contract + Kahn topological sort | Immune to Vite/SWC type-stripping and production minification |
+| **Dependency Discovery** | `reflect-metadata` reflection, `fn.toString()` regex parsing | Physical Path as Contract + DAG topological sort | Immune to Vite/SWC type-stripping and production minification |
 | **Data Contracts** | Class + Decorator DTOs (`class-validator`) | Data-Oriented Programming (DOP) + Plain Schema Objects | Pure data flows transparently across full-stack; zero reflection; edge-friendly |
 
 ---

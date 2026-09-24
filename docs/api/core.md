@@ -19,7 +19,7 @@ Compiles a declared module list into an immutable, validated Directed Acyclic Gr
 - **Parameters**:
   - `modules`: Array of module descriptor objects. Typically provided automatically by `virtual:modular-container`, or constructed manually in unit tests and scripts.
 - **Returns**:
-  - `CompiledModuleGraph`: A frozen structure containing the Kahn topological sort array, cycle detection metadata, and short-alias lookup maps.
+  - `CompiledModuleGraph`: A compiled structure containing the DFS topological sort array, cycle detection metadata, and short-alias lookup maps.
 - **Errors**:
   - Throws a descriptive `Error` indicating the full circular reference path if a dependency cycle is detected.
   - Throws if conflicting module keys or invalid module definitions are encountered.
@@ -59,7 +59,9 @@ A convenience utility that executes `compileModuleGraph` followed immediately by
 
 ---
 
-## Mesh Export Protocol
+## Mesh Module Export Protocol
+
+> 💡 **The Mesh Concept**: In Path-IoC, each business module is termed a **Mesh** (analogous to a **Bean** in Spring). Just as Spring is to Java and Bean is to Class, Path-IoC is an application-level modular system where Mesh is a high-level IoC unit contrasting with standard ES Modules (ESM).
 
 Every module located at `src/modules/**/index.ts` may export up to four standard identifiers:
 
@@ -67,5 +69,5 @@ Every module located at `src/modules/**/index.ts` may export up to four standard
 | :--- | :--- | :--- | :--- |
 | **`main`** *(Required)* | `(container: ModularContainer, moduleNames: string[]) => any \| Promise<any>` | - | Factory function invoked according to topological sort order. Supports `async`. |
 | **`dependencies`** *(Optional)* | `string[] \| ((moduleNames: string[]) => string[])` | `[]` | Explicit topological dependencies. Supports string arrays or dynamic filter functions. |
-| **`order`** *(Optional)* | `number` | `99999` | Priority weight when no explicit topological dependencies constrain ordering. |
-| **`skip`** *(Optional)* | `boolean` | `false` | Skips runtime execution of `main`. Used for externally injected modules (e.g. injecting `requestContext` in backend request isolation), purely so unplugin can generate type definitions. |
+| **`order`** *(Optional)* | `number` | `99999` | Priority weight when no explicit topological dependencies constrain ordering. Smaller numbers execute earlier (ascending numerical order, default `99999`). |
+| **`skip`** *(Optional)* | `boolean` | `false` | Skips runtime execution of `main`. Used for externally injected modules (e.g. injecting `requestContext` in backend request isolation). **Note**: Even with `skip: true`, a dummy `main` function (e.g., `export const main = (): MyType => ({} as any)`) must still be exported to satisfy runtime graph validation and type generation. |

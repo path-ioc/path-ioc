@@ -56,10 +56,10 @@ OS 启动线程 ──> 阻塞等待 DB/配置就绪 (Thread.sleep / IO Block) �
   }
   ```
 
-### 2. 范式解法：从串行阻塞到 Kahn DAG 拓扑点火
+### 2. 范式解法：从串行阻塞到 DAG 拓扑点火
 Java 依赖线程阻塞解决依赖准备；而 TypeScript 的原生正解，是**在图编译期将所有异步初始化作为顶层 Promise 进行拓扑调度（Topological Ordering）**。
 
-Path-IoC 将每个模块视为一个纯函数工厂。通过无锁 Kahn 拓扑算法，在容器点火（Bootstrap）期，前置依赖（如 `remoteConfig`）的异步解析会自动作为后续业务模块（如 `orderService`）入参的先决条件。**50 个节点的并发级联解析仅耗时 21.2 微秒，运行期请求链路上则为纯同步调用，彻底终结异步污染与竞态死锁**。
+Path-IoC 将每个模块视为一个纯函数工厂。通过 DFS 后序拓扑排序与反应式 Promise 记忆化调度，在容器点火（Bootstrap）期，前置依赖（如 `remoteConfig`）的异步解析会自动作为后续业务模块（如 `orderService`）入参的先决条件。**50 个节点的并发级联解析仅耗时 21.2 微秒，运行期请求链路上则为纯同步调用，彻底终结异步污染与竞态死锁**。
 
 ---
 
@@ -102,10 +102,11 @@ export abstract class UserRepository {
 
 | Spring (Java) 核心概念 | Path-IoC (TypeScript) 原生对标 | 核心演进逻辑与差异 |
 | :--- | :--- | :--- |
-| **`@Configuration + @Bean`** | **文件级纯函数工厂** (`export default`) | Java 用 Class 包装工厂方法；Path-IoC 直接利用 JS 文件模块和函数一等公民。 |
-| **`ApplicationContext`** | **`ModularContainer`** | Spring 容器包含重型多线程同步锁；Path-IoC 为基于 Kahn DAG 的超轻量微内核（21µs 冷启）。 |
+| **Bean (Spring Bean)** | **Mesh Module (Mesh 模块)** | Java 以 Class 为基础由 Spring 托管为 Bean；Path-IoC 以 ES Module 为基础由拓扑引擎托管为 Mesh Module。 |
+| **`@Configuration + @Bean`** | **文件级纯函数工厂** (`export const main`) | Java 用 Class 包装工厂方法；Path-IoC 直接利用 JS 文件模块和函数一等公民。 |
+| **`ApplicationContext`** | **`ModularContainer`** | Spring 容器包含重型多线程同步锁；Path-IoC 为基于拓扑 DAG 的超轻量微内核（21µs 冷启）。 |
 | **`@Autowired` 构造器注入** | **词法闭包依赖查找 (DL)** | 消除构造器 DI 混淆“实例化”与“调用”的弊端，杜绝假性循环依赖。 |
-| **三级缓存 (Three-level Cache)** | **Kahn 拓扑排序 + DFS 严格拦截** | Java 用三级缓存兜底循环依赖；Path-IoC 在图编译期以 Fail-Fast 阻断致命环路，保障单线程安全。 |
+| **三级缓存 (Three-level Cache)** | **DFS 拓扑排序 Fail-Fast 严格拦截** | Java 用三级缓存兜底循环依赖；Path-IoC 在图编译期以 Fail-Fast 阻断致命环路，保障单线程安全。 |
 | **`@Aspect` (AspectJ / CGLIB)** | **动态高阶函数代理 (AOP Proxies)** | 无需字节码操纵与复杂注解，直接利用 JS 闭包代理实现无侵入切面拦截。 |
 | **JNDI / 动态服务发现** | **可模式搜索的依赖查找** | 支持 `dependencies: (all) => all.filter(...)` 正则与通配符批量纳管。 |
 | **`@Scope("request")`** | **`requestContext` 请求隔离容器** | 启动期静态图单例缓存，HTTP 请求期轻量容器填充，无反射损耗，完美契合 Serverless/Edge。 |
@@ -180,13 +181,13 @@ export const dependencies = ["remoteConfig"];
 import { createModularContainer } from "virtual:modular-container";
 
 // 一键点火启动容器，所有依赖拓扑调度与异步预热由 unplugin 全自动接管
-const container = await createModularContainer();
+createModularContainer();
 ```
 
 **架构优势**：
 1. **零注解侵入**：业务代码里没有任何 `@Injectable`、`@Autowired` 或特权黑魔法；
 2. **纯粹可测试**：脱离框架时，`orderService` 就是一个普通的 JavaScript 函数，单元测试只需直接传入 `{ remoteConfig: mockConfig }` 即可，无需启动庞大的测试容器；
-3. **极速启动**：Kahn 算法自动推导模块 A 为模块 B 的拓扑父节点，无缝并行预热。
+3. **极速启动**：拓扑引擎自动推导模块 A 为模块 B 的拓扑先决节点，无缝并行预热。
 
 ---
 

@@ -48,7 +48,7 @@ When engineers ask whether Path-IoC can replace NestJS's HTTP controllers, they 
 │          Category B: Application-Level Module System        │
 │                         (Path-IoC)                          │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │ Pure Topological Micro-Engine (Kahn DAG · Path · Closures) │
+│  │ Pure Topological Micro-Engine (Topological DAG · Path)    │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  Host: Universal (Vite Frontend / Cloudflare Workers / Node) │
 │  Ecosystem: Seamlessly pairs with Hono, Fastify, React, Vue │

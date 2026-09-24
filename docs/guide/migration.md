@@ -10,10 +10,10 @@ This guide describes how to upgrade projects using the legacy `lianhanlin-modula
 
 | Legacy Feature | Modern Scoped Package | Description |
 | :--- | :--- | :--- |
-| Dependency lookup runtime & Kahn DAG | **`@path-ioc/core`** | **Runtime Required**. Microsecond lock-free engine |
+| Dependency lookup & topological runtime | **`@path-ioc/core`** | **Runtime Required**. Microsecond lock-free engine |
 | Vite / Webpack / Rollup compiler plugins | **`@path-ioc/unplugin`** | **Dev Dependency**. Universal bundler adapter |
-| Demand proxy & Turbo execution mode | **`@path-ioc/container`** | **Optional**. High-level container extensions |
-| Graph manifest packaging & bundling | **`@path-ioc/pack`** | **Optional**. Topology analysis & bundle tooling |
+| Synchronous getter lazy loading POC | **`@path-ioc/container`** | **Experimental**. Not recommended for production, used for benchmark comparison |
+| Mesh module standalone npm packaging | **`@path-ioc/pack`** | **Optional**. Packages module directories into distributable npm packages |
 
 ---
 
@@ -117,27 +117,37 @@ If your project utilizes **Mesh Registry Bundling (`Modular Pack`)**—generatin
 pnpm add -D @path-ioc/pack
 ```
 
-### 2. Configure `modularPackPlugin` in Bundler
+### 2. Configure `modularPackPlugin` (Dedicated Config Recommended)
 
-```diff
-  import { defineConfig } from "vite";
-  import pathIoc from "@path-ioc/unplugin";
-+ import { modularPackPlugin } from "@path-ioc/pack";
+> [!WARNING]
+> Because `@path-ioc/pack` overrides the build pipeline (enforces `build.lib`, sets `outDir` to `dist-plugin`, and triggers `npm pack` on `closeBundle`), **do not attach it unconditionally to your standard application `vite.config.ts`**. Projects should control activation based on their build pipeline needs.
 
-  export default defineConfig({
-    plugins: [
-      pathIoc.vite({
-        modulesPath: "src/modules",
-        typeFileOutput: "types",
-      }),
-+     // Enable physical registry entry generation
-+     modularPackPlugin({
-+       modulesPath: "src/modules", // Module scan directory, default: "src/modules"
-+       // entryFile: "node_modules/.path-ioc/.modular-plugin-entry.ts", // Optional custom entry path
-+     }),
-    ],
-  });
+**Recommended Pattern: Create a dedicated `vite.config.pack.ts`**:
+```typescript
+// vite.config.pack.ts
+import { defineConfig } from "vite";
+import { modularPackPlugin } from "@path-ioc/pack";
+
+export default defineConfig({
+  plugins: [
+    modularPackPlugin({
+      modulesPath: "src/modules", // Module scan directory, default: "src/modules"
+      // entryFile: "node_modules/.path-ioc/.modular-plugin-entry.ts", // Optional custom entry path
+    }),
+  ],
+});
 ```
+
+Configure a dedicated script in `package.json`:
+```json
+{
+  "scripts": {
+    "build": "vite build",
+    "build:pack": "vite build --config vite.config.pack.ts"
+  }
+}
+```
+*(Alternatively, conditionally load it in `vite.config.ts` using custom environment variables, e.g., `process.env.BUILD_TARGET === 'pack'`)*
 
 ### 3. Generated Physical Entry Specifications
 - Default output location: `node_modules/.path-ioc/.modular-plugin-entry.ts`;

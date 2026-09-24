@@ -24,7 +24,7 @@ Examined through the history of software architecture, the progression from Bean
 * **Historical Mission**: Topological reconstruction for the post-bundler, edge-native era.
 * **Runtime Substrate**: Native ES Modules, first-class functions, lexical closures, and metadata-free compilation pipelines.
 * **Philosophy**: **Discard pseudo-Java illusions; return to computation and graph topology.**
-  * **From Hierarchical Trees to Flat Meshes**: Eliminates artificial `@Module` fences. The entire system forms a decentralized Directed Acyclic Graph (DAG). Each module is an autonomous Mesh cell, naturally supporting topological ordering, subgraph slicing, and cross-package federation (`@path-ioc/pack`).
+  * **From Hierarchical Trees to Flat Meshes**: Eliminates artificial `@Module` fences. The entire system forms a decentralized Directed Acyclic Graph (DAG). Each module is an autonomous Mesh cell, naturally supporting topological ordering and standalone npm distribution (`@path-ioc/pack`).
   * **Short Names as Bean IDs, Paths as Free Annotations**: Application code performs pure dependency lookup via intuitive short names; physical directories serve as natural architectural metadata (e.g. `/pages` for routing, `/services` for AOP interception) with zero runtime cost.
 
 ---
@@ -90,7 +90,7 @@ export const main = (container: ModularContainer) => {
 };
 ```
 
-* **DAG Orchestrates Assembly Order**: `dependencies` acts purely as input to Kahn's topological sorting algorithm, enabling **lock-free `async/await` concurrent awakening** under the single-threaded Event Loop;
+* **DAG Orchestrates Assembly Order**: `dependencies` acts purely as input to the DAG topological sorting engine, enabling **lock-free `async/await` concurrent awakening** under the single-threaded Event Loop;
 * **DL Resolves Runtime Dependencies**: When `main(container)` is invoked, all declared dependencies are guaranteed to be fully resolved;
 * **Deadlocks Eradicated at the Root**: Decoupling instantiation ordering from invocation collaboration eliminates the need for three-level caches and permanently removes `forwardRef()`.
 
@@ -155,7 +155,7 @@ Just like React developers intuitively build Higher-Order Components (HOC), High
 Traditional frameworks re-inspect reflection metadata on every incoming HTTP request, incurring heavy CPU penalties.
 
 Path-IoC enforces a strict **Two-Stage Execution Separation**:
-1. **Static Graph Compilation (`compileModuleGraph`)**: Executed once during process cold boot. Performs Kahn topological sorting, cycle validation, and builds an immutable execution plan.
+1. **Static Graph Compilation (`compileModuleGraph`)**: Executed once during process cold boot. Performs DAG topological sorting, cycle validation, and builds an immutable execution plan.
 2. **Container Instantiation (`instantiateModuleContainer`)**: Executed per HTTP request. Rapidly injects context into the pre-compiled topological plan.
 
 In Cloudflare Workers and serverless edge runtimes, this reduces instantiation overhead to **21.2 microseconds**, reducing framework CPU consumption by over 80%.

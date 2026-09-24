@@ -17,7 +17,7 @@ sequenceDiagram
     participant Engine as @path-ioc/core
 
     Worker->>Engine: 1. compileModuleGraph(modules)
-    Note over Engine: Executes Kahn DAG sorting and validation once (~1.7ms)<br>Generates an immutable CompiledGraph cache
+    Note over Engine: Executes DFS topological sorting and validation once (~1.7ms)<br>Generates an immutable CompiledGraph cache
     
     Request->>Engine: 2. instantiateModuleContainer(compiledGraph, reqContainer)
     Note over Engine: Instantiates the per-request container in 21.2 µs<br>Injects request context into c.requestContext
@@ -72,16 +72,26 @@ export default app;
 In request-isolated architectures, heavy resources like database connection pools or Redis clients should not be reconstructed per request. A lightweight closure memoizer ensures cross-request singleton persistence:
 
 ```typescript
-// Helper utility: Process-level singleton closure
-export const memoizeModule = <T extends (...args: any[]) => any>(fn: T): T => {
-  let cache: any;
+// Helper utility: Process-level singleton closure (production implementation)
+export const memoizeModule = <
+  Result,
+  T extends (
+    modularContainer: ModularContainer,
+    moduleDeclarationNames: string[]
+  ) => Result
+>(
+  main: T
+): T => {
+  let result: Result;
   let initialized = false;
-  return ((...args: any[]) => {
-    if (!initialized) {
-      cache = fn(...args);
-      initialized = true;
+  return ((
+    modularContainer: ModularContainer,
+    moduleDeclarationNames: string[]
+  ) => {
+    if (!initialized && (initialized = true)) {
+      result = main(modularContainer, moduleDeclarationNames);
     }
-    return cache;
+    return result;
   }) as T;
 };
 
@@ -93,3 +103,10 @@ export const main = memoizeModule((container: ModularContainer) => {
   return pool;
 });
 ```
+
+> 💡 **Edge Environment Variables & Cross-Request Singletons**:  
+> In Cloudflare Workers and Hono, environment bindings (such as `DATABASE_URL`) are attached to the per-request context `c.env`, as there is no traditional Node.js global `process.env`.  
+> 
+> Because environment bindings are immutable across requests within the same Worker process instance, extracting configuration on the first request to initialize a persistent connection pool via `memoizeModule` is the idiomatic edge pattern.  
+> 
+> ⚠️ **Safety Boundary**: Ensure that `memoizeModule` closures **only access immutable configuration from `requestContext.env`**, and never capture request-specific mutable state (such as headers or user sessions), avoiding cross-request data leaks.

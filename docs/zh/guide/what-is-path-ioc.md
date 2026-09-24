@@ -42,24 +42,26 @@
 #### 威力一：动态批量聚合 (Automatic Aggregation)
 例如系统的总路由模块 `src/modules/router/index.ts` 需要挂载全站所有页面路由，无需人工手动维护庞大的 import 清单：
 ```typescript
-// dependencies 传入函数，自动扫描聚合所有 /pages 路径下的模块
+// dependencies 传入函数，声明拓扑时序：等待所有 /pages 路径下的模块就绪
 export const dependencies = (allModules: string[]) =>
   allModules.filter((path) => path.startsWith("/pages"));
 
-export const main = (container: ModularContainer, pagePaths: string[]) => {
-  // 零配置全自动挂载所有路由
+export const main = (container: ModularContainer, allModuleNames: string[]) => {
+  // 第二参数为全量模块名，直接过滤出页面路径列表
+  const pagePaths = allModuleNames.filter((path) => path.startsWith("/pages"));
   return createRouter(pagePaths.map((path) => container[path]));
 };
 ```
 
 #### 威力二：AOP 声明式切面拦截 (Pointcut & Weaving)
-例如需要对全站所有业务服务层统一织入事务管理、性能度量或权限校验，直接以路径前缀充当 AspectJ 切点表达式：
+例如需要对全站所有业务服务层统一织入事务管理、性能度量或权限校验，直接以路径前缀充当切点表达式：
 ```typescript
-// 自动拦截所有处于 /services 语义空间下的模块
+// 自动声明依赖：确保所有 /services 模块优先完成初始化
 export const dependencies = (allModules: string[]) =>
   allModules.filter((path) => path.startsWith("/services"));
 
-export const main = (container: ModularContainer, servicePaths: string[]) => {
+export const main = (container: ModularContainer, allModuleNames: string[]) => {
+  const servicePaths = allModuleNames.filter((path) => path.startsWith("/services"));
   for (const path of servicePaths) {
     container[path] = withTransaction(container[path]);
   }
@@ -70,6 +72,6 @@ export const main = (container: ModularContainer, servicePaths: string[]) => {
 
 ### 核心收益总结
 1. **纯函数导出**：模块只需导出一个普通的 `main(container)` 工厂函数，零框架特权侵入，无需继承 BaseClass，无需修饰 `@Injectable()` 注解；
-2. **纯同步 DAG 拓扑无锁调度**：基于 Kahn 算法与拓扑深度，全自动检测环形依赖并按最优层级唤醒；
+2. **纯同步 DAG 拓扑无锁调度**：基于 DFS 拓扑排序与深度分析，全自动检测环形依赖并按最优层级唤醒；
 3. **全自动 TypeScript 类型推导**：通过跨构建器插件（`@path-ioc/unplugin`）在后台毫秒级生成全局强类型声明，享受精准的 IDE 智能补全；
 4. **编译期与运行期彻底解耦**：静态图只在进程冷启动时编译一次，单次 HTTP 请求装配耗时仅 **21.2 微秒**。

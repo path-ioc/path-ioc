@@ -185,7 +185,9 @@ export const main = (container: ModularContainer) => {
 export const dependencies = (allPaths: string[]) =>
   allPaths.filter((path) => path.startsWith("/pages/"));
 
-export const main = (container: ModularContainer, pagePaths: string[]) => {
+export const main = (container: ModularContainer, allModuleNames: string[]) => {
+  // 获取当前切面关注的目标页面路径
+  const pagePaths = dependencies(allModuleNames);
   // 零手动维护：新增页面只要落在 /pages 目录下，自动完成装配
   const routes = pagePaths.map((path) => container[path]);
   return createRouter(routes);
@@ -209,7 +211,8 @@ export const main = (container: ModularContainer, pagePaths: string[]) => {
 export const dependencies = (allPaths: string[]) =>
   allPaths.filter((path) => path.startsWith("/services/"));
 
-export const main = (container: ModularContainer, targetPaths: string[]) => {
+export const main = (container: ModularContainer, allModuleNames: string[]) => {
+  const targetPaths = dependencies(allModuleNames);
   for (const path of targetPaths) {
     const targetService = container[path] as Record<string, Function>;
     

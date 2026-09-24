@@ -133,9 +133,11 @@ Path-IoC 从不强制任何固化目录，而是将“路径即契约”的自�
        all.filter(name => name.includes('/services/'));
 
      // 2. 凭直觉包裹增强并挂回容器（享受全局 ModularContainer 强类型注入）
-     export const main = async (container: ModularContainer) => {
-       for (const name of dependencies(Object.keys(container))) {
+     export const main = async (container: ModularContainer, allModuleNames: string[]) => {
+       const targetServices = dependencies(allModuleNames);
+       for (const name of targetServices) {
          const target = container[name as keyof ModularContainer];
+         if (!target) continue;
          container[name as keyof ModularContainer] = new Proxy(target, {
            get(target, prop, receiver) {
              const orig = Reflect.get(target, prop, receiver);

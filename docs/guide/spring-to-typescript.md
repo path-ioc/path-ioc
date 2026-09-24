@@ -56,10 +56,10 @@ Main Thread ──> Cannot block! Class constructor() cannot await ──> Async
   }
   ```
 
-### 1.2 The Paradigm Solution: From Blocking Threads to Kahn's DAG Ignition
+### 1.2 The Paradigm Solution: From Blocking Threads to DAG Ignition
 Java relies on blocking OS threads to ensure prerequisite readiness. In TypeScript, the native solution is **treating all asynchronous initializations as top-level Promises scheduled through a Directed Acyclic Graph (DAG)**.
 
-Path-IoC treats every module as a pure factory closure. During container bootstrap, the lock-free Kahn topological algorithm guarantees that asynchronous prerequisites (e.g., `remoteConfig`) resolve before downstream modules (e.g., `orderService`) are instantiated. **50 nodes assemble in 21.2 microseconds, leaving the runtime HTTP request path completely synchronous and free from race conditions**.
+Path-IoC treats every module as a pure factory closure. During container bootstrap, DFS post-order topological compilation and reactive Promise memoization guarantee that asynchronous prerequisites (e.g., `remoteConfig`) resolve before downstream modules (e.g., `orderService`) are instantiated. **50 nodes assemble in 21.2 microseconds, leaving the runtime HTTP request path completely synchronous and free from race conditions**.
 
 ---
 
@@ -102,10 +102,11 @@ You no longer need dummy abstract classes; you get compile-time safety and IDE a
 
 | Spring (Java) Concept | Path-IoC (TypeScript) Counterpart | Architectural Evolution |
 | :--- | :--- | :--- |
-| **`@Configuration + @Bean`** | **File-level Pure Factory** (`export default`) | Java wraps factories in classes; Path-IoC uses native ES modules and first-class functions. |
-| **`ApplicationContext`** | **`ModularContainer`** | Spring involves synchronized multi-threaded locks; Path-IoC is a 21.2 µs lock-free Kahn DAG micro-engine. |
+| **Bean (Spring Bean)** | **Mesh Module** | Java wraps classes into managed Spring Beans; Path-IoC wraps ES Modules into topologically managed Mesh Modules. |
+| **`@Configuration + @Bean`** | **File-level Pure Factory** (`export const main`) | Java wraps factories in classes; Path-IoC uses native ES modules and first-class functions. |
+| **`ApplicationContext`** | **`ModularContainer`** | Spring involves synchronized multi-threaded locks; Path-IoC is a 21.2 µs lock-free DAG micro-engine. |
 | **`@Autowired` Constructor DI** | **Lexical Closure Dependency Lookup (DL)** | Eliminates constructor coupling between instantiation and invocation, preventing false cycle deadlocks. |
-| **Three-level Cache** | **Kahn DAG Topological Sorting + DFS Interception** | Spring masks cycles with 3-tier caching; Path-IoC uses compile-time Fail-Fast detection to guarantee event loop safety. |
+| **Three-level Cache** | **DFS Topological Sorting Fail-Fast Interception** | Spring masks cycles with 3-tier caching; Path-IoC uses compile-time Fail-Fast detection to guarantee event loop safety. |
 | **`@Aspect` (AspectJ / CGLIB)** | **Functional Higher-Order Proxies** | Zero bytecode manipulation; leverages JavaScript closures for non-invasive cross-cutting concerns. |
 | **JNDI / Dynamic Discovery** | **Pattern-Searchable Dependency Lookup** | Supports regex and predicates: `dependencies: (all) => all.filter(...)`. |
 | **`@Scope("request")`** | **`requestContext` Request-Isolated Containers** | Static graph compiled once at boot; lightweight request-scoped context created on demand for Serverless & Edge. |
@@ -180,13 +181,13 @@ export const dependencies = ["remoteConfig"];
 import { createModularContainer } from "virtual:modular-container";
 
 // One-line container ignition: DAG topological scheduling handled automatically by unplugin
-const container = await createModularContainer();
+createModularContainer();
 ```
 
 **Key Architectural Benefits**:
 1. **Zero Annotation Invasiveness**: No `@Injectable()`, `@Autowired()`, or proprietary metadata tokens.
 2. **Pure Testability**: Outside the container, `orderService` is just an ordinary JavaScript function. Unit testing requires only passing `{ remoteConfig: mockConfig }` without spinning up a heavy test container.
-3. **Ultra-Fast Boot**: Kahn's algorithm automatically identifies Module A as Module B's topological parent and arranges parallel preheating without locks.
+3. **Ultra-Fast Boot**: Topological compiler automatically identifies Module A as Module B's prerequisite and arranges parallel preheating without locks.
 
 ---
 

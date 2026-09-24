@@ -26,7 +26,7 @@ features:
   - title: 物理路径即抽象契约
     details: 彻底消除数千行纵横交错的相对路径 import 声明。以物理目录结构自动映射逻辑契约，从数学拓扑层面杜绝隐式循环依赖与死锁。
   - title: 21.2 µs 纯同步无锁 DAG
-    details: 基于 Kahn 算法与权重拓扑调度。50 节点装配耗时仅 21.2 微秒，500 节点图编译仅 1.72 毫秒，HTTP 请求期零图计算开销。
+    details: 基于高效的 DAG 拓扑编译与权重调度。50 节点装配耗时仅 21.2 微秒，500 节点图编译仅 1.72 毫秒，HTTP 请求期零图计算开销。
   - title: 零配置全自动类型推导
     details: 依托 AST 实时监听与虚拟模块技术，代码保存即生成全局强类型推导，享受 100% 准确的 IDE 智能补全，无需手动定义接口映射。
   - title: 动态语言纯正 AOP 切面
@@ -163,7 +163,7 @@ export const main = (container: ModularContainer) => {
     <div class="benchmark-stat-card">
       <div class="stat-label">500 节点静态图编译</div>
       <div class="stat-value purple">1.72 ms</div>
-      <div class="stat-desc">进程冷启动单次全拓扑 Kahn 校验，随后全局静态缓存复用。</div>
+      <div class="stat-desc">进程冷启动单次全拓扑校验，随后全局静态缓存复用。</div>
     </div>
     <div class="benchmark-stat-card">
       <div class="stat-label">核心引擎代码体积</div>

@@ -42,24 +42,26 @@ The framework places no restrictions on directory names. **The true architectura
 #### Power 1: Dynamic Batch Aggregation
 A centralized router module (`src/modules/router/index.ts`) can automatically mount all pages across the application without maintaining a manual list of imports:
 ```typescript
-// Functions in dependencies automatically aggregate all modules under /pages
+// Functions in dependencies declare topological order: wait for all modules under /pages
 export const dependencies = (allModules: string[]) =>
   allModules.filter((path) => path.startsWith("/pages"));
 
-export const main = (container: ModularContainer, pagePaths: string[]) => {
-  // Automatically register all routes with zero configuration
+export const main = (container: ModularContainer, allModuleNames: string[]) => {
+  // Second argument receives all module names; filter out page paths directly
+  const pagePaths = allModuleNames.filter((path) => path.startsWith("/pages"));
   return createRouter(pagePaths.map((path) => container[path]));
 };
 ```
 
 #### Power 2: AOP Pointcut Interception & Weaving
-To apply transaction management, metrics, or permission checks across all services, paths act as AspectJ pointcut expressions:
+To apply transaction management, metrics, or permission checks across all services, paths act as pointcut selectors:
 ```typescript
-// Intercept all modules residing within the /services semantic namespace
+// Ensure all /services modules are instantiated first
 export const dependencies = (allModules: string[]) =>
   allModules.filter((path) => path.startsWith("/services"));
 
-export const main = (container: ModularContainer, servicePaths: string[]) => {
+export const main = (container: ModularContainer, allModuleNames: string[]) => {
+  const servicePaths = allModuleNames.filter((path) => path.startsWith("/services"));
   for (const path of servicePaths) {
     container[path] = withTransaction(container[path]);
   }
@@ -70,6 +72,6 @@ export const main = (container: ModularContainer, servicePaths: string[]) => {
 
 ### Core Architectural Benefits
 1. **Pure Function Exports**: Modules export a simple `main(container)` factory function. Zero class inheritance, zero `@Injectable()` annotations, and zero framework lockdown.
-2. **Synchronous Lock-Free Kahn DAG Scheduling**: Powered by Kahn's topological sorting algorithm, cyclic dependencies are detected at compilation time, and modules are instantiated in optimal cascade order.
+2. **Synchronous Lock-Free DFS DAG Scheduling**: Powered by DFS post-order topological traversal, cyclic dependencies are detected at compilation time, and modules are instantiated in optimal cascade order.
 3. **Automated TypeScript Type Generation**: The universal `@path-ioc/unplugin` scanner generates global type interfaces in milliseconds on file save, delivering 100% accurate IDE auto-completion.
 4. **Two-Stage Execution Separation**: The static dependency graph compiles once during cold boot. Subsequent container instantiations take only **21.2 microseconds**, making it ideal for edge computing.

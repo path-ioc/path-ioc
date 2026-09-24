@@ -45,9 +45,13 @@
 // src/main.tsx
 import { createModularContainer } from "virtual:modular-container";
 
-// 一键唤醒全局拓扑容器
-createModularContainer();
+// 规范点火：预先挂载全局引用对象，杜绝模块内部同步引用时出现 undefined
+const container = (globalThis.modularContainer = {});
+await createModularContainer(container);
 ```
+
+> **为什么必须预先挂载对象引用？**  
+> 在前端工程中，许多模块内部或组件可能会直接访问全局 `modularContainer` 变量。如果采用 `globalThis.modularContainer = await createModularContainer();`，在整个异步拓扑初始化完成前该全局变量始终为 `undefined`。一旦模块在启动时序中有同步调用或注册钩子，便会抛出 `Cannot read properties of undefined`。因此，最佳实践是先完成引用绑定 `const container = (globalThis.modularContainer = {})`，再传入 `createModularContainer(container)` 由拓扑引擎逐层填充。
 
 在组件或业务逻辑中直接解构使用：
 ```tsx

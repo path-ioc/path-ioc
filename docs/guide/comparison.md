@@ -37,7 +37,7 @@ Before comparing technical benchmarks, we must establish a clear taxonomy of wha
 ┌─────────────────────────────────────────────────────────────┐
 │                 Path-IoC (Orthogonal Topological Engine)    │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │ Pure Topological Micro-Engine (Kahn DAG · Path · Closures) │
+│  │ Pure Topological Micro-Engine (Topological DAG · Path)    │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  Host: Universal (Vite Frontend / Cloudflare Workers / Node) │
 │  Ecosystem: Seamlessly pairs with Hono, Fastify, or Web UI  │
@@ -63,7 +63,7 @@ Before comparing technical benchmarks, we must establish a clear taxonomy of wha
 | **Runtime Portability** | Node.js Server Runtimes only | Primarily Node.js | JVM Containers only | **Universal**<br>(Vite Web, Cloudflare Workers, Node.js) |
 | **Initialization Mechanism** | Serial dominant / Constructors cannot `await` | No async factory scheduling | Strict single-threaded serial pipeline (JMM thread-safety) | **Native DAG Parallel / Concurrent Activation**<br>(Microsecond lock-free cascade) |
 | **Aspect-Oriented Programming (AOP)** | Overly complex (Guards/Pipes/Filters) and limited to Controllers | No built-in AOP | Epoch-making declarative proxies (AspectJ) | **Complete AOP & Zero Overhead**<br>(Based on Dependency Lookup & dynamic higher-order proxies) |
-| **Circular Dependency Handling** | Prone to deadlocks (`forwardRef` deadlocks on async providers) | Limited to synchronous property access | 3-tier cache cycle resolution (masks architectural flaws) | **Underlying DFS Fail-Fast Interception**<br>Turbo extension Dynamic Getter resolution |
+| **Circular Dependency Handling** | Prone to deadlocks (`forwardRef` deadlocks on async providers) | Limited to synchronous property access | 3-tier cache cycle resolution (masks architectural flaws) | **DFS Fail-Fast Interception**<br>(Compile-time strict cycle detection, eliminating deadlocks) |
 | **Cold Boot Latency** | 200ms – 1500ms (Heavy reflection table scanning) | Milliseconds (Proxy property lookup overhead) | Seconds (Constrained by JVM model) | **21.2 µs** (50 nodes assembled in 21.2 microseconds) |
 | **Code Invasiveness** | High (framework annotations and class decorators everywhere) | Medium (binds to function parameter names) | Low (supports standard JSR-330 annotations) | **Zero Invasiveness**<br>(Modules are pure functions, completely testable without framework) |
 
@@ -90,7 +90,7 @@ By forcing Java's multi-threaded JVM compromises onto JavaScript's single-thread
 Path-IoC aligns directly with the single-threaded Event Loop:
 - Modules are physical files; files are pure functions;
 - Physical paths represent logical contracts; strings represent abstract interfaces;
-- Types are generated at build time, and containers resolve in 21.2 µs at runtime via Kahn's DAG topological engine.
+- Types are generated at build time, and containers resolve in 21.2 µs at runtime via DAG topological engine.
 
 ---
 
@@ -104,9 +104,9 @@ Path-IoC aligns directly with the single-threaded Event Loop:
 ### 2. When Should You Choose Path-IoC Without Hesitation?
 * **Massive, Complex Enterprise Systems (500+ Modules / Monorepo Hubs / Domain-Driven Design)**:
   - **Eliminating Relative Import Hell**: Massive projects replace tens of thousands of fragile `../../..` relative imports with physical directory contracts, enabling risk-free directory refactoring;
-  - **Eradicating Circular Dependency Deadlocks**: In complex domain architectures, interdependent services (Orders, Billing, Risk Control) are standard. Path-IoC uses Kahn's algorithm to compile the DAG upfront and resolves calls on-demand via Dependency Lookup (DL), physically eliminating silent deadlocks caused by `forwardRef()` with async providers;
+  - **Eradicating Circular Dependency Deadlocks**: In complex domain architectures, interdependent services (Orders, Billing, Risk Control) are standard. Path-IoC separates startup sequencing from runtime Dependency Lookup (DL), physically eliminating silent deadlocks caused by `forwardRef()` with async providers;
   - **Lightning-Fast HMR & Instant Testing**: 500-node graph compilation takes just 1.72 ms. Modules are pure factory closures, allowing thousands of unit tests to execute in seconds without spinning up heavy containers;
-  - **Cross-Team Multi-Mesh Federation**: Powered by `@path-ioc/pack`, independent teams can develop isolated mesh packages and cascade them seamlessly into a top-level application, purpose-built for giant monorepos.
+  - **Standalone Mesh Package Distribution**: Powered by `@path-ioc/pack`, teams can package module directories into standalone distributable npm libraries, purpose-built for component and micro-module distribution.
 * **Modern Full-Stack & Cross-Runtime Architectures (Vite Web, Node.js Backend, Edge Workers)**:
   - The exact same domain service code runs seamlessly across frontend SPAs (unified lifecycles and AOP telemetry), backend Node servers, and ultra-strict Cloudflare Workers (cold start in 21.2 µs);
   - Completely free from 2015-era experimental decorators and `reflect-metadata`, fully compatible with high-speed AST type-stripping toolchains (Vite, esbuild, SWC, Rspack).
@@ -233,7 +233,7 @@ Path-IoC **completely eschews decorators and runtime reflection**. It operates e
 To explore the underlying graph theory mathematics and high-concurrency production models in detail, read our dedicated deep-dive essays:
 
 * 📐 **Graph Theory & Concurrency Models**: [Why Dependency Injection Cannot Achieve Topological Concurrency: Graph Cycles, 3-Tier Caching, and the Async Deadlock](/articles/why-di-cannot-concurrent)  
-  *Explore Kahn's algorithm, JVM 3-tier memory visibility, and NestJS `for...of await` serial pipeline internals.*
+  *Explore DAG topological scheduling, JVM 3-tier memory visibility, and NestJS `for...of await` serial pipeline internals.*
 * 🚀 **High-Concurrency Production Patterns**: [Container Dual-State in the Event Loop: Client Global Singleton vs. Server Request Isolation with Memoized Heavy Singletons](/articles/client-vs-server-container-patterns)  
   *Master request-scoped isolation via `requestContext` paired with pure closure memoization (`memoizeModule`) for database pools.*
 * 💡 **Migration & Mental Models**: [Spring to Path-IoC: Architecture Migration & Mental Model Shift for Java Engineers](/guide/spring-to-typescript)  

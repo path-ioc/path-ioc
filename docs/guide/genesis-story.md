@@ -132,9 +132,11 @@ From a pure runtime execution standpoint, NestJS can ultimately achieve asynchro
        all.filter(name => name.includes('/services/'));
 
      // 2. Intuitively wrap with enhancement and remount to container (typed via ModularContainer)
-     export const main = async (container: ModularContainer) => {
-       for (const name of dependencies(Object.keys(container))) {
+     export const main = async (container: ModularContainer, allModuleNames: string[]) => {
+       const targetServices = dependencies(allModuleNames);
+       for (const name of targetServices) {
          const target = container[name as keyof ModularContainer];
+         if (!target) continue;
          container[name as keyof ModularContainer] = new Proxy(target, {
            get(target, prop, receiver) {
              const orig = Reflect.get(target, prop, receiver);

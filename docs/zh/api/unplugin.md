@@ -49,9 +49,10 @@ import {
 ```typescript
 import {
   modules,                 // 全量模块描述数组: { key: string, module: IOCModule }[]
-  createModularContainer,  // 一键实例化便捷函数: (targetContainer?) => Promise<ModularContainer>
+  createModularContainer,  // 高性能实例化入口: (targetContainer?: Record<string, any>) => Promise<ModularContainer>
 } from "virtual:modular-container";
 ```
 
-- **Vite / Rolldown / Rollup 环境**：纯内存虚拟模块注入，零物理磁盘 I/O 开销；
-- **Webpack 5 / Rspack 环境**：自动在 `node_modules/.virtual-modular-container.js` 生成临时桥接代理，完美兼容 Webpack 模块图解析。
+- **单图编译缓存**：`createModularContainer` 内部闭包缓存了 `compiledGraph`。静态依赖图只在进程冷启动时编译一次，后续高并发场景下成千上万个请求调用 `createModularContainer(reqContainer)` 时直接复用静态图，仅需约 21.2µs 即可完成请求级上下文隔离填充；
+- **Vite / Rolldown / Rollup 环境**：通过虚拟模块机制向内存动态提供模块注册表代码，无需在磁盘生成临时入口构建文件；
+- **Webpack 5 / Rspack 环境**：自动在 `node_modules/.virtual-modular-container.js` 生成临时桥接文件，完美兼容 Webpack 模块图解析。

@@ -12,7 +12,7 @@
 ### 1.1 What is Path-IoC?
 Path-IoC is a pure topological Inversion of Control (IoC) engine and universal modular architecture toolchain for modern TypeScript. Unlike traditional IoC containers (NestJS, InversifyJS, TSyringe) that rely on 2015-era experimental class decorators and runtime reflection metadata (`reflect-metadata`), Path-IoC leverages the physical file system hierarchy, first-class functions, and lexical closures to achieve:
 1. **Zero Decorators & Zero Runtime Reflection**: 100% compatible with modern AST type-stripping compilers (Vite, Rollup, esbuild, SWC, Node 22+ type stripping).
-2. **Microsecond Cold Starts (21.2 µs)**: High-speed Kahn's DAG topological compilation. 50 modules are assembled in 21.2 microseconds, and 500 modules in 1.72 milliseconds.
+2. **Microsecond Cold Starts (21.2 µs)**: High-speed DAG topological compilation. 50 modules are assembled in 21.2 microseconds, and 500 modules in 1.72 milliseconds.
 3. **Physical Path as Contract**: File paths naturally serve as abstract contracts (e.g., short name `userService` maps to `/services/user`). Eliminates thousands of fragile relative imports (`../../..`).
 4. **Universal Runtime Portability**: Runs seamlessly across Web Browsers, Vite, Webpack 5, Rspack, Node.js, and strict Serverless/Edge runtimes like Cloudflare Workers (where CPU cold-start limits are 10ms–50ms).
 5. **Pattern-Searchable Dependency Lookup (DL)**: Supports expressive service discovery via predicates: `dependencies: (all) => all.filter(...)`.
@@ -27,7 +27,7 @@ Thesis (Spring)           Antithesis (NestJS)          Synthesis (Path-IoC)
 [Java Class + JMM]   ->   [TS Decorator Illusion]  ->  [Dynamic Topology Mesh]
 OS Thread Blocking        Constructor Async Crash      Pure Factory Closures
 JSR-330 Annotations       Rigid @Module Trees          Physical Path Contracts
-JVM Bytecode / CGLIB      reflect-metadata Hell        Kahn DAG Graph Engine
+JVM Bytecode / CGLIB      reflect-metadata Hell        DAG Topology Engine
 ```
 
 ### 2.1 Generation 1: Spring Bean (Java OOP & JMM Native)
@@ -50,7 +50,7 @@ JVM Bytecode / CGLIB      reflect-metadata Hell        Kahn DAG Graph Engine
   - Modules are pure functions inside physical files.
   - Physical paths serve as logical contracts.
   - Dependency Lookup (DL) decouples instantiation from invocation.
-  - Kahn's DAG topologically pre-heats asynchronous dependencies synchronously before runtime invocation.
+  - Topologically pre-heats asynchronous dependencies synchronously before runtime invocation via DAG compilation.
 
 ---
 
@@ -62,7 +62,7 @@ JVM Bytecode / CGLIB      reflect-metadata Hell        Kahn DAG Graph Engine
 | **Bundler Compatibility** | **Poor** (Vite / ESBuild type-stripping crashes) | Good | Native to JVM | **Exceptional** (Zero metadata, Vite/Webpack/Rspack native) |
 | **Async Initialization** | Serial dominant; Constructors cannot `await` | No async factory scheduling | Serial blocking threads | **Native DAG Parallel / Cascaded Preheat** (Microsecond lock-free) |
 | **AOP Capabilities** | Decorators limited to HTTP Controllers (Guards/Pipes) | None | AspectJ bytecode weaving | **Native Functional Proxies** across all domain modules |
-| **Circular Dependencies** | High risk (`forwardRef` deadlocks on async) | Synchronous properties only | 3-tier cache cycle resolution | **DFS Fail-Fast** + Turbo dynamic getter resolution |
+| **Circular Dependencies** | High risk (`forwardRef` deadlocks on async) | Synchronous properties only | 3-tier cache cycle resolution | **DFS Fail-Fast Interception** (Strict compile-time cycle detection) |
 | **Cold Boot Latency** | 200ms – 1500ms (Heavy reflection) | Medium | Constrained by JVM startup | **21.2 µs** (50 nodes); ideal for Serverless & Edge |
 | **Architectural Role** | Full-stack HTTP opinionated web framework | Standalone DI library | Enterprise full-stack Java platform | **Orthogonal Topological IoC Micro-Engine** |
 
@@ -158,7 +158,7 @@ export const main = (container: ModularContainer) => {
   };
 };
 
-// Declare topological dependencies for Kahn DAG preheating
+// Declare topological dependencies for DAG preheating
 export const dependencies = ["logger"];
 ```
 
@@ -177,7 +177,7 @@ order.createOrder("ORD_101", 99);
 ---
 
 ## 6. Package Ecosystem
-- `@path-ioc/core`: Minimalist topological graph compiler, Kahn algorithm, and DL container.
-- `@path-ioc/unplugin`: Build-time plugin for Vite, Webpack, Rspack, and Rollup. Performs AST scanning and virtual type synthesis (`ModularContainer`).
-- `@path-ioc/container`: Advanced container primitives for request-scoped isolation (`requestContext`) and closure memoization (`memoizeModule`).
-- `@path-ioc/pack`: Multi-mesh composition and cross-package dependency aggregation.
+- `@path-ioc/core`: Minimalist topological graph compiler, DFS topological sorting, and dependency lookup runtime.
+- `@path-ioc/unplugin`: Universal build plugin for Vite, Webpack, Rspack, and Rollup. Performs AST scanning and virtual type synthesis (`ModularContainer`).
+- `@path-ioc/container`: Experimental comparison package exploring synchronous getter lazy loading (`demand`/`turbo`). Not recommended for production.
+- `@path-ioc/pack`: Dedicated Vite plugin for packaging mesh modules into distributable standalone npm packages (`dist-plugin`, obfuscation).

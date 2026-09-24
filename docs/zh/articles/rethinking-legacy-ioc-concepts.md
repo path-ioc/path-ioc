@@ -122,7 +122,7 @@ Path-IoC 依靠两阶段图编译（编译图 0 延迟，单次纯同步实例�
 
 Path-IoC 彻底顺应现代工程与编译器演进：
 1. **编译期全自动生成类型（DX）**：构建插件扫描物理模块目录，全自动生成全局类型声明文件（`ignore.modular.d.ts`），提供 100% 静态类型推导与智能补全；
-2. **运行期微秒级无锁装配（Runtime）**：运行期不读取任何元数据，不解析任何形参函数体。直接将显式声明的字符串路径送入 Kahn 拓扑排序算法，在单线程 Event Loop 下实现毫秒级的原生 `async/await` 并发点火；
+2. **运行期微秒级无锁装配（Runtime）**：运行期不读取任何元数据，不解析任何形参函数体。直接将显式声明的字符串路径送入 DAG 拓扑排序与依赖图编译引擎，在单线程 Event Loop 下实现毫秒级的原生 `async/await` 并发点火；
 3. **完全兼容现代构建器与边缘计算**：纯 ES Module 闭包，零反射开销，在 Vite、Webpack、Rolldown、Cloudflare Workers 中均能原生顺畅运行。
 
 ---
@@ -147,7 +147,7 @@ Path-IoC 彻底顺应现代工程与编译器演进：
 | **生命周期** | `OnModuleDestroy`、`@preDestroy` 框架特权钩子 | 用户态 `onDestroy` 契约 + 原生拓扑逆序并发编排 | 生命周期不是容器特权，只是有向图上的普通计算任务 |
 | **模块隔离** | `@Module({ exports })` 模块墙、父子容器树 | 康威定律：物理包（Package）隔离与文件目录边界 | 组织协作防腐依赖物理工程边界，而非运行时代码人造屏障 |
 | **作用域管理** | `@Scope(Scope.REQUEST)` 动态原型链、Proxy 查表 | 21µs 纯同步容器装配 + `memoizeModule` 闭包缓存 | 容器只负责装配；多例与缓存回归函数直觉，消除 GC 抖动 |
-| **依赖解析** | `reflect-metadata` 类型反射、`fn.toString()` 正则匹配 | 物理路径契约（Path as Contract）+ Kahn 图拓扑 | 免疫 Vite/SWC 类型擦除，免疫生产代码混淆压缩 |
+| **依赖解析** | `reflect-metadata` 类型反射、`fn.toString()` 正则匹配 | 物理路径契约（Path as Contract）+ DAG 拓扑编译 | 免疫 Vite/SWC 类型擦除，免疫生产代码混淆压缩 |
 | **数据契约** | Class + 装饰器 DTO（`class-validator`） | 面向数据编程（DOP）+ 纯数据字面量（Schema Object） | 纯数据通透前后端全链路，零反射，微秒冷启动边缘友好 |
 
 ---
