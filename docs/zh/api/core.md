@@ -68,4 +68,4 @@
 | **`main`** *(必须)* | `(container: ModularContainer, moduleNames: string[]) => any \| Promise<any>` | - | 模块工厂函数。接收容器与全量模块 Key，支持 `async`。 |
 | **`dependencies`** *(可选)* | `string[] \| ((moduleNames: string[]) => string[])` | `[]` | 拓扑依赖声明。支持静态数组或动态函数过滤。 |
 | **`order`** *(可选)* | `number` | `99999` | 优先级权重。在无拓扑依赖约束时决定执行时序（负数优先）。 |
-| **`skip`** *(可选)* | `boolean` | `false` | 跳过执行标记。常用于多平台剪枝或仅做类型占位。 |
+| **`skip`** *(可选)* | `boolean` | `false` | 跳过执行标记。用于外部预先注入的模块（如后端请求隔离时注入 `requestContext`），仅让 unplugin 生成类型提示而不执行 `main`。 |

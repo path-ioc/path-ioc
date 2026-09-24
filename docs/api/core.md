@@ -68,4 +68,4 @@ Every module located at `src/modules/**/index.ts` may export up to four standard
 | **`main`** *(Required)* | `(container: ModularContainer, moduleNames: string[]) => any \| Promise<any>` | - | Factory function invoked according to topological sort order. Supports `async`. |
 | **`dependencies`** *(Optional)* | `string[] \| ((moduleNames: string[]) => string[])` | `[]` | Explicit topological dependencies. Supports string arrays or dynamic filter functions. |
 | **`order`** *(Optional)* | `number` | `99999` | Priority weight when no explicit topological dependencies constrain ordering. |
-| **`skip`** *(Optional)* | `boolean` | `false` | When `true`, skips runtime initialization (useful for type-only placeholder modules). |
+| **`skip`** *(Optional)* | `boolean` | `false` | Skips runtime execution of `main`. Used for externally injected modules (e.g. injecting `requestContext` in backend request isolation), purely so unplugin can generate type definitions. |
