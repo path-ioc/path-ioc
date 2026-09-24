@@ -23,6 +23,8 @@ hero:
       link: https://github.com/path-ioc/path-ioc
 
 features:
+  - title: 应用级自组织模块系统
+    details: 对标原生 ESM，作为业务层模块系统替代脆弱的相对路径引用。一行代码纯粹点火，生命周期编排与业务全域在 Mesh 模块内自闭环运转。
   - title: 物理路径即抽象契约
     details: 彻底消除数千行纵横交错的相对路径 import 声明。以物理目录结构自动映射逻辑契约，从数学拓扑层面杜绝隐式循环依赖与死锁。
   - title: 21.2 µs 纯同步无锁 DAG
@@ -31,8 +33,6 @@ features:
     details: 依托 AST 实时监听与虚拟模块技术，代码保存即生成全局强类型推导，享受 100% 准确的 IDE 智能补全，无需手动定义接口映射。
   - title: 动态语言纯正 AOP 切面
     details: 零学习成本，无需繁琐装饰器与实验性元数据注解。依托 JavaScript 函数一等公民与高阶代理，实现纯正无侵入的面向切面编程。
-  - title: 跨主流构建工具通用支持
-    details: 基于 unplugin 架构，统一代码库无缝适配 Vite、Webpack 5、Rspack、Rollup 与 Node.js 生产环境。
   - title: 边缘计算与 Serverless 就绪
     details: 启动期单例静态图编译与请求级轻量容器多例填充。零反射零元数据包袱，轻松满足 10ms~50ms 苛刻 CPU 限额，吞吐提升 80%。
 ---

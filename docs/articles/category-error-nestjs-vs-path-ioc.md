@@ -125,6 +125,54 @@ Pain point: Code littered with relative imports (`../../..`). Import avalanches,
 
 Their conceptual souls are identical. Just as Java's enterprise standard was defined by Spring Beans rather than `module-info.java`, complex TypeScript systems require an application-level IoC mesh rather than naked file imports.
 
+### The Host Ignition Boundary: The Physical Divide Between Host and Module System
+
+Once Path-IoC is recognized as an application-level self-organizing module system, common architectural confusions disappear—most notably, the question of *"why the entry point only contains a single call to `createModularContainer()`"*.
+
+Consider how the boundary between the **Host Environment** and the **Module System** is designed across three major programming paradigms:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                   The Host Ignition Boundary Comparison                │
+├───────────────────┬──────────────────────────────┬─────────────────────┤
+│ Paradigm          │ Host Igniter                 │ Business Execution  │
+├───────────────────┼──────────────────────────────┼─────────────────────┤
+│ Browser & ESM     │ <script type="module" ...>   │ 100% inside ESM DAG │
+├───────────────────┼──────────────────────────────┼─────────────────────┤
+│ Java & Spring     │ SpringApplication.run(...)   │ 100% inside Beans   │
+├───────────────────┼──────────────────────────────┼─────────────────────┤
+│ TS & Path-IoC     │ createModularContainer()     │ 100% inside Mesh    │
+└───────────────────┴──────────────────────────────┴─────────────────────┘
+```
+
+1. **Nobody consumes ES Modules inside an HTML `<script>` tag**:
+   ```html
+   <!-- ❌ Regressive, absurd anti-pattern -->
+   <script>
+     const esm = await import("./main.js");
+     esm.orderService.createOrder();
+   </script>
+   ```
+   `<script type="module" src="./main.js">` purely instructs the browser engine to resolve the ESM dependency graph. Once ignited, all business lifecycles circulate autonomously within the ES module graph.
+2. **Nobody consumes Beans inside Spring Boot's `main` method**:
+   ```java
+   // ❌ Anti-pattern violating Spring architecture standards
+   public static void main(String[] args) {
+       ConfigurableApplicationContext ctx = SpringApplication.run(App.class, args);
+       ctx.getBean(OrderService.class).createOrder();
+   }
+   ```
+   In enterprise Spring engineering, the sole purpose of `main` is a one-line ignition: `SpringApplication.run(App.class, args);`. All startup warming and service coordination are handled autonomously within beans via `@EventListener` or `CommandLineRunner`.
+3. **Similarly, nobody should consume the container in Path-IoC's `main.ts`**:
+   ```typescript
+   // ❌ Category error degrading a module system runtime into an object factory
+   const container = await createModularContainer();
+   container.orderService.createOrder();
+   ```
+   `createModularContainer()` is the equivalent ignition boundary in the Mesh Module world. It notifies the unplugin to compile the static DAG and activate dependencies in the host runtime (Vite, Node, Bun, Cloudflare Workers). **Once ignited, 100% of business logic, lifecycle orchestration, and AOP aspects operate autonomously within Mesh Modules.**
+
+Attempting to extract the container into the entry point to invoke business methods commits a category error: confusing an application-level module system runtime with an ordinary object dictionary.
+
 ---
 
 ## 4. The Historical Limitation of NestJS

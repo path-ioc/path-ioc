@@ -125,6 +125,54 @@ TS 原生提供：ES Module (import / export)、相对路径、顶层裸执行
 **两者在精神内核上 100% 契合。**  
 整个 Java 工业界事实上的模块化标准，从来不是 Java 9 的 `module-info.java`，而是 Spring 的 Bean 容器；同样，在现代复杂 TypeScript 工程中，能够真正解决解耦治理的，也绝不仅是裸写 `import`，而是 Path-IoC 这套应用级模块拓扑网格。
 
+### 宿主点火边界（Ignition Boundary）：模块系统与宿主环境的物理分界
+
+一旦确立了“Path-IoC 是应用级自组织模块系统”的定位，很多长期困扰开发者的概念混淆便迎刃而解——最典型的就是对“为什么入口只有一行 `createModularContainer()`”的疑惑。
+
+让我们考察三大现代软件体系中，**宿主环境（Host）与模块系统（Module System）之间的点火分界**：
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                      三大体系的“宿主点火边界”对照表                    │
+├───────────────────┬──────────────────────────────┬─────────────────────┤
+│ 体系              │ 宿主启动点火器 (Igniter)     │ 业务运行发生地      │
+├───────────────────┼──────────────────────────────┼─────────────────────┤
+│ 浏览器 & ESM      │ <script type="module" ...>   │ 100% 在 ES Module 图谱内│
+├───────────────────┼──────────────────────────────┼─────────────────────┤
+│ Java & Spring     │ SpringApplication.run(...)   │ 100% 在 Spring Bean 拓扑内│
+├───────────────────┼──────────────────────────────┼─────────────────────┤
+│ TS & Path-IoC     │ createModularContainer()     │ 100% 在 Mesh 模块网格内│
+└───────────────────┴──────────────────────────────┴─────────────────────┘
+```
+
+1. **绝对不会有人在 HTML `<script>` 标签里消费 ESM 模块**：
+   ```html
+   <!-- ❌ 荒谬且反模式的倒退写法 -->
+   <script>
+     const esm = await import("./main.js");
+     esm.orderService.createOrder();
+   </script>
+   ```
+   `<script type="module" src="./main.js">` 纯粹负责告知浏览器渲染引擎启动 ESM 依赖图解析。一旦点火完成，所有业务生命周期都在 ES 模块图谱中自组织流转。
+2. **绝对不会有人在 Spring Boot 的 `main` 方法中消费 Bean**：
+   ```java
+   // ❌ 违背 Spring 架构规范的反模式
+   public static void main(String[] args) {
+       ConfigurableApplicationContext ctx = SpringApplication.run(App.class, args);
+       ctx.getBean(OrderService.class).createOrder();
+   }
+   ```
+   在正规工业级 Spring 实践中，`main` 函数唯一的使命就是一键点火 `SpringApplication.run(App.class, args);`。后续所有业务预热与服务调度，全部通过 `@EventListener`、`CommandLineRunner` 等机制在 Bean 体系内部闭环完成。
+3. **同样，绝对不应该在 `main.ts` 中消费 Path-IoC 容器**：
+   ```typescript
+   // ❌ 将模块系统降级为普通对象工厂的反模式
+   const container = await createModularContainer();
+   container.orderService.createOrder();
+   ```
+   `createModularContainer()` 是 Mesh 模块世界的同等点火边界。它负责在宿主环境（Vite / Node / Bun / Cloudflare Workers）中通知 unplugin 完成 DAG 静态图编译与依赖激活。**点火完成之后，100% 的业务执行、生命周期编排与 AOP 切面防护全在 Mesh Module 内部自闭环运转。**
+
+任何试图把 `container` 接出来在入口处调用业务方法的想法，本质上都犯了把“应用级模块系统运行时”降级当成“普通工具库/对象字典”的范畴谬误。
+
 ---
 
 ## 四、NestJS 的历史局限：为什么它成不了“现代模块系统”？

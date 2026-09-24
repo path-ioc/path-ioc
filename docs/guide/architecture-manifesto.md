@@ -26,6 +26,7 @@ Examined through the history of software architecture, the progression from Bean
 * **Philosophy**: **Discard pseudo-Java illusions; return to computation and graph topology.**
   * **From Hierarchical Trees to Flat Meshes**: Eliminates artificial `@Module` fences. The entire system forms a decentralized Directed Acyclic Graph (DAG). Each module is an autonomous Mesh cell, naturally supporting topological ordering and standalone npm distribution (`@path-ioc/pack`).
   * **Short Names as Bean IDs, Paths as Free Annotations**: Application code performs pure dependency lookup via intuitive short names; physical directories serve as natural architectural metadata (e.g. `/pages` for routing, `/services` for AOP interception) with zero runtime cost.
+  * **Host Ignition Boundary & Module Autonomy**: Just as `<script type="module">` ignites ESM and `SpringApplication.run()` boots Spring, `createModularContainer()` serves strictly as the **host ignition boundary** between the environment (Node/Vite/Bun/Browser) and the Mesh module system. The host only ignites; 100% of business lifecycles circulate autonomously within the module system, precluding external invocation anti-patterns.
 
 ---
 

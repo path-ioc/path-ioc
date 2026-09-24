@@ -23,6 +23,8 @@ hero:
       link: https://github.com/path-ioc/path-ioc
 
 features:
+  - title: Application-Level Module System
+    details: Counterparts native ESM to replace fragile relative imports in business layers. One-line host ignition boots an autonomous Mesh universe where lifecycles and business logic circulate 100% internally.
   - title: Physical Path as Contract
     details: Eliminate thousands of fragile relative import lines. File paths map directly to logical contracts with mathematical certainty, preventing circular dependency deadlocks.
   - title: 21.2 µs Lock-Free DAG
@@ -31,8 +33,6 @@ features:
     details: AST scanning paired with virtual modules generates complete TypeScript interfaces on file save. Enjoy 100% accurate IDE auto-completion with zero manual typing.
   - title: Native Functional AOP
     details: No decorators, no experimental metadata. Leverage JavaScript's first-class functions and higher-order proxies for non-invasive, aspect-oriented cross-cutting concerns.
-  - title: Universal Bundler Ecosystem
-    details: Built on the unplugin architecture. A single configuration seamlessly supports Vite, Webpack 5, Rspack, Rollup, and Node.js backends.
   - title: Serverless & Edge Ready
     details: Static graph compilation combined with request-isolated containers. Zero metadata reflection easily satisfies strict 10ms-50ms CPU limits with 80% higher throughput.
 ---

@@ -109,7 +109,6 @@ You no longer need dummy abstract classes; you get compile-time safety and IDE a
 | **Three-level Cache** | **DFS Topological Sorting Fail-Fast Interception** | Spring masks cycles with 3-tier caching; Path-IoC uses compile-time Fail-Fast detection to guarantee event loop safety. |
 | **`@Aspect` (AspectJ / CGLIB)** | **Functional Higher-Order Proxies** | Zero bytecode manipulation; leverages JavaScript closures for non-invasive cross-cutting concerns. |
 | **JNDI / Dynamic Discovery** | **Pattern-Searchable Dependency Lookup** | Supports regex and predicates: `dependencies: (all) => all.filter(...)`. |
-| **`@Scope("request")`** | **`requestContext` Request-Isolated Containers** | Static graph compiled once at boot; lightweight request-scoped context created on demand for Serverless & Edge. |
 
 ---
 
@@ -183,6 +182,36 @@ import { createModularContainer } from "virtual:modular-container";
 // One-line container ignition: DAG topological scheduling handled automatically by unplugin
 createModularContainer();
 ```
+
+### Host Ignition Boundary: Why Does the Entry Point Only Call `createModularContainer()`?
+
+Developers new to Path-IoC often wonder: *"Why don't we assign the return value in `main.ts` and call business methods on the container?"*
+
+**Because Path-IoC is an application-level self-organizing module system (Mesh Module System), not an ordinary object factory.** Consider two classic host boundaries in software engineering:
+
+1. **Standard Java Spring Boot Practice**:
+   ```java
+   @SpringBootApplication
+   public class Application {
+       public static void main(String[] args) {
+           // Pure container ignition switch: never call getBean() in main!
+           SpringApplication.run(Application.class, args);
+       }
+   }
+   ```
+   In any production-grade Spring application, extracting beans from the container in `main` to run business logic is strictly prohibited. If post-startup execution is needed, managed beans implement `CommandLineRunner`, `ApplicationRunner`, or listen to `@EventListener(ApplicationReadyEvent.class)` inside the container.
+2. **Standard Browser HTML & ES Module Practice**:
+   ```html
+   <!-- Host environment ESM ignition switch -->
+   <script type="module" src="./main.js"></script>
+   ```
+   Nobody writes code in an HTML `<script>` tag to grab exported objects from an ES module and invoke methods. The `<script type="module">` tag merely triggers the browser to resolve the ESM dependency graph; once ignited, the entire application lifecycle runs exclusively within the ES module graph.
+3. **The Equivalent Boundary in Path-IoC**:
+   ```typescript
+   // Host environment & Mesh module system ignition switch
+   createModularContainer();
+   ```
+   `createModularContainer()` in `src/main.ts` is the `SpringApplication.run()` and `<script type="module">` of the Mesh Module universe. It solely compiles the DAG topology and activates dependencies. Once ignited, **100% of business logic, lifecycle orchestration, route handling, and AOP aspects operate autonomously within Mesh Modules**. Extracting objects into `main.ts` to execute business logic is a category error that degrades a module system runtime into an ordinary dictionary.
 
 **Key Architectural Benefits**:
 1. **Zero Annotation Invasiveness**: No `@Injectable()`, `@Autowired()`, or proprietary metadata tokens.

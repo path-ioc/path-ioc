@@ -109,7 +109,6 @@ export abstract class UserRepository {
 | **三级缓存 (Three-level Cache)** | **DFS 拓扑排序 Fail-Fast 严格拦截** | Java 用三级缓存兜底循环依赖；Path-IoC 在图编译期以 Fail-Fast 阻断致命环路，保障单线程安全。 |
 | **`@Aspect` (AspectJ / CGLIB)** | **动态高阶函数代理 (AOP Proxies)** | 无需字节码操纵与复杂注解，直接利用 JS 闭包代理实现无侵入切面拦截。 |
 | **JNDI / 动态服务发现** | **可模式搜索的依赖查找** | 支持 `dependencies: (all) => all.filter(...)` 正则与通配符批量纳管。 |
-| **`@Scope("request")`** | **`requestContext` 请求隔离容器** | 启动期静态图单例缓存，HTTP 请求期轻量容器填充，无反射损耗，完美契合 Serverless/Edge。 |
 
 ---
 
@@ -183,6 +182,36 @@ import { createModularContainer } from "virtual:modular-container";
 // 一键点火启动容器，所有依赖拓扑调度与异步预热由 unplugin 全自动接管
 createModularContainer();
 ```
+
+### 宿主点火边界：为什么入口只有一行 `createModularContainer()`？
+
+很多初次接触 Path-IoC 的开发者容易产生一个疑问：“`createModularContainer()` 之后，为什么不需要在 `main.ts` 中接收返回值去调用业务方法？”
+
+**因为 Path-IoC 是应用级自组织模块系统（Mesh Module System），而不是普通对象工厂。** 让我们对比两组最经典的标准宿主边界：
+
+1. **Java Spring Boot 的标准实践**：
+   ```java
+   @SpringBootApplication
+   public class Application {
+       public static void main(String[] args) {
+           // 纯粹的容器点火开关，绝不在 main 里拿 getBean() 调业务！
+           SpringApplication.run(Application.class, args);
+       }
+   }
+   ```
+   在任何规范的 Spring 生产工程中，绝不允许在 `main` 启动类中从容器捞出 Bean 执行业务。若应用启动后需要执行预热或业务逻辑，必须通过实现 `CommandLineRunner`、`ApplicationRunner` 或监听 `@EventListener(ApplicationReadyEvent.class)`，由 Spring 容器纳管的 Bean 在内部自闭环完成。
+2. **浏览器 HTML 与 ES Module 的标准实践**：
+   ```html
+   <!-- 宿主环境的 ESM 点火开关 -->
+   <script type="module" src="./main.js"></script>
+   ```
+   绝不会有人在 HTML `<script>` 标签里从 ESM 导出对象中获取方法来写业务调用。`<script type="module">` 仅仅负责通知浏览器启动 ESM 依赖图解析；一旦点火，整个程序的生命周期全部在 ESM 的模块图谱内部流转。
+3. **Path-IoC 的同等边界**：
+   ```typescript
+   // 宿主环境与 Mesh 模块系统的点火开关
+   createModularContainer();
+   ```
+   `main.ts` 中的 `createModularContainer()` 就是 Mesh 模块世界中的 `SpringApplication.run()` 与 `<script type="module">`。它纯粹负责触发 DAG 拓扑编译与依赖激活；一旦点火，**100% 的业务逻辑、生命周期编排、接口路由与切面治理均在 Mesh Module 内部自闭环运转**。任何试图在 `main.ts` 中把 `container` 接出来写业务的做法，本质上都是把模块系统运行时降级为普通对象字典的范畴倒退。
 
 **架构优势**：
 1. **零注解侵入**：业务代码里没有任何 `@Injectable`、`@Autowired` 或特权黑魔法；
