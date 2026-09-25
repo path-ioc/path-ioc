@@ -3,7 +3,7 @@
     <img src="https://cdn.path-ioc.dev/path-ioc/logo.svg" width="120" height="129" alt="Path-IoC Logo">
   </a>
   <h1>Path-IoC</h1>
-  <p><b>纯同步拓扑依赖查找引擎 (IoC-DL) 与 TypeScript 通用模块化基础库</b></p>
+  <p><b>对标原生 ESM 的应用级自组织模块系统与纯依赖查找 (IoC-DL) 拓扑引擎</b></p>
   <p>基于物理文件目录路径的无反射、零装饰器、微秒级拓扑依赖查找与 DAG 调度引擎</p>
 
   <p>
@@ -23,26 +23,39 @@
 
 ---
 
+## 实机编码与极速点火演示录屏 (Live Demo Video)
+
+<div align="center">
+  <video src="https://cdn.path-ioc.dev/path-ioc/demo-zh.mp4" controls width="100%" playsinline>
+    您的浏览器不支持 HTML5 视频播放。<a href="https://cdn.path-ioc.dev/path-ioc/demo-zh.mp4">点击查看实机演示视频</a>
+  </video>
+  <p><em>⚡ 实机架构漫游：实时编码、拓扑依赖编排与极速容器点火</em></p>
+</div>
+
+---
+
 ## 概述：传统 TypeScript 依赖与 IoC 框架的深层痛点
 
-在传统大型前端工程或全栈中台中，模块之间往往充斥着纵横交错的相对路径 `import`，随着系统复杂度上升，不可避免地陷入：
+在传统大型前端工程与全栈单体中，模块之间充斥着纵横交错的相对路径 `import`。随着业务演进，不可避免地陷入：
 
-- **死锁泥潭与循环依赖（Circular Dependencies）**：物理交叉引用在运行时触发未定义报错；
-- **隐式强耦合，拆分重构举步维艰**：重命名或迁移底层文件波及数十个上层业务代码；
-- **传统 TS IoC 方案在现代打包器下的“元数据擦除崩溃”**：NestJS / InversifyJS 强依赖 `reflect-metadata` 与实验性装饰器。在现代打包器（Vite、ESBuild、Rollup、SWC）的纯类型擦除下极易崩溃；
-- **边缘计算冷启动严苛限制**：Cloudflare Workers / Serverless 仅有 10ms~50ms CPU 时间限制，传统框架高频元数据查表极易导致请求超时。
+- **死锁泥潭与循环依赖（Circular Dependencies）**：物理交叉引用在运行时触发未定义报错（`TypeError: undefined is not a function`）；
+- **隐式强耦合，拆分重构举步维艰**：重命名或迁移底层文件波及数十个上层业务代码，重构摩擦极大；
+- **传统 TS IoC 方案在现代打包器下的“元数据擦除崩溃”**：NestJS / InversifyJS 强依赖 `reflect-metadata` 与实验性装饰器。在现代打包器（Vite、Rolldown、ESBuild、Rollup、SWC）的纯类型擦除下极易崩溃；
+- **边缘计算冷启动严苛限制**：Cloudflare Workers / Serverless 仅有 10ms~50ms CPU 时间限制，传统框架高频元数据查表极易导致冷启动超时；
+- **宿主强绑定与框架锁死**：传统框架强行侵入应用入口（如 `main.ts`），导致业务代码与特定 HTTP 框架及专有类装饰器深度绑定。
 
 ---
 
 ## Path-IoC 的解决之道：路径即契约 (Path as Contract)
 
-Path-IoC 带来全新的 **“物理路径即逻辑契约”** 设计哲学：
+Path-IoC 带来全新的 **“物理路径即逻辑契约”** 架构设计：
 
-1. **纯同步无锁 DAG 拓扑调度**：基于 Kahn 算法与权重拓扑优先级，50 节点依赖装配仅需 **`21.2 微秒 (µs)`**；
-2. **零学习成本与原生 AOP**：无需任何装饰器与元数据，纯函数 `main(container)` 导出，依托动态语言函数一等公民实现纯正的面向切面编程；
-3. **全自动 TypeScript 类型推导**：保存代码即毫秒级生成全局强类型推导（`ModularContainer` / `ModuleMap`）；
-4. **跨构建工具通用插件体系**：基于 `unplugin` 规范，一套配置原生适配 Vite、Rolldown、Webpack 5、Rspack、Rollup 与 Node.js；
-5. **边缘计算极致冷启动**：“静态图单例 + 请求级容器多例”，完美贴合 Cloudflare Workers / SCF 严苛的 CPU 纳秒级响应限制。
+1. **应用级自组织模块系统（Application-Level Mesh Module System）**：对标原生 ESM，作为业务层自组织网格。宿主（Hono、Express、Koa、Next.js API、Workers、CLI 等）只做一行代码点火（`createModularContainer()`），业务模块在网格内自闭环运转，不挑宿主，零框架锁死；
+2. **基于 DFS 拓扑排序与 Promise 反应式并发流**：依托深度优先搜索（DFS）后序遍历压栈拓扑排序与 Promise.all 记忆化反应式并发流，50 节点依赖装配仅需 **`21.2 微秒 (µs)`**；
+3. **物理路径即特征（Feature）与短名称 Mesh ID**：物理路径前缀（如 `/infra/`、`/biz/`）作为特征标签（类比元数据注解），静态依赖直接使用极简短名称（如 `dependencies = ["logger", "db"]`），直接解构并享受全局类型推导；
+4. **零装饰器与纯函数闭包**：无需任何类装饰器与元数据反射，纯函数工厂 `main(container)` 导出，依托动态语言函数一等公民实现纯正无侵入的面向切面编程；
+5. **编译器-运行时协同设计（Compiler-Runtime Co-design）**：`@path-ioc/unplugin` 维护单图编译缓存闭包（冷启动单次编译 1.72ms，后续点火仅 21.2µs），AST 监听器实现 0.04ms 实时类型生成；
+6. **全构建工具生态适配**：基于 `unplugin` 规范，一套配置原生适配 Vite、Rolldown、Webpack 5、Rspack、Rollup 与 Node.js，完美契合 Edge/Serverless CPU 纳秒级响应限制。
 
 ---
 
@@ -77,7 +90,7 @@ flowchart TD
 
     subgraph RunTime ["核心运行态 (Runtime Engine)"]
         E["@path-ioc/core<br>(Pure DAG Engine)"]
-        F["拓扑排序 & 环形依赖深搜拦截"]
+        F["DFS 拓扑排序与 Promise 反应式并发流"]
         G["无锁级联容器装配<br><code>ModularContainer</code>"]
         
         D -->|依赖收集| E
@@ -102,9 +115,9 @@ flowchart TD
 | 子包 (Package) | 职责定位 (Responsibility) | NPM 状态 | 文档指南 |
 | :--- | :--- | :--- | :--- |
 | [**`@path-ioc/core`**](./packages/core) | **核心引擎**：纯净、极速的拓扑依赖解析与图调度（浏览器/Node/Worker 通用） | [![npm](https://img.shields.io/npm/v/@path-ioc/core.svg)](https://www.npmjs.com/package/@path-ioc/core) | [查看核心文档](./packages/core/README.md) |
-| [**`@path-ioc/unplugin`**](./packages/unplugin) | **通用插件**：跨构建器插件（Vite/Webpack/Rspack），自动生成类型与注入虚拟模块 | [![npm](https://img.shields.io/npm/v/@path-ioc/unplugin.svg)](https://www.npmjs.com/package/@path-ioc/unplugin) | [查看插件文档](./packages/unplugin/README.md) |
-| [**`@path-ioc/container`**](./packages/container) | **高阶容器**：Demand Proxy 懒加载、Turbo Mode 运行期解环扩展 | [![npm](https://img.shields.io/npm/v/@path-ioc/container.svg)](https://www.npmjs.com/package/@path-ioc/container) | [查看容器扩展](./packages/container/README.md) |
-| [**`@path-ioc/pack`**](./packages/pack) | **分发打包**：物理入口生成器与网格依赖打包器 | [![npm](https://img.shields.io/npm/v/@path-ioc/pack.svg)](https://www.npmjs.com/package/@path-ioc/pack) | [查看打包文档](./packages/pack/README.md) |
+| [**`@path-ioc/unplugin`**](./packages/unplugin) | **编译器-运行时协同插件**：跨构建器插件（Vite/Rolldown/Webpack/Rspack），单图编译缓存与微秒级类型生成 | [![npm](https://img.shields.io/npm/v/@path-ioc/unplugin.svg)](https://www.npmjs.com/package/@path-ioc/unplugin) | [查看插件文档](./packages/unplugin/README.md) |
+| [**`@path-ioc/container`**](./packages/container) | **高阶实验容器**：Demand Proxy 懒加载与子图切片（历史概念对比与评测包，非生产推荐包） | [![npm](https://img.shields.io/npm/v/@path-ioc/container.svg)](https://www.npmjs.com/package/@path-ioc/container) | [查看容器扩展](./packages/container/README.md) |
+| [**`@path-ioc/pack`**](./packages/pack) | **分发打包**：专用于 Mesh 网格独立依赖打包分发的发布构建插件 | [![npm](https://img.shields.io/npm/v/@path-ioc/pack.svg)](https://www.npmjs.com/package/@path-ioc/pack) | [查看打包文档](./packages/pack/README.md) |
 | [**`@path-ioc/benchmarks`**](./packages/benchmarks) | **性能压测**：基于 Mitata 的高精度多场景性能测试套件 | 私有包 | [查看压测文档](./packages/benchmarks/README.md) |
 
 ---
@@ -134,10 +147,10 @@ export default defineConfig({
 
 ### 3. 编写业务模块 (`src/modules/order-service/index.ts`)
 ```typescript
-// 纯函数闭包工厂，零装饰器，直接从 container 提取依赖 (IoC-DL 依赖查找)
-export const main = (container: ModularContainer) => {
-  const { dbConnection, userService } = container;
+// 纯函数闭包工厂，零装饰器，直接使用短名称 Mesh ID 依赖查找 (IoC-DL)
+export const dependencies = ["dbConnection", "userService"];
 
+export const main = ({ dbConnection, userService }: ModularContainer) => {
   return {
     async createOrder(item: string, price: number) {
       const user = await userService.getCurrentUser();
@@ -145,27 +158,23 @@ export const main = (container: ModularContainer) => {
     },
   };
 };
-
-// 拓扑前置依赖：插件自动将目录名转为驼峰短名称
-export const dependencies = ["dbConnection", "userService"];
 ```
 
 ### 4. 编写启动业务模块 (`src/modules/start-app/index.ts`)
 ```typescript
 // 一切业务皆模块：初始调用收敛在 IoC 模块内，天然保障 AOP 切面与依赖拓扑就绪
-export const main = (container: ModularContainer) => {
-  const { orderService } = container;
+export const dependencies = ["orderService"];
+
+export const main = ({ orderService }: ModularContainer) => {
   orderService.createOrder("MacBook Pro M5", 19999);
 };
-
-export const dependencies = ["orderService"];
 ```
 
-### 5. 应用入口点火唤醒 (`src/main.ts`)
+### 5. 宿主应用入口点火唤醒 (`src/main.ts`)
 ```typescript
 import { createModularContainer } from "virtual:modular-container";
 
-// 入口保持绝对纯粹：仅充当容器点火器，零业务逻辑污染
+// 宿主点火边界：入口保持绝对纯粹，仅充当一行点火器，零业务逻辑污染
 createModularContainer();
 ```
 

@@ -1,7 +1,7 @@
 <div align="center">
   <h1>@path-ioc/unplugin</h1>
-  <p><b>Universal Dev Plugin for Path-IoC (Virtual Container & Type Generator)</b></p>
-  <p>Cross-bundler virtual module injector & automated TypeScript type generator for Vite, Rolldown, Webpack 5, Rspack, Rollup, and Esbuild</p>
+  <p><b>Compiler-Runtime Co-design Plugin for Path-IoC (Virtual Container & Type Synthesis)</b></p>
+  <p>Cross-bundler virtual module injector & microsecond TypeScript type generator for Vite, Rolldown, Webpack 5, Rspack, Rollup, and Esbuild</p>
 
   <p>
     <a href="https://www.npmjs.com/package/@path-ioc/unplugin"><img src="https://img.shields.io/npm/v/@path-ioc/unplugin.svg" alt="NPM version"></a>
@@ -18,57 +18,82 @@
   </p>
 </div>
 
-> 💡 **Architectural Positioning**: `@path-ioc/unplugin` is the companion build-time engine for [`@path-ioc/core`](../core). In production projects, both work as one: `unplugin` scans physical module directories at build time and synthesizes real-time `.d.ts` definitions, while `core` executes lock-free DAG topological scheduling at runtime.  
-> **For the full architecture manifesto, design principles, and end-to-end guide:**  
-> 📖 **[Read the @path-ioc/core Guide](../core/README.md)** or visit **[https://path-ioc.dev](https://path-ioc.dev)**.
+> 💡 **Architectural Positioning: Compiler-Runtime Co-design**  
+> `@path-ioc/unplugin` is not a mere convenience helper; it is the compiler-side twin intimately coupled with [`@path-ioc/core`](../core/README.md), forming the bedrock of Path-IoC's **Compiler-Runtime Co-design** philosophy.  
+> In modern TypeScript development, relying on runtime reflection (`reflect-metadata`) causes bundling failures, cold-start latency, and lack of true static type awareness. `@path-ioc/unplugin` shifts module scanning, DAG topological caching, and type synthesis to the build phase, enabling sub-millisecond hot-reloading and **21.2 µs** per-request container ignition for the [`@path-ioc/core`](../core/README.md) runtime.  
+> 📖 **For module authoring specifications, pure function factories, and end-to-end guides, see: [`@path-ioc/core` Official Guide](../core/README.md)** or visit the official documentation at **[https://path-ioc.dev/](https://path-ioc.dev/)**.
 
 ---
 
-## Key Responsibilities
+## Live Demo & Instant Ignition (Live Demo Video)
 
-- **Universal Bundler Support**:
-  Built on the `unplugin` standard to natively support **Vite**, **Rolldown (Rust)**, **Webpack 5**, **Rspack**, **Rollup**, and **Esbuild** with a unified configuration API.
-- **`virtual:modular-container` Streaming Module Injection**:
-  Automatically scans `src/modules/**/index.{ts,tsx}` during development/build to generate the complete module registry. Injected purely in-memory for Vite/Rolldown/Rollup, and dynamically bridged for Webpack/Rspack.
-- **Zero-Config TypeScript Type Synthesis**:
-  Generates `ignore.modular.d.ts` in milliseconds during dev mode and HMR, augmenting the global `ModularContainer` interface with 100% accurate IDE auto-completion.
-- **Automatic `.gitignore` Self-Healing**:
-  Appends `ignore.*` rules to your project's `.gitignore` automatically to prevent ephemeral declaration files from polluting version control.
+<div align="center">
+  <video src="https://cdn.path-ioc.dev/path-ioc/demo-en.mp4" controls width="100%" playsinline>
+    Your browser does not support the video tag. <a href="https://cdn.path-ioc.dev/path-ioc/demo-en.mp4">Watch Live Demo Video</a>
+  </video>
+  <p>⚡ <b><a href="https://cdn.path-ioc.dev/path-ioc/demo-en.mp4">Watch Live Architecture Tour: Real-time Coding, Topological Orchestration & Instant Ignition</a></b></p>
+</div>
 
 ---
 
-## Installation
+## Key Pillars of Compiler-Runtime Co-design
+
+### 1. Single-Graph Compile Cache Closure (`compiledGraph`)
+Inside the generated `virtual:modular-container`, `@path-ioc/unplugin` maintains a module-level closure that holds the pre-compiled `compiledGraph`:
+- **One-Time Cold Boot**: The entire application's dependency DAG is parsed, validated, and sorted once at process startup (500 nodes compile in just **1.72 ms**);
+- **Ultra-Fast Request Ignition**: Every invocation of `createModularContainer()` reuses the cached immutable graph, hydrating an isolated container in just **21.2 microseconds (µs)**;
+- **Zero Runtime DAG Recomputation**: In high-concurrency environments (Cloudflare Workers, Hono, Node.js), incoming HTTP requests suffer zero latency penalty from graph reconstruction.
+
+### 2. Microsecond AST Real-Time Type Synthesis (`0.04 ms`)
+During development and Hot Module Replacement (HMR), the plugin's background AST scanner detects file changes and generates `types/ignore.modular.d.ts` in **0.04 milliseconds**:
+- Augments the global `ModularContainer` interface with zero manual boilerplate;
+- Developers write `const { db, logger } = container;` and instantly enjoy 100% accurate IDE auto-completion and type checking;
+- Safely manages ephemeral declaration files with automatic `.gitignore` self-healing.
+
+### 3. Clear Host Ignition Boundary
+Traditional frameworks force business code to adapt to proprietary application classes and controller decorators. With `@path-ioc/unplugin`, the host only ignites the container:
+```typescript
+import { createModularContainer } from "virtual:modular-container";
+
+// One-line host ignition (Hono, Express, Koa, Workers, Next.js API, CLI)
+const container = await createModularContainer();
+```
+Business modules circulate 100% autonomously within the mesh, completely decoupled from the host environment.
+
+---
+
+## Universal Bundler Integration
+
+### 1. Installation
 
 ```bash
 pnpm add -D @path-ioc/unplugin
 pnpm add @path-ioc/core
 ```
 
----
+### 2. Bundler Configuration Quick Reference
 
-## Bundler Quick Reference
-
-### 1. Vite (`vite.config.ts`)
+#### Vite (`vite.config.ts`)
 ```typescript
 import { defineConfig } from "vite";
 import { vitePlugin as pathIoc } from "@path-ioc/unplugin";
 
 export default defineConfig({
-  plugins: [pathIoc({ modulesPath: "src/modules", typeFileOutput: "types" })],
+  plugins: [pathIoc()],
 });
 ```
 
-### 2. Rolldown (`rolldown.config.ts`)
+#### Rolldown (`rolldown.config.ts`)
 ```typescript
 import { defineConfig } from "rolldown";
 import { rolldownPlugin as pathIoc } from "@path-ioc/unplugin";
 
 export default defineConfig({
-  plugins: [pathIoc({ modulesPath: "src/modules", typeFileOutput: "types" })],
+  plugins: [pathIoc()],
 });
 ```
 
-### 3. Rspack (`rspack.config.js`)
+#### Rspack (`rspack.config.js`)
 ```javascript
 const { rspackPlugin: pathIoc } = require("@path-ioc/unplugin");
 
@@ -77,26 +102,35 @@ module.exports = {
 };
 ```
 
-### 4. Webpack 5 (`webpack.config.js`)
+#### Webpack 5 (`webpack.config.js`)
 ```javascript
 const { webpackPlugin: pathIoc } = require("@path-ioc/unplugin");
 
 module.exports = {
-  plugins: [pathIoc({ modulesPath: "src/modules" })],
+  plugins: [pathIoc()],
 };
 ```
 
-### 5. Rollup (`rollup.config.js`) / Esbuild
+#### Rollup (`rollup.config.js`) & Esbuild
 ```javascript
 // Rollup
 import { rollupPlugin as pathIoc } from "@path-ioc/unplugin";
+
 // Esbuild
 import { esbuildPlugin as pathIoc } from "@path-ioc/unplugin";
 ```
 
+> **Zero-Configuration by Default**: All bundler plugins fully support zero-argument `pathIoc()` invocation. If your project uses custom directories, override them as needed:
+> ```typescript
+> pathIoc({
+>   modulesPath: "src/modules",   // Custom module root directory (default: "src/modules")
+>   typeFileOutput: "types",     // Custom type declaration output directory (default: "types")
+> })
+> ```
+
 ---
 
-## Plugin Options
+## Plugin Options (`PathIocPluginOptions`)
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -105,10 +139,49 @@ import { esbuildPlugin as pathIoc } from "@path-ioc/unplugin";
 
 ---
 
-## Production Usage & Module Writing
+## Virtual Module (`virtual:modular-container`)
 
-For practical guidance on creating modules with `main`, declaring dependencies, and igniting the container, please see:  
-👉 **[Read @path-ioc/core Documentation](../core/README.md)**
+The plugin injects `virtual:modular-container` into your application at build time:
+
+```typescript
+import {
+  modules,                 // Complete module descriptor array: { key: string, module: IOCModule }[]
+  createModularContainer,  // High-performance container bootstrapper: (targetContainer?: Record<string, any>) => Promise<ModularContainer>
+} from "virtual:modular-container";
+```
+
+### Serverless / Hono Production Example (Request Isolation)
+
+```typescript
+import { Hono } from "hono";
+import { createModularContainer } from "virtual:modular-container";
+import { memoizeModule } from "@path-ioc/core";
+
+const app = new Hono<{ Bindings: { DB_URL: string } }>();
+
+app.use("*", async (c, next) => {
+  // 1. Instant container ignition: single-graph cache (only 21.2µs)
+  const container = await createModularContainer();
+
+  // 2. Safe infrastructure singleton memoization
+  memoizeModule(container, "dbPool", () => createPostgresPool(c.env.DB_URL));
+
+  // 3. Dynamic injection of per-request multi-tenant context
+  container.$inject("requestContext", {
+    requestId: c.req.header("x-request-id") || crypto.randomUUID(),
+  });
+
+  c.set("ioc", container);
+  await next();
+});
+```
+
+---
+
+## Module Authoring & Core Runtime Guide
+
+`@path-ioc/unplugin` focuses on compile-time automated scanning, type synthesis, and single-graph cache injection. For authoring `main` pure-function closures, declaring Mesh dependencies, and leveraging IoC-DL and AOP aspects, please refer directly to:  
+👉 **[Read the `@path-ioc/core` Architectural & Practical Guide](../core/README.md)** or visit the official documentation at **[https://path-ioc.dev/](https://path-ioc.dev/)**.
 
 ---
 

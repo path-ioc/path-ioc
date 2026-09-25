@@ -29,7 +29,7 @@ const videoSrc = computed(() => {
 
           <div class="window-title">
             <span class="window-icon">⚡</span>
-            <span>{{ isZh ? "path-ioc-demo · 75秒实机编码与极速点火录屏" : "path-ioc-demo · 75s Live Architecture Tour" }}</span>
+            <span>{{ isZh ? "path-ioc-demo · 实机编码与极速点火演示录屏" : "path-ioc-demo · Live Architecture & Ignition Demo" }}</span>
           </div>
 
           <div class="window-badge">

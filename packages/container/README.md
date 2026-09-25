@@ -15,9 +15,9 @@
   </p>
 </div>
 
-> **Architectural Purpose**:  
-> `@path-ioc/core` static graph compilation and native `async/await` topological preheating form the bedrock of Path-IoC.  
-> `@path-ioc/container` is the companion extension proving that without TypeScript decorators or `reflect-metadata`, Path-IoC natively accommodates and surpasses traditional JS IoC frameworks in **"On-Demand Subgraph Slicing"** and **"Dynamic Dependency Resolution"**, delivering **4 physically closed-loop scheduling paradigms**.
+> ⚠️ **Historical Evolution Experimental Package / Not Recommended for Production**  
+> `@path-ioc/container` was developed as an experimental proof-of-concept and benchmark package to evaluate synchronous getter-based lazy loading against traditional JS IoC frameworks (such as InversifyJS). Due to strict sequential mutex constraints on property resolution, **it is not recommended for standard production applications and has no active iteration roadmap**.  
+> For production systems, please use [`@path-ioc/core`](../core) and [`@path-ioc/unplugin`](../unplugin) with `createModularContainer`.
 
 ---
 
@@ -27,34 +27,22 @@
 
 In enterprise production (similar to Java Spring's default `eager-singleton`), full DAG topological preheating at boot time remains the gold standard for system stability, dependency integrity, and runtime throughput:
 
-- **Canonical Core (`@path-ioc/core`)**: Strictly rigorous—static graph compilation, DFS Fail-Fast cyclic dependency rejection, and native `async/await` DAG concurrency. Rejects implicit cycle-breaking that masks architectural design flaws.
-- **Extended Container (`@path-ioc/container`)**: Open and versatile—wraps high-order proxy containers to decompose "Loading Scope (`eager` | `demand`)" and "Execution Engine (`async` | `turbo`)" into a **2-dimensional orthogonal matrix**, matching traditional on-demand IoC patterns.
+- **Canonical Core (`@path-ioc/core`)**: Strictly rigorous—static graph compilation, DFS Fail-Fast cyclic dependency rejection, and native `async/await` DAG concurrency. Rejects implicit cycle-breaking that masks architectural design flaws;
+- **Extended Container (`@path-ioc/container`)**: Exploratory—wraps high-order proxy containers to decompose "Loading Scope (`eager` | `demand`)" and "Execution Engine (`async` | `turbo`)" into a **2-dimensional orthogonal matrix**, evaluating traditional on-demand IoC patterns.
 
 ---
 
 ### 2. The Irreconcilable Physical Law: `async` vs. `turbo`
 
-In the JavaScript/TypeScript single-threaded execution model, **"Asynchronous Initialization"** and **"Dynamic Runtime Dependency Sensing"** are physically irreconcilable:
+In the JavaScript single-threaded execution model, **"Asynchronous Initialization"** and **"Dynamic Runtime Dependency Sensing"** are physically irreconcilable:
 
-- **Physical Reason**: JavaScript's Proxy dynamic getter (`c.foo`) is purely synchronous; it cannot suspend execution mid-flight to await an asynchronous microtask.
-  - If a module requires asynchronous setup (`async main`), its dependencies **must be statically declared beforehand** so the DAG scheduler can orchestrate topological `await` execution.
+- **Physical Reason**: JavaScript's Proxy dynamic getter (`container.foo`) is purely synchronous; it cannot suspend execution mid-flight to await an asynchronous microtask.
+  - If a module requires asynchronous setup (`async main`), its dependencies **must be statically declared beforehand** so the DAG scheduler can orchestrate topological `await` execution;
   - If dynamic sensing without declared dependencies were permitted during `async` execution, accessing an unready node would inevitably yield unhandled dangling Promises or deadlock the event loop.
 
 Path-IoC resolves this via physical separation:
-- **`async` mode**: Explicit `dependencies` -> Compiled static DAG -> **100% Native Reactive Topological Concurrency**;
-- **`turbo` mode**: Zero `dependencies` declarations -> Runtime Proxy Dynamic Getters -> **Zero-config pass-through & lock-free cycle unwinding**.
-
----
-
-## Selection Matrix
-
-| Dimension | **NestJS** | **InversifyJS** | **Awilix** | **TSyringe** | **TypeDI** | **@path-ioc/container** |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Core Contract** | `@Injectable()` + TS Decorators + `reflect-metadata` | `@injectable()` + TS Decorators + `reflect-metadata` | Regex `.toString()` or param inspection + Proxy | `@singleton()` + TS Decorators + `reflect-metadata` | `@Service()` + TS Decorators + `reflect-metadata` | **Physical Path Contract + Pure ES Closures + Static Graph** |
-| **Code Intrusion** | High (framework decorators everywhere) | High (bound to `@inject`) | Low (matches parameters) | High (Microsoft decorators) | High (TypeDI decorators) | **Zero** (Pure ES functions; runs independently) |
-| **On-Demand / Lazy Paradigm** | Module-level explicit lazy loading (`LazyModuleLoader`) | Property-level lazy injection (`@lazyInject`) | Proxy-based on-demand instantiation (sync only) | Not supported | Not supported | **Forward Subgraph Slicing** (`extractSubModules` automatically extracts forward dependency slice) |
-| **Cycle Resolution** | `forwardRef()` (breaks easily on async) | `@lazyInject()` deferred lookup | Dynamic Proxy Getter (sync only) | `delay()` with explicit token | `constructMany` deferred | **Turbo Mode Dynamic Getter** (Zero tokens; automatic sync cycle unwinding) |
-| **Async Concurrency** | Serial pipeline; sequential blocking | `getAsync()` without native DAG | Async factory (`container.build()`) | None | None | **Dual Engine Scheduler** (`async` native DAG concurrency / `turbo` synchronous pass-through) |
+- **`async` mode (Supports async, requires declared `dependencies`)**: Explicit `dependencies` -> Compiled static DAG -> **100% Native Reactive Topological Concurrency** (cascaded asynchronously via `Promise.all`);
+- **`turbo` mode (Pure synchronous pass-through, supports omitting `dependencies`)**: **Strictly forbids asynchronous `main` factories** (throws `[Turbo Mode] Async module is not supported` if a Promise is returned). Because the synchronous call stack never suspends, **modules can completely omit `dependencies`**, relying on Proxy Dynamic Getters to synchronously traverse and hydrate dependencies on demand; calling-phase mutual references avoid deadlocks naturally, while initialization-phase circular deadlocks trigger a call stack overflow or are caught by static DFS Fail-Fast interception.
 
 ---
 
@@ -67,20 +55,32 @@ Path-IoC resolves this via physical separation:
                     │      mode: "async"      │      mode: "turbo"      │
                     │  (Reactive DAG Engine)  │  (Zero-Promise Sync)    │
 ┌───────────────────┼─────────────────────────┼─────────────────────────┤
-│ strategy: "eager" │  ① Full Async Preheat   │  ② Sync Preheat + Dynamic│
+│ strategy: "eager" │  ① Full Async Preheat   │  ② Sync Preheat + Direct│
 │ (Full Load)       │  (Mounts $ready handle) │  (Fast sync utilities)  │
 ├───────────────────┼─────────────────────────┼─────────────────────────┤
 │ strategy: "demand"│  ③ Subgraph On-Demand   │  ④ Direct Sync Pass-thru│
-│ (Instant Slice)   │  (Large SPA / Fuse Prot)│  (Ultra-fast CLI / Test)│
+│ (Instant Slice)   │  (Strict Mutex Guard)   │  (Ultra-fast CLI / Test)│
 └───────────────────┴─────────────────────────┴─────────────────────────┘
 ```
 
-| Paradigm (`strategy` $\times$ `mode`) | Trigger Mechanism | Key Characteristics | Best Suited For |
+| Paradigm (`strategy` $\times$ `mode`) | Trigger Mechanism | Key Characteristics | Intended Scenario |
 | :--- | :--- | :--- | :--- |
-| **`eager` + `async`** | Container creation | Full DAG topological concurrency preheat; non-enumerable `container.$ready` handle | Standard servers / microservices, preheating pools and caches at startup |
-| **`eager` + `turbo`** | Container creation | Synchronously evaluates modules in topological order; tracks dynamically added modules | Synchronous client applications, complex monolithic toolchains |
-| **`demand` + `async`** | Property access (`container.UserPage`) | Traverses forward dependency tree to extract minimum slice; strict fuse protection | Large SPAs, route-level code splitting, extreme cold-start optimization |
-| **`demand` + `turbo`** | Property access (`container.foo`) | Instant synchronous evaluation without `await`; supports dynamic sensing & unwinding | Ultra-fast CLI tools, synchronous pipelines, unit test isolation |
+| **`eager` + `async`** | Container creation | Full DAG topological concurrency preheat; non-enumerable `container.$ready` handle | Asynchronous pre-warming experiments |
+| **`eager` + `turbo`** | Container creation | Synchronously evaluates modules in topological order; throws if an async module is encountered | Synchronous utility test suites |
+| **`demand` + `async`** | Property access (`container.UserPage`) | Traverses forward dependency tree to extract minimum slice. **Warning**: Mutex-guarded; sequential `await` is required, and concurrent accesses (e.g. `Promise.all([container.a, container.b])`) will throw a mutex conflict error | Demand-driven async slicing tests |
+| **`demand` + `turbo`** | Property access (`container.foo`) | Instant synchronous evaluation without `await`; strictly intercepts dependency cycles via DFS Fail-Fast | Synchronous batch pipelines, unit test isolation |
+
+---
+
+## Selection Matrix
+
+| Dimension | **NestJS** | **InversifyJS** | **Awilix** | **@path-ioc/core** *(Standard)* | **@path-ioc/container** *(Experimental)* |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Core Contract** | `@Injectable()` + Decorators | `@injectable()` + Decorators | Regex `.toString()` + Proxy | **Physical Path Contract + Pure Closures + Static Graph** | **Physical Path Contract + High-Order Proxy** |
+| **Code Intrusion** | High | High | Low | **Zero** (Pure ES functions) | **Zero** (Pure ES functions) |
+| **On-Demand / Lazy** | `LazyModuleLoader` | `@lazyInject` | Proxy on-demand (sync only) | Static DAG Preheating | **Forward Subgraph Slicing** (`extractSubModules`) |
+| **Cycle Resolution** | `forwardRef()` (breaks on async) | `@lazyInject()` | Dynamic Proxy Getter (sync) | **DFS Fail-Fast Cycle Interception** | **DFS Fail-Fast** (No dynamic async cycle breaking) |
+| **Production Ready** | Yes | Yes | Yes | **Recommended for Production** | ⚠️ **Experimental / Not Recommended** |
 
 ---
 
@@ -89,7 +89,7 @@ Path-IoC resolves this via physical separation:
 In `demand` mode, when accessing `container.UserPage` for the first time, the container does not pull the entire registry. Instead, it calls `extractSubModules(graph, 'UserPage')`:
 
 1. **Forward Traversal**: Starting from `UserPage`, performs depth-first recursion over `resolvedDepsMap`;
-2. **Deterministic Isolation**: Strictly collects `UserPage` and its downstream dependencies, pruning unrelated branches;
+2. **Deterministic Isolation**: Strictly collects `UserPage` and its downstream transitive dependencies, pruning unrelated branches;
 3. **Local Compilation**: Compiles the minimal extracted subset into a sub-graph and executes it immediately.
 
 ```
@@ -101,6 +101,8 @@ Access container.UserPage
                                       ├── 1. Recursively extract forward dependencies (UserService, UserApi...)
                                       └── 2. Compile and instantiate local slice immediately
 ```
+
+*(Note: `extractSubModules` is an internal private algorithm function, not exported publicly; it is dispatched automatically by the Proxy Getter in `demand` mode).*
 
 ---
 
@@ -131,16 +133,7 @@ export const createContainer: (
 ) => Record<string, unknown>;
 ```
 
----
-
-### `extractSubModules(graph, ...entryPoints)`
-
-```typescript
-export const extractSubModules: (
-  graph: CompiledModuleGraph,
-  ...entryPoints: string[]
-) => { key: string; module: IOCModule }[];
-```
+*(Note: In `eager + async` mode, a non-enumerable `$ready: Promise<void>` is attached to the returned object).*
 
 ---
 

@@ -3,7 +3,7 @@
     <img src="https://cdn.path-ioc.dev/path-ioc/logo.svg" width="120" height="129" alt="Path-IoC Logo">
   </a>
   <h1>Path-IoC</h1>
-  <p><b>Pure Topological Dependency Lookup (IoC-DL) Engine & Universal Modular Utility for Modern TypeScript</b></p>
+  <p><b>Application-Level Self-Organizing Mesh Module System & Pure Dependency Lookup (IoC-DL) Engine for TypeScript</b></p>
   <p>Zero-reflection, zero-decorator dependency lookup based on physical file paths.</p>
 
   <p>
@@ -23,14 +23,26 @@
 
 ---
 
-## Overview: The Problem with Traditional TypeScript Imports & IoC
+## Live Demo Video
 
-In large-scale web applications and monorepos, codebases typically accumulate thousands of explicit relative `import` statements. Over time, this architecture inevitably leads to:
+<div align="center">
+  <video src="https://cdn.path-ioc.dev/path-ioc/demo-en.mp4" controls width="100%" playsinline>
+    Your browser does not support the video tag. <a href="https://cdn.path-ioc.dev/path-ioc/demo-en.mp4">Watch Live Demo Video</a>
+  </video>
+  <p><em>⚡ Live Architecture Tour: Real-time Coding, Topological Orchestration & Instant Ignition</em></p>
+</div>
+
+---
+
+## Overview: The Problem with Traditional Imports & IoC Frameworks
+
+In large-scale web applications and monorepos, codebases accumulate thousands of explicit relative `import` statements. Over time, this architecture leads to:
 
 - **Circular Dependency Deadlocks**: Interdependent files crash at runtime (`TypeError: undefined is not a function`);
 - **Heavy Refactoring Friction**: Moving or renaming an infrastructure file cascades into batch editing across dozens of consumer files;
-- **Metadata Fragility in Modern Bundlers**: Traditional TypeScript IoC frameworks (NestJS, InversifyJS) depend strictly on `reflect-metadata` and experimental decorators. Under modern bundlers (Vite, Rollup, ESBuild, SWC) that perform pure AST type erasure, runtime reflection fails;
-- **Severe Serverless Cold-Start Latency**: Edge environments like Cloudflare Workers enforce tight 10ms–50ms CPU execution limits. Dynamic reflection lookups often exhaust these quotas during request startup.
+- **Metadata Fragility in Modern Bundlers**: Traditional TypeScript IoC frameworks (NestJS, InversifyJS) depend strictly on `reflect-metadata` and experimental decorators. Under modern bundlers (Vite, Rolldown, Rollup, ESBuild, SWC) that perform pure AST type erasure, runtime reflection fails;
+- **Severe Serverless Cold-Start Latency**: Edge environments like Cloudflare Workers enforce tight 10ms–50ms CPU execution limits. Dynamic reflection lookups exhaust these quotas during request startup;
+- **Framework Lock-in**: Traditional frameworks invade your application entrypoint and force all handlers and controllers into proprietary class abstractions.
 
 ---
 
@@ -38,11 +50,12 @@ In large-scale web applications and monorepos, codebases typically accumulate th
 
 Path-IoC introduces **"Physical Path as Logical Contract"**—a dynamic language architecture that replaces explicit import coupling with topological graph resolution:
 
-1. **Lock-Free Kahn DAG Scheduling**: Powered by Kahn's topological sort, 50 interdependent modules assemble in **`21.2 microseconds (µs)`**;
-2. **Zero Decorators, Pure Functions**: Modules export a simple `main(container)` function. No class decorators, no base classes, zero framework intrusion;
-3. **Automated TypeScript Type Inference**: Background AST scanning generates complete `ModularContainer` types on file save with 100% accurate IDE auto-completion;
-4. **Universal Bundler Ecosystem**: Built on `unplugin` to natively support Vite, Rolldown, Webpack 5, Rspack, Rollup, and Node.js;
-5. **Edge & Serverless Native**: Two-stage execution separates one-time static graph compilation from lightweight per-request container instantiation, boosting throughput by over 80%.
+1. **Application-Level Mesh Module System**: Counterparts native ESM to replace fragile relative imports in business layers. The host only executes a single line of ignition (`createModularContainer()`), while business modules circulate and self-organize 100% autonomously within the mesh without host lock-in;
+2. **DFS Topological Sorting & Reactive Promise Stream**: Powered by DFS post-order stack topological sorting and a Promise memoized reactive stream, 50 interdependent modules assemble in **`21.2 microseconds (µs)`**;
+3. **Physical Path as Feature & Short-Name Mesh ID**: File paths serve as abstract feature labels, while short names act as Mesh IDs for direct destructuring and zero-overhead lookup;
+4. **Zero Decorators, Pure Closures**: Modules export a simple `main(container)` factory function. No class decorators, no reflect-metadata, zero framework intrusion;
+5. **Compiler-Runtime Co-design & Zero-Config Types**: AST watcher generates complete `ModularContainer` types in 0.04ms on file save; single-graph compile cache boots in 1.72ms and ignites in 21.2µs;
+6. **Universal Ecosystem & Serverless Ready**: Built on `unplugin` for Vite, Rolldown, Webpack 5, Rspack, Rollup, and Node.js, natively fulfilling strict Edge/Serverless CPU constraints.
 
 ---
 
@@ -77,7 +90,7 @@ flowchart TD
 
     subgraph RunTime ["Core Runtime Engine"]
         E["@path-ioc/core<br>(Pure DAG Engine)"]
-        F["Kahn Topological Sorting & Cycle Detection"]
+        F["DFS Topological Sorting & Reactive Promise Stream"]
         G["Lock-Free Container Assembly<br><code>ModularContainer</code>"]
         
         D -->|Module Descriptors| E
@@ -100,9 +113,9 @@ flowchart TD
 | Package | Role | NPM Version | Documentation |
 | :--- | :--- | :--- | :--- |
 | [**`@path-ioc/core`**](./packages/core) | Core DAG topological sorting and dependency lookup engine | [![npm](https://img.shields.io/npm/v/@path-ioc/core.svg)](https://www.npmjs.com/package/@path-ioc/core) | [Core Docs](./packages/core/README.md) |
-| [**`@path-ioc/unplugin`**](./packages/unplugin) | Universal build plugin (Vite / Webpack / Rspack) for virtual modules and types | [![npm](https://img.shields.io/npm/v/@path-ioc/unplugin.svg)](https://www.npmjs.com/package/@path-ioc/unplugin) | [Plugin Docs](./packages/unplugin/README.md) |
-| [**`@path-ioc/container`**](./packages/container) | Advanced container with demand proxy slicing and turbo cycle resolution | [![npm](https://img.shields.io/npm/v/@path-ioc/container.svg)](https://www.npmjs.com/package/@path-ioc/container) | [Container Docs](./packages/container/README.md) |
-| [**`@path-ioc/pack`**](./packages/pack) | Physical entrypoint generator and mesh distribution bundler | [![npm](https://img.shields.io/npm/v/@path-ioc/pack.svg)](https://www.npmjs.com/package/@path-ioc/pack) | [Pack Docs](./packages/pack/README.md) |
+| [**`@path-ioc/unplugin`**](./packages/unplugin) | Compiler-Runtime Co-design build plugin (Vite / Rolldown / Webpack / Rspack) for virtual modules, single-graph compile cache, and automated types | [![npm](https://img.shields.io/npm/v/@path-ioc/unplugin.svg)](https://www.npmjs.com/package/@path-ioc/unplugin) | [Plugin Docs](./packages/unplugin/README.md) |
+| [**`@path-ioc/container`**](./packages/container) | Experimental container with demand proxy slicing (historical concept evaluation package; not recommended for production) | [![npm](https://img.shields.io/npm/v/@path-ioc/container.svg)](https://www.npmjs.com/package/@path-ioc/container) | [Container Docs](./packages/container/README.md) |
+| [**`@path-ioc/pack`**](./packages/pack) | Dedicated npm packaging and distribution bundler for Mesh registries | [![npm](https://img.shields.io/npm/v/@path-ioc/pack.svg)](https://www.npmjs.com/package/@path-ioc/pack) | [Pack Docs](./packages/pack/README.md) |
 | [**`@path-ioc/benchmarks`**](./packages/benchmarks) | High-precision Mitata performance test suites | Private | [Benchmarks Docs](./packages/benchmarks/README.md) |
 
 ---
@@ -130,12 +143,12 @@ export default defineConfig({
 });
 ```
 
-### 3. Author a Module (`src/modules/order-service/index.ts`)
+### 3. Author a Business Module (`src/modules/order-service/index.ts`)
 ```typescript
-// Pure closure factory, 0 decorators, lookup dependencies directly from container
-export const main = (container: ModularContainer) => {
-  const { dbConnection, userService } = container;
+// Pure closure factory, 0 decorators, lookup dependencies via short-name Mesh IDs
+export const dependencies = ["dbConnection", "userService"];
 
+export const main = ({ dbConnection, userService }: ModularContainer) => {
   return {
     async createOrder(item: string, price: number) {
       const user = await userService.getCurrentUser();
@@ -143,27 +156,23 @@ export const main = (container: ModularContainer) => {
     },
   };
 };
-
-// Topological prerequisites: directory names are automatically camelCased to short names
-export const dependencies = ["dbConnection", "userService"];
 ```
 
 ### 4. Author a Startup Module (`src/modules/start-app/index.ts`)
 ```typescript
 // All business logic stays inside IoC modules to guarantee AOP aspects and topological readiness
-export const main = (container: ModularContainer) => {
-  const { orderService } = container;
+export const dependencies = ["orderService"];
+
+export const main = ({ orderService }: ModularContainer) => {
   orderService.createOrder("MacBook Pro M5", 19999);
 };
-
-export const dependencies = ["orderService"];
 ```
 
-### 5. Application Ignition (`src/main.ts`)
+### 5. Host Application Ignition (`src/main.ts`)
 ```typescript
 import { createModularContainer } from "virtual:modular-container";
 
-// Entry file stays 100% clean as a pure ignition trigger with 0 business pollution
+// Host ignition boundary: entry file stays 100% clean as a pure ignition trigger with 0 business pollution
 createModularContainer();
 ```
 

@@ -15,12 +15,16 @@
   </p>
 </div>
 
+> 💡 **Architectural Positioning & Usage Boundary**  
+> `@path-ioc/pack` is a dedicated Vite build plugin designed to bundle an isolated Mesh module directory into a **distributable standalone npm package / component library**.  
+> **Warning**: This plugin automatically intercepts Vite configuration and forces Library Mode (`build.lib`). **Do NOT unconditionally embed it in standard web application builds (e.g. standard Vite SPA/SSR configs).** It is recommended to use a dedicated packaging config (e.g. `vite.config.pack.ts`) or trigger it via separate packaging scripts.
+
 ---
 
-## Features
+## Core Capabilities
 
 - **Physical Entrypoint Generation**:
-  During Vite builds, automatically scans `src/modules` for physical directories containing `index.ts/tsx` and synthesizes clean on-disk entrypoints (default `.modular-plugin-entry.ts`).
+  During Vite builds, automatically scans `src/modules` for physical directories containing `index.ts/tsx` and synthesizes clean on-disk entrypoints (default `node_modules/.path-ioc/.modular-plugin-entry.ts`);
 - **Full Mesh Registry & Type Exports**:
   Generates unified module import aliases and exports the canonical runtime module registry array `modules`:
   ```typescript
@@ -30,9 +34,11 @@
   ];
   ```
 - **Static Type Mapping Extraction (`sharedMappings`)**:
-  Fills `sharedMappings` and `sharedContainerMappings` to provide accurate type descriptions for cross-package SDKs or microfrontend mesh topologies.
-- **Physical Isolation & Bundler Obfuscation Compatibility**:
-  Generated physical entrypoint files integrate seamlessly into standard npm packaging pipelines, fully compatible with downstream AST transformers and code protection tools.
+  Populates `sharedMappings` and `sharedContainerMappings` arrays to provide accurate type descriptions for cross-package SDKs or microfrontend mesh topologies;
+- **Built-in Obfuscation Protection**:
+  During the `closeBundle` lifecycle, automatically performs deep code obfuscation using `javascript-obfuscator` by default. Can be disabled via environment variable `MODULAR_OBFUSCATE=false`;
+- **Automated Packaging**:
+  Automatically synthesizes package-ready metadata (`package.json`, `index.d.ts`) and triggers `npm pack` in `outDir` to produce distribution `.tgz` tarballs.
 
 ---
 
@@ -48,7 +54,7 @@ npm install -D @path-ioc/pack
 
 ## Quick Start
 
-### Vite Configuration (`vite.config.ts`)
+### Dedicated Packaging Config (`vite.config.pack.ts`)
 
 ```typescript
 import { defineConfig } from "vite";
@@ -61,13 +67,19 @@ export default defineConfig({
   plugins: [
     modularPackPlugin({
       modulesPath: "src/modules",
-      // Optional: Custom on-disk entrypoint path (default: node_modules/.path-ioc/.modular-plugin-entry.ts)
+      outDir: "dist-plugin",
+      // Optional: Custom on-disk entrypoint path
       entryFile: "node_modules/.path-ioc/.modular-plugin-entry.ts",
       sharedMappings,
       sharedContainerMappings,
     }),
   ],
 });
+```
+
+To build and package your mesh bundle:
+```bash
+vite build --config vite.config.pack.ts
 ```
 
 ---
@@ -78,8 +90,15 @@ export default defineConfig({
 | :--- | :--- | :--- | :--- |
 | **`modulesPath`** | `string` | `'src/modules'` | Root directory scanned for modular IoC entrypoints. |
 | **`entryFile`** | `string` | `'node_modules/.path-ioc/.modular-plugin-entry.ts'` | Target physical path for the generated entrypoint file. |
+| **`outDir`** | `string` | `'dist-plugin'` | Output directory for the packaged library bundle and npm tarball. |
 | **`sharedMappings`** | `string[]` | `[]` *(optional)* | Reference to an array that receives generated type mapping strings. |
 | **`sharedContainerMappings`** | `string[]` | `[]` *(optional)* | Reference to an array that receives generated container type mapping strings. |
+
+---
+
+## Environment Variables
+
+- **`MODULAR_OBFUSCATE`**: Set to `false` (e.g. `MODULAR_OBFUSCATE=false vite build`) to disable the default `javascript-obfuscator` pass for debugging or open-source distribution.
 
 ---
 
