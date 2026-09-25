@@ -28,10 +28,13 @@
 ## Live Demo & Instant Ignition (Live Demo Video)
 
 <div align="center">
-  <video src="https://cdn.path-ioc.dev/path-ioc/demo-en.mp4" controls width="100%" playsinline>
-    Your browser does not support the video tag. <a href="https://cdn.path-ioc.dev/path-ioc/demo-en.mp4">Watch Live Demo Video</a>
-  </video>
-  <p>⚡ <b><a href="https://cdn.path-ioc.dev/path-ioc/demo-en.mp4">Watch Live Architecture Tour: Real-time Coding, Topological Orchestration & Instant Ignition</a></b></p>
+  <a href="https://path-ioc.dev" target="_blank" rel="noopener noreferrer">
+    <img src="https://cdn.path-ioc.dev/path-ioc/demo-en.webp" alt="Path-IoC Live Demo & Architecture Tour" width="100%">
+  </a>
+  <p>
+    <em>⚡ <b>Live Architecture Tour</b>: Real-time Coding, Topological Orchestration & Instant Ignition</em><br>
+    <a href="https://path-ioc.dev"><b>🌐 Watch Video on path-ioc.dev</b></a> | <a href="https://cdn.path-ioc.dev/path-ioc/demo-en.mp4"><b>▶ Direct MP4 (1080p HD)</b></a>
+  </p>
 </div>
 
 ---

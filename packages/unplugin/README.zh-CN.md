@@ -28,10 +28,13 @@
 ## 实机编码与极速点火演示录屏 (Live Demo Video)
 
 <div align="center">
-  <video src="https://cdn.path-ioc.dev/path-ioc/demo-zh.mp4" controls width="100%" playsinline>
-    您的浏览器不支持 HTML5 视频播放。<a href="https://cdn.path-ioc.dev/path-ioc/demo-zh.mp4">点击查看实机演示视频</a>
-  </video>
-  <p>⚡ <b><a href="https://cdn.path-ioc.dev/path-ioc/demo-zh.mp4">点击查看实机架构漫游：实时编码、拓扑依赖编排与极速容器点火</a></b></p>
+  <a href="https://path-ioc.dev/zh/" target="_blank" rel="noopener noreferrer">
+    <img src="https://cdn.path-ioc.dev/path-ioc/demo-zh.webp" alt="Path-IoC 实机编码与极速点火演示" width="100%">
+  </a>
+  <p>
+    <em>⚡ <b>实机架构漫游</b>：实时编码、拓扑依赖编排与极速容器点火</em><br>
+    <a href="https://path-ioc.dev/zh/"><b>🌐 前往官网在线播放 (path-ioc.dev)</b></a> | <a href="https://cdn.path-ioc.dev/path-ioc/demo-zh.mp4"><b>▶ 直链播放 MP4 (1080p 超清)</b></a>
+  </p>
 </div>
 
 ---
