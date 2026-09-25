@@ -1,5 +1,11 @@
 # @path-ioc/unplugin
 
+## 0.1.4
+
+### Patch Changes
+
+- docs: sync updated READMEs and architectural documentation
+
 ## 0.1.2
 
 ### Patch Changes

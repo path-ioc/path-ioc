@@ -1,6 +1,6 @@
 {
   "name": "@path-ioc/core",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Pure topological dependency resolution engine & zero-reflection IoC runtime",
   "keywords": [
     "ioc",

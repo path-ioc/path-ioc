@@ -1,5 +1,13 @@
 # @path-ioc/container
 
+## 0.1.4
+
+### Patch Changes
+
+- docs: sync updated READMEs and architectural documentation
+- Updated dependencies
+  - @path-ioc/core@0.1.4
+
 ## 0.1.2
 
 ### Patch Changes
