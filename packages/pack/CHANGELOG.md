@@ -1,5 +1,11 @@
 # @path-ioc/pack
 
+## 0.1.5
+
+### Patch Changes
+
+- docs: replace video tags with image preview and video links in README files
+
 ## 0.1.4
 
 ### Patch Changes
