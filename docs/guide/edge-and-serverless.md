@@ -28,38 +28,25 @@ sequenceDiagram
 
 ## Production Implementation with Hono & Cloudflare Workers
 
-### 1. Request Context Isolation via Middleware
+### 1. Wildcard Gateway & Per-Request Container Isolation
+
+In the Hono entry point, the host maintains zero business routes, passing the current request's `c` context directly into the container as a seed object:
 
 ```typescript
-import { Hono, Context } from "hono";
+// src/index.ts
+import { Hono } from "hono";
 import { createModularContainer } from "virtual:modular-container";
 
-type AppEnv = {
-  Variables: {
-    modularContainer: ModularContainer;
-  };
-};
-
-const app = new Hono<AppEnv>();
-
-// Mount isolated container per HTTP request inside middleware
-app.use("*", async (c, next) => {
-  const reqContainer = {
-    requestContext: c, // Inject request context (headers, auth, environment bindings)
-  } as any;
-
-  // Reuses pre-compiled DAG graph under the hood. Instantiation takes only 21.2 µs!
-  await createModularContainer(reqContainer);
-
-  c.set("modularContainer", reqContainer);
-  await next();
-});
+const app = new Hono();
 
 // Wildcard API Gateway: Like Spring MVC DispatcherServlet, delegates all routing to the container
-// Business endpoints live under src/modules/api/** where physical paths serve as contracts
+// Reuses the pre-compiled DAG static graph under the hood. Per-request container hydration takes only 21.2 µs!
 app.all("*", async (c) => {
-  const { apiAggregator } = c.get("modularContainer");
-  return await apiAggregator();
+  // Pass current request context as seed object, overriding the skip-marked requestContext module
+  const container = await createModularContainer({ requestContext: c });
+
+  // 💡 Delegates to the internal apiAggregator module for URL contract matching and unified AOP governance
+  return await container.apiAggregator();
 });
 
 export default app;
@@ -67,39 +54,41 @@ export default app;
 
 ---
 
-## Heavy Resource Memoization: Process-Level Singletons (`memoizeModule`)
+### 2. Standard External Injection Contract: `skip: true`
 
-In request-isolated architectures, heavy resources like database connection pools or Redis clients should not be reconstructed per request. A lightweight closure memoizer ensures cross-request singleton persistence:
+To give `container.requestContext` 100% complete TypeScript IDE auto-completion without manual global declaration merging, simply declare standard contracts under the module directory:
 
 ```typescript
-// Helper utility: Process-level singleton closure (production implementation)
-export const memoizeModule = <
-  Result,
-  T extends (
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => Result
->(
-  main: T
-): T => {
-  let result: Result;
-  let initialized = false;
-  return ((
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => {
-    if (!initialized && (initialized = true)) {
-      result = main(modularContainer, moduleDeclarationNames);
-    }
-    return result;
-  }) as T;
-};
+// src/modules/request-context/index.ts
+import type { Context } from "hono";
 
+// 💡 External Injection Contract:
+// 1. Marked with skip: true: container skips dummy main; seed object provides the real instance;
+// 2. unplugin extracts the return type automatically, ambiently generating 100% type-safe completion.
+export const skip = true;
+export const main = (): Context => ({} as Context);
+```
+
+---
+
+## Heavy Resource Memoization: Process-Level Singletons (`memoizeModule`)
+
+In request-isolated architectures, heavy resources like database connection pools or Redis clients should not be reconstructed per request. A pure higher-order closure ensures cross-request singleton persistence.
+
+> 📘 **Deep Dive Recommendation**: For a comprehensive architectural analysis on falsy value safety, Promise cache poisoning defense, and self-healing resilience:  
+> 👉 [**Process-Level Singletons via Closure Caching: The memoizeModule Pattern in Production**](/articles/memoize-module-pattern)
+
+```typescript
 // src/modules/infra/db-pool/index.ts
-export const main = memoizeModule((container: ModularContainer) => {
+import { memoizeModule } from "../../../utils/memoizeModule";
+import { createPool } from "mysql2/promise";
+
+export const dependencies = [];
+
+export const main = memoizeModule(async (container: ModularContainer) => {
   const { requestContext } = container;
-  // Connection pool initialized once on first cold request, reused by all subsequent requests
-  const pool = createDbPool(requestContext.env.DATABASE_URL);
+  // Connection pool initialized once on first cold request, reused by all subsequent requests in isolate!
+  const pool = await createPool(requestContext.env.DATABASE_URL);
   return pool;
 });
 ```

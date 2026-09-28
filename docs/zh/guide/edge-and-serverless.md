@@ -28,38 +28,25 @@ sequenceDiagram
 
 ## 在 Hono / Cloudflare Workers 中的实战代码
 
-### 1. 中间件隔离当前请求上下文
+### 1. 通配网关与请求级容器隔离
+
+在 Hono 入口处，宿主环境保持 0 具体业务路由维护，以单行通配分发将当前请求的 `c` 上下文作为种子对象传入容器：
 
 ```typescript
-import { Hono, Context } from "hono";
+// src/index.ts
+import { Hono } from "hono";
 import { createModularContainer } from "virtual:modular-container";
 
-type AppEnv = {
-  Variables: {
-    modularContainer: ModularContainer;
-  };
-};
+const app = new Hono();
 
-const app = new Hono<AppEnv>();
-
-// 在 HTTP 中间件中挂载请求级隔离容器
-app.use("*", async (c, next) => {
-  const reqContainer = {
-    requestContext: c, // 注入当前请求的 Context (包含 Headers, Auth, Env 等)
-  } as any;
-
-  // 内部自动复用启动期预编译的 DAG 静态图，填充仅耗时 21.2 微秒！
-  await createModularContainer(reqContainer);
-
-  c.set("modularContainer", reqContainer);
-  await next();
-});
-
-// 通配 API 网关分发 (类似 SpringMVC DispatcherServlet，入口处绝不手写具体业务路由！)
-// 业务接口一律由 src/modules/api/** 物理路径模块承载，并由 apiAggregator 模块进行统一调度与 AOP 切面拦截
+// 通配 API 网关分发 (类似 Spring MVC DispatcherServlet，入口处绝不手写具体业务路由！)
+// 内部自动复用启动期预编译的 DAG 静态图，每个请求填充容器仅耗时 21.2 微秒！
 app.all("*", async (c) => {
-  const { apiAggregator } = c.get("modularContainer");
-  return await apiAggregator();
+  // 将当前请求 Context 作为种子传入，自动覆盖带 skip: true 的 requestContext 模块
+  const container = await createModularContainer({ requestContext: c });
+
+  // 💡 委托给容器内部聚合网关模块调度执行，并在模块内闭环实现统一切面治理
+  return await container.apiAggregator();
 });
 
 export default app;
@@ -67,39 +54,41 @@ export default app;
 
 ---
 
-## 重型资源复用：进程级单例高阶函数 (`memoizeModule`)
+### 2. 统一外部注入契约：`skip: true`
 
-在多请求隔离模式下，数据库连接池（Connection Pool）或 Redis 客户端无需每次请求都重复创建。可以使用高阶函数闭包实现跨请求的全局单例复用：
+为了让 `container.requestContext` 享受 100% 完整的 TypeScript 智能补全，无需手动声明全局合并，只需在模块目录下建立标准契约声明：
 
 ```typescript
-// 辅助函数：进程级单例闭包 (生产推荐实现)
-export const memoizeModule = <
-  Result,
-  T extends (
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => Result
->(
-  main: T
-): T => {
-  let result: Result;
-  let initialized = false;
-  return ((
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => {
-    if (!initialized && (initialized = true)) {
-      result = main(modularContainer, moduleDeclarationNames);
-    }
-    return result;
-  }) as T;
-};
+// src/modules/request-context/index.ts
+import type { Context } from "hono";
 
+// 💡 外部注入契约：
+// 1. 标记 skip: true，运行时容器跳过执行，由外部种子对象注入；
+// 2. unplugin 自动提取类型推导，为全局容器挂载强类型 requestContext。
+export const skip = true;
+export const main = (): Context => ({} as Context);
+```
+
+---
+
+## 重型资源复用：进程级单例高阶函数 (`memoizeModule`)
+
+在多请求隔离模式下，数据库连接池（Connection Pool）或 Redis 客户端无需每次请求都重复创建。可以使用纯函数高阶闭包实现跨请求的全局单例复用。
+
+> 📘 **深度专栏推荐**：关于假值防击穿、异步 Promise 缓存毒化防御与冷启动自愈的完整工业级推演，详见专栏深度解析：  
+> 👉 [**《进程级单例与闭包缓存原语：memoizeModule 设计哲学与生产实践》**](/zh/articles/memoize-module-pattern)
+
+```typescript
 // src/modules/infra/db-pool/index.ts
-export const main = memoizeModule((container: ModularContainer) => {
+import { memoizeModule } from "../../../utils/memoizeModule";
+import { createPool } from "mysql2/promise";
+
+export const dependencies = [];
+
+export const main = memoizeModule(async (container: ModularContainer) => {
   const { requestContext } = container;
-  // 仅在首次请求时创建连接池，后续所有 HTTP 请求直接共享同一连接实例！
-  const pool = createDbPool(requestContext.env.DATABASE_URL);
+  // 仅在当前 Worker 实例的首个请求到达时提取环境变量并创建连接池，后续请求稳定复用！
+  const pool = await createPool(requestContext.env.DATABASE_URL);
   return pool;
 });
 ```

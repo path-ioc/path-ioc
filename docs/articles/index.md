@@ -43,13 +43,22 @@ Different articles may tackle overlapping architectural concepts, but each addre
 #### 3. [Container Dual-State in the Event Loop: Client Global Singleton vs. Server Request Isolation with Memoized Heavy Singletons](/articles/client-vs-server-container-patterns)
 * **Perspective**: Full-Stack State Isolation / Single-Threaded Event Loop / Production Patterns
 * **Core Dilemma**: Under the single-threaded Event Loop of Node.js / V8, how do you enforce strict request-scoped container isolation while preventing resource leaks from redundant re-creation of heavy singletons like DB connection pools, Redis clients, and ORM schemas?
-* **Key Takeaway**: Master higher-order module memoization (`memoizeModule`) using pure closure caching to achieve bulletproof production architectures in Hono, Express, and Cloudflare Workers.
+* **Key Takeaway**: Master the dual-state model separating client persistent singletons from server request-isolated containers.
 
 </div>
 
 <div class="article-card">
 
-#### 4. [Initialization Trade-offs: Lazy Connection vs. Topological Preheat — Halting Async Function Color Pollution](/articles/async-preheat-vs-lazy-connection)
+#### 4. [Process-Level Singletons via Closure Caching: The memoizeModule Pattern in Production](/articles/memoize-module-pattern)
+* **Perspective**: Pure Higher-Order Closures / Falsy Value Safety / Anti-Poisoning Self-Healing / Cross-Request Resource Reuse
+* **Core Dilemma**: How do we reuse database pools and Redis clients without framework-level Scope annotations? How do we prevent transient network glitches from poisoning Promise caches permanently?
+* **Key Takeaway**: Master the production-grade `memoizeModule` implementation, tracing its evolution from naive prototypes to self-healing resilience while upholding strict safety boundaries.
+
+</div>
+
+<div class="article-card">
+
+#### 5. [Initialization Trade-offs: Lazy Connection vs. Topological Preheat — Halting Async Function Color Pollution](/articles/async-preheat-vs-lazy-connection)
 * **Perspective**: Runtime Trade-offs / The Function Color Problem / Architectural Decision Trees
 * **Core Dilemma**: "Should all backend modules be purely synchronous in initialization?" Rejecting binary dogmas! Forcing modules with async pre-loading and sync invocations (e.g. metadata managers, Trie trees, rulesets) into lazy patterns unleashes viral async infection across business logic.
 * **Key Takeaway**: Master the boundary between I/O Proxies and In-Memory Engines; see how Path-IoC's native topological concurrency preserves 100% synchronous purity at call time.
@@ -58,7 +67,7 @@ Different articles may tackle overlapping architectural concepts, but each addre
 
 <div class="article-card">
 
-#### 5. ["Veteran JS IoC Frameworks Built So Many Concepts—Isn't There at Least One Strength Path-IoC Should Adopt?"](/articles/rethinking-legacy-ioc-concepts)
+#### 6. ["Veteran JS IoC Frameworks Built So Many Concepts—Isn't There at Least One Strength Path-IoC Should Adopt?"](/articles/rethinking-legacy-ioc-concepts)
 * **Perspective**: Cross-Framework Deconstruction / Conway's Law / Data-Oriented Programming (DOP) / Minimalist First Principles
 * **Core Dilemma**: NestJS, InversifyJS, TSyringe, Awilix—did years of module walls, lifecycle hooks, request-scoped trees, and Class DTO ecosystems accumulate irreplaceable strengths? Why does Path-IoC refuse to adopt these concepts into its core?
 * **Key Takeaway**: Understand why lifecycle management is just graph traversal, why physical repository separation trumps code-level module walls, and how DOP schema literals and microsecond container instantiation eliminate reflection trees forever.
@@ -67,7 +76,7 @@ Different articles may tackle overlapping architectural concepts, but each addre
 
 <div class="article-card">
 
-#### 6. [Architectural Anti-Pattern: Why Hardcoding Full Paths in Business Dependencies is Wrong](/articles/anti-pattern-full-path)
+#### 7. [Architectural Anti-Pattern: Why Hardcoding Full Paths in Business Dependencies is Wrong](/articles/anti-pattern-full-path)
 * **Perspective**: Architectural Anti-Patterns / Domain-Driven Design (DDD) / Location Transparency / AOP Metadata
 * **Core Dilemma**: "Can't I just resolve module naming collisions by writing full paths in `dependencies`?" Beware of architectural decay! Why is hardcoding physical paths in business modules a refactoring disaster, and what is the true calling of fully qualified paths?
 * **Key Takeaway**: Understand the strict separation between Short Names (Bean IDs) and Full Paths (Semantic Tags), and master semantic DDD renaming alongside non-invasive AOP aspect meshes.
@@ -81,5 +90,5 @@ Different articles may tackle overlapping architectural concepts, but each addre
 * **For Enterprise & Large-Scale Architects**: Read [The Category Error: NestJS vs Path-IoC](/articles/category-error-nestjs-vs-path-ioc) for a fundamental look at the limitations of ES Modules and the true essence of application-level modular architecture.
 * **For Java / Spring Architects**: Begin with [Why DI Cannot Achieve Topological Concurrency](/articles/why-di-cannot-concurrent), followed by the [Architecture Manifesto](/guide/architecture-manifesto) and [Spring to TypeScript Migration Guide](/guide/spring-to-typescript).
 * **For Node.js / NestJS / Inversify Developers**: Read the [Framework Comparison](/guide/comparison) and [Rethinking Veteran JS IoC Concepts & Path-IoC Stance](/articles/rethinking-legacy-ioc-concepts).
-* **For Full-Stack & Concurrency Architects**: Study [Initialization Trade-offs: Lazy vs. Topological Preheat](/articles/async-preheat-vs-lazy-connection) and [Container Dual-State in the Event Loop](/articles/client-vs-server-container-patterns).
+* **For Full-Stack & Concurrency Architects**: Study [Process-Level Singletons (memoizeModule)](/articles/memoize-module-pattern), [Initialization Trade-offs: Lazy vs. Topological Preheat](/articles/async-preheat-vs-lazy-connection) and [Container Dual-State in the Event Loop](/articles/client-vs-server-container-patterns).
 * **For Independent Engineers**: Jump straight into the [Quick Start](/guide/quick-start) and explore the [Pro Boilerplate](/templates/pro-boilerplate).

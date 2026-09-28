@@ -100,18 +100,17 @@ Rather than introducing bloated `@Scope(Scope.REQUEST)` metadata abstractions, P
 1. **Per-Request Container Instantiation**: Each HTTP request receives its own lightweight container seeded with a request-scoped `requestContext` (e.g., Hono's `Context` or Express's `Request`);
 2. **Memoized Heavy Singletons**: Resource-heavy components—such as database connection pools, Redis clients, and ORM entity schemas—are cached across the process lifetime using a pure higher-order closure.
 
-### 1. Implementing the Universal `memoizeModule` Primitive
-Without requiring framework magic, this is achieved via pure functional JavaScript respecting language primitives:
+### 1. Process-Level Singleton Closures: `memoizeModule`
+
+Path-IoC rejects complex framework-level Scope machinery, returning cross-request caching to pure function closures. For an in-depth exploration covering falsy-value safety, Promise cache poisoning defense, and self-healing resilience:  
+👉 [**Process-Level Singletons via Closure Caching: The memoizeModule Pattern in Production**](/articles/memoize-module-pattern)
+
+In application codebases, maintain this pure utility under `utils/memoizeModule.ts`:
 
 ```typescript
 // utils/memoizeModule.ts
 // Note: ModularContainer is ambiently declared globally by Path-IoC unplugin
 
-/**
- * Wraps a module factory into a process-wide closure singleton.
- * Strictly transparent: sync stays sync, async stays async; executes once and caches.
- * Respects Fail-Fast: if an error occurs, it naturally bubbles up to notify the system.
- */
 export const memoizeModule = <
   Result,
   T extends (
@@ -128,22 +127,43 @@ export const memoizeModule = <
     modularContainer: ModularContainer,
     moduleDeclarationNames: string[]
   ) => {
-    if (!initialized && (initialized = true)) {
-      result = main(modularContainer, moduleDeclarationNames);
+    if (!initialized) {
+      const val = main(modularContainer, moduleDeclarationNames);
+      // 🛡️ Anti-Poisoning Protection: Evict cache on rejection to permit self-healing retries
+      if (val && typeof (val as unknown as Promise<unknown>).then === "function") {
+        (val as unknown as Promise<unknown>).catch(() => {
+          initialized = false;
+          result = undefined as unknown as Result;
+        });
+      }
+      result = val;
+      initialized = true;
     }
     return result;
   }) as T;
 };
 ```
 
-> **Design Principles: Why Avoid Over-Engineering?**
-> 1. **Independent Boolean Flag Prevents Falsy Value Stampedes**: Using `let initialized = false` records execution state independently. If a module legitimately returns `undefined` (e.g. pure side-effect modules), `null`, or `false`, it will never re-execute on every request due to `if (cached)` check flaws;
-> 2. **Transparent Sync/Async Semantics**: Preserves the original function signature perfectly. If a module is purely synchronous (e.g. compiling complex local config dictionaries or AST models), it remains purely synchronous—**never force-wrapped in `async`**, avoiding unnecessary V8 microtask queue overhead;
-> 3. **Embrace Fail-Fast Errors**: An `Error` is the runtime's most effective signal for communicating failure. If database credentials or configs are broken, the module should fail fast and crash loudly, rather than having a memoizer mask the failure with blind retries;
-> 4. **Self-Healing & Reconnection Boundary**: `memoizeModule` focuses strictly on process-level singleton closure caching. Production drivers (e.g. MySQL2 pool, Redis clients) already feature native heartbeat and auto-reconnect capabilities; custom async retry or self-healing policies can be encapsulated directly inside the factory function.
+---
 
+### 2. External Context Protocol: Uniformly Declare via `skip: true`
 
-### 2. Heavy Modules: Process-Wide Singletons via Closure
+For runtime context injected dynamically by the host (such as Hono's `Context` or Express's `Request`), Path-IoC standardizes on declaring a Mesh module under `src/modules/` with `skip: true`:
+
+```typescript
+// src/modules/request-context/index.ts
+import type { Context } from "hono";
+
+// 💡 Standard External Injection Contract:
+// 1. Marked with skip: true: the runtime container skips dummy main; seed object supplies the instance.
+// 2. unplugin extracts the return type automatically, ambiently generating 100% type-safe completion.
+export const skip = true;
+export const main = (): Context => ({} as Context);
+```
+
+---
+
+### 3. Heavy Modules: Process-Wide Singletons via Closure
 ```typescript
 // src/modules/infrastructure/database/index.ts
 import { memoizeModule } from "../../../utils/memoizeModule";
@@ -160,15 +180,15 @@ export const main = memoizeModule(async () => {
 });
 ```
 
-### 3. Lightweight Business Services: Pure Request Isolation
+---
+
+### 4. Lightweight Business Services: Pure Request Isolation
 ```typescript
 // src/modules/services/orderService/index.ts
-import type { Context } from "hono";
-
 export const dependencies = ["database"];
 
 export const main = (container: ModularContainer) => {
-  // Zero 'any', zero 'as Context' type casting—enjoy 100% IDE auto-completion!
+  // Zero 'any', zero manual 'declare global'—enjoy 100% IDE auto-completion!
   const { database, requestContext } = container;
   const requestId = requestContext.req.header("x-request-id");
   const currentUser = requestContext.get("user");
@@ -189,20 +209,12 @@ export const main = (container: ModularContainer) => {
 
 ## 5. Web Framework Integration (Hono / Express / Koa)
 
-Using **Hono** as a modern high-performance example, integrating per-request containers with full TypeScript typing takes just a few lines:
+Using **Hono** as a modern high-performance example, the host entry point maintains zero business routes, handing dispatching authority directly to the container:
 
 ```typescript
 // src/index.ts
-import { Hono, type Context } from "hono";
+import { Hono } from "hono";
 import { createModularContainer } from "virtual:modular-container";
-
-// 💡 Declaration Merging: augment ModularContainer with runtime request context types
-// Merges seamlessly with plugin-generated ignore.modular.d.ts for 100% IDE auto-completion
-declare global {
-  interface ModularContainer {
-    requestContext: Context;
-  }
-}
 
 const app = new Hono();
 
@@ -219,7 +231,11 @@ const app = new Hono();
 // ✅ Architectural Best Practice: Wildcard Dispatcher Gateway (Spring MVC DispatcherServlet)
 // Host maintains zero business routes; requests delegate to container aggregator with unified AOP governance (~20µs)
 app.all("*", async (c) => {
+  // Pass current request context as seed object, overriding the skip-marked requestContext module
   const container = await createModularContainer({ requestContext: c });
+
+  // 💡 Note: apiAggregator is a user-defined gateway router Mesh module (src/modules/api-aggregator/index.ts)
+  // Encapsulates internal URL contract matching, AOP telemetry, and exception shielding within the container.
   return await container.apiAggregator();
 });
 

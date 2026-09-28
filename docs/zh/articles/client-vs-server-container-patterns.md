@@ -99,18 +99,17 @@ Path-IoC 拒绝在框架核心内引入复杂的“作用域元数据”概念�
 1. **容器本身按请求实例化（Per-Request Container）**：每个 HTTP 请求分配一个独立的轻量容器，注入专属的 `requestContext`（如 Hono 的 `c` 上下文、Express 的 `req`），杜绝并发污染；
 2. **重型模块通过纯函数闭包缓存（Memoization）**：数据库连接池、Redis 客户端、ORM 实体元数据等重量级资源，在进程生命周期内通过闭包保证只初始化一次。
 
-### 1. 实现通用重型模块单例原语：`memoizeModule`
-无需框架特权支持，只需一段尊重语言原语的纯函数：
+### 1. 进程级单例闭包：`memoizeModule`
+
+Path-IoC 拒绝在框架核心引入繁琐的 Scope 概念，而是将跨请求缓存回归纯函数闭包原语。关于从防假值击穿到异步 Promise 毒化防御与自愈的完整工业级演进，详见专栏深度解析：  
+👉 [**《进程级单例与闭包缓存原语：memoizeModule 设计哲学与生产实践》**](/zh/articles/memoize-module-pattern)
+
+在业务工程中，只需在 `utils/memoizeModule.ts` 中维护该纯函数：
 
 ```typescript
 // utils/memoizeModule.ts
 // 注：ModularContainer 为 Path-IoC unplugin 全局声明合并接口，无需手动导入
 
-/**
- * 将模块工厂函数包装为单例闭包
- * 严格保持原函数的行为透明：同步保持同步，异步保持异步；只执行一次并缓存结果。
- * 坚守 Fail-Fast：若发生错误则自然抛出让系统感知，绝不盲目捕获或越俎代庖搞重试。
- */
 export const memoizeModule = <
   Result,
   T extends (
@@ -127,22 +126,43 @@ export const memoizeModule = <
     modularContainer: ModularContainer,
     moduleDeclarationNames: string[]
   ) => {
-    if (!initialized && (initialized = true)) {
-      result = main(modularContainer, moduleDeclarationNames);
+    if (!initialized) {
+      const val = main(modularContainer, moduleDeclarationNames);
+      // 🛡️ 异常清除保护：异步 Promise 失败时清除标记，确保后续请求能自愈重试
+      if (val && typeof (val as unknown as Promise<unknown>).then === "function") {
+        (val as unknown as Promise<unknown>).catch(() => {
+          initialized = false;
+          result = undefined as unknown as Result;
+        });
+      }
+      result = val;
+      initialized = true;
     }
     return result;
   }) as T;
 };
 ```
 
-> **设计要点：为什么不要把它想复杂？**
-> 1. **独立布尔标记防假值击穿**：使用 `let initialized = false` 独立记录执行状态。如果模块返回值合法地就是 `undefined`（如纯副作用初始化）、`null` 或 `false`，绝不会因 `if (cached)` 的判定缺陷而导致每次请求都被重新执行；
-> 2. **保持同步/异步行为绝对透明**：利用精确泛型推导，原函数是纯同步（如解析本地配置字典或 AST 模型），包装后依然是纯同步函数，**绝不强加 `async` 包装**，避免将同步计算强行拖入 V8 微任务队列；
-> 3. **敬畏异常（Fail-Fast 哲学）**：编程语言中的 `Error` 是程序明确向外宣告故障的最高效通道。如果数据库凭证错误或配置丢失，模块应当光明正大抛出异常中断请求，而非在缓存层私自掩盖错误搞盲目重试；
-> 4. **连接自愈与重试职责边界**：`memoizeModule` 专注于进程级单例的闭包缓存。现代生产级驱动（如 MySQL2 / Redis 连接池）底层通常自带自动重连与心跳探测机制；若业务有特殊的自定义异步重试或冷启动自愈诉求，可在工厂函数内部自行封装。
+---
 
+### 2. 外部上下文规范：统一使用 `skip: true` 声明类型与契约
 
-### 2. 重型模块：一次初始化，进程常驻
+对于外部宿主动态注入的上下文（如 Hono `Context` 或 Express `Request`），Path-IoC 规范要求**统一在 `src/modules/` 下建立带 `skip: true` 的声明模块**：
+
+```typescript
+// src/modules/request-context/index.ts
+import type { Context } from "hono";
+
+// 💡 统一外部注入契约：
+// 1. 标记 skip: true，运行时容器跳过 dummy main 执行，由外部种子对象提供真实实例；
+// 2. unplugin 自动提取 main 返回类型，为容器全局生成 100% 强类型智能补全。
+export const skip = true;
+export const main = (): Context => ({} as Context);
+```
+
+---
+
+### 3. 重型模块：一次初始化，进程常驻
 ```typescript
 // src/modules/infrastructure/database/index.ts
 import { memoizeModule } from "../../../utils/memoizeModule";
@@ -159,15 +179,15 @@ export const main = memoizeModule(async () => {
 });
 ```
 
-### 3. 轻型业务模块：请求级纯净隔离
+---
+
+### 4. 轻型业务模块：请求级纯净隔离
 ```typescript
 // src/modules/services/orderService/index.ts
-import type { Context } from "hono";
-
 export const dependencies = ["database"];
 
 export const main = (container: ModularContainer) => {
-  // 零 any、无需 as Context 类型断言，直接享受专属上下文的 100% 智能提示！
+  // 零 any、无需手动 declare global，直接解构享受 100% 强类型 IDE 提示！
   const { database, requestContext } = container;
   const requestId = requestContext.req.header("x-request-id");
   const currentUser = requestContext.get("user");
@@ -188,20 +208,12 @@ export const main = (container: ModularContainer) => {
 
 ## 五、在 Web 框架中的无缝集成 (Hono / Express / Koa)
 
-以现代全栈高性能框架 **Hono** 为例，在网关入口处通过 TypeScript 声明合并与容器实例化，即可完成极致请求隔离：
+以现代全栈高性能框架 **Hono** 为例，入口处无需手写任何业务路由，直接以通配网关将调度权移交容器：
 
 ```typescript
 // src/index.ts
-import { Hono, type Context } from "hono";
+import { Hono } from "hono";
 import { createModularContainer } from "virtual:modular-container";
-
-// 💡 声明合并 (Declaration Merging)：为容器扩展当前环境专属的请求上下文强类型
-// 自动与构建插件生成的 ignore.modular.d.ts 合并，业务解构享受 100% 智能补全与静态校验
-declare global {
-  interface ModularContainer {
-    requestContext: Context;
-  }
-}
 
 const app = new Hono();
 
@@ -217,7 +229,11 @@ const app = new Hono();
 // ✅ 架构正道：通配网关分发（等同于 Spring MVC 的 DispatcherServlet）
 // 宿主入口 0 具体业务路由维护，请求全交由容器内部聚合调度与统一切面治理 (单次填充仅耗时 20µs)
 app.all("*", async (c) => {
+  // 传入当前请求 Context 作为种子对象，覆盖被标记为 skip 的 requestContext 模块
   const container = await createModularContainer({ requestContext: c });
+
+  // 💡 注：apiAggregator 为容器内部自建的网关调度 Mesh 模块 (src/modules/api-aggregator/index.ts)
+  // 负责在容器内部闭环完成 URL 契约匹配、AOP 审计拦截与异常屏蔽，见专栏详细实现
   return await container.apiAggregator();
 });
 
