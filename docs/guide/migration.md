@@ -85,7 +85,7 @@ Import the `initialize` bootstrap function from `@path-ioc/core`:
 - import { initialize } from "lianhanlin-modular";
 + import { initialize } from "@path-ioc/core";
 
-  initialize(modules, container);
+  await initialize(modules, container);
 ```
 
 ---

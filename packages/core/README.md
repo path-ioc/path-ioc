@@ -263,18 +263,34 @@ Tested on Apple Silicon under Node.js v24 (`pnpm bench`):
 
 ```typescript
 export interface IOCModule {
-  main: (container: any, moduleNames: string[]) => any | Promise<any>;
-  dependencies?: string[] | ((moduleNames: string[]) => string[]);
+  main: (
+    modularContainer: Record<string, unknown> & { $logs?: string[] },
+    moduleDeclarationNames: string[]
+  ) => Promise<unknown> | unknown;
+  dependencies?: string[] | ((moduleDeclarationNames: string[]) => string[]);
   order?: number;
   skip?: boolean;
 }
 
+export interface ModuleDeclaration {
+  name: string; // Short name for dependency resolution
+  fullName: string; // Full physical path name, globally unique
+  main: (
+    modularContainer: Record<string, unknown> & { $logs?: string[] },
+    moduleDeclarationNames: string[]
+  ) => Promise<unknown> | unknown;
+  dependencies: string[];
+  order: number;
+  skip?: boolean;
+  rawModule: IOCModule;
+}
+
 export interface CompiledModuleGraph {
-  sortedKeys: string[];
-  resolvedDepsMap: Record<string, string[]>;
-  shortKeyToFullKeyMap: Record<string, string>;
-  fullKeyToShortKeyMap: Record<string, string>;
-  moduleMap: Record<string, IOCModule>;
+  sortedDeclarations: ModuleDeclaration[];
+  resolvedDepsMap: Map<string, string[]>;
+  fullNameToModuleMap: Map<string, ModuleDeclaration>;
+  moduleDeclarationNames: string[];
+  shortNameToFullNameMap: Map<string, string | null>;
 }
 
 export function compileModuleGraph(
@@ -283,7 +299,7 @@ export function compileModuleGraph(
 ```
 
 - **Algorithm & Complexity**: Time $O(V + E)$, Space $O(V + E)$ based on **DFS post-order traversal stack topological sorting**;
-- **Fail-Fast Error Handling**: Throws descriptive errors with full cycle paths upon detecting cyclic dependencies, or on short-key collisions.
+- **Fail-Fast Error Handling**: Throws descriptive errors with full cycle paths upon detecting cyclic dependencies, or on ambiguous short-key collisions.
 
 ---
 
@@ -297,8 +313,8 @@ export function instantiateModuleContainer(
 ```
 
 - **Execution Semantics**:
-  - Iterates through `compiledGraph.sortedKeys` in validated topological order;
-  - Mounts return values to both `container[fullKey]` and `container[shortKey]`;
+  - Iterates through `compiledGraph.sortedDeclarations` in validated topological order;
+  - Mounts return values to both `container[fullName]` and `container[name]` (when short name is unambiguous);
   - Awaits asynchronous `main` promises before triggering dependent child nodes using memoized Promise streams.
 
 ---

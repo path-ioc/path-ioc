@@ -85,7 +85,7 @@ pnpm add -D @path-ioc/unplugin
 - import { initialize } from "lianhanlin-modular";
 + import { initialize } from "@path-ioc/core";
 
-  initialize(modules, container);
+  await initialize(modules, container);
 ```
 
 ---

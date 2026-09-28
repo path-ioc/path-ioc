@@ -126,7 +126,7 @@ From a pure runtime execution standpoint, NestJS can ultimately achieve asynchro
      **In Path-IoC, developers with zero prior AOP experience or concepts can write genuine zero-coupling AOP modules purely through dynamic language intuition—we simply call them "Higher-Order Modules"**.
      Just like React developers naturally write Higher-Order Components (HOC), developers need no framework-privileged APIs:
      ```ts
-     // src/modules/aspects/profiler.ts —— A Higher-Order Module with zero AOP concepts
+     // src/modules/aspects/profiler/index.ts —— A Higher-Order Module with zero AOP concepts
      // 1. Intuitively search target service paths (no need to understand Pointcut)
      export const dependencies = (all: string[]) => 
        all.filter(name => name.includes('/services/'));

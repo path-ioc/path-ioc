@@ -105,7 +105,7 @@ Without requiring framework magic, this is achieved via pure functional JavaScri
 
 ```typescript
 // utils/memoizeModule.ts
-import type { ModularContainer } from "@path-ioc/core";
+// Note: ModularContainer is ambiently declared globally by Path-IoC unplugin
 
 /**
  * Wraps a module factory into a process-wide closure singleton.
@@ -139,13 +139,14 @@ export const memoizeModule = <
 > **Design Principles: Why Avoid Over-Engineering?**
 > 1. **Independent Boolean Flag Prevents Falsy Value Stampedes**: Using `let initialized = false` records execution state independently. If a module legitimately returns `undefined` (e.g. pure side-effect modules), `null`, or `false`, it will never re-execute on every request due to `if (cached)` check flaws;
 > 2. **Transparent Sync/Async Semantics**: Preserves the original function signature perfectly. If a module is purely synchronous (e.g. compiling complex local config dictionaries or AST models), it remains purely synchronous—**never force-wrapped in `async`**, avoiding unnecessary V8 microtask queue overhead;
-> 3. **Embrace Fail-Fast Errors**: An `Error` is the runtime's most effective signal for communicating failure. If database credentials or configs are broken, the module should fail fast and crash loudly, rather than having a memoizer mask the failure with blind retries.
+> 3. **Embrace Fail-Fast Errors**: An `Error` is the runtime's most effective signal for communicating failure. If database credentials or configs are broken, the module should fail fast and crash loudly, rather than having a memoizer mask the failure with blind retries;
+> 4. **Self-Healing & Reconnection Boundary**: `memoizeModule` focuses strictly on process-level singleton closure caching. Production drivers (e.g. MySQL2 pool, Redis clients) already feature native heartbeat and auto-reconnect capabilities; custom async retry or self-healing policies can be encapsulated directly inside the factory function.
 
 
 ### 2. Heavy Modules: Process-Wide Singletons via Closure
 ```typescript
-// modules/infrastructure/database.ts
-import { memoizeModule } from "../../utils/memoizeModule";
+// src/modules/infrastructure/database/index.ts
+import { memoizeModule } from "../../../utils/memoizeModule";
 import { createPool } from "mysql2/promise";
 
 export const dependencies = [];
@@ -161,8 +162,7 @@ export const main = memoizeModule(async () => {
 
 ### 3. Lightweight Business Services: Pure Request Isolation
 ```typescript
-// modules/services/orderService.ts
-import type { ModularContainer } from "@path-ioc/core";
+// src/modules/services/orderService/index.ts
 import type { Context } from "hono";
 
 export const dependencies = ["database"];
@@ -206,7 +206,18 @@ declare global {
 
 const app = new Hono();
 
-// Wildcard Gateway: Handles request isolation and container delegation (assembly in ~20 µs)
+// ❌ Anti-Pattern: Registering business routes manually on host app
+// (Analogous to writing individual Java Servlets in Spring MVC instead of Controllers)
+// Leaks business routing to host and completely bypasses container AOP aspect protection!
+// app.post("/api/orders", async (c) => {
+//   const container = await createModularContainer({ requestContext: c });
+//   const body = await c.req.json();
+//   const result = await container.orderService.createOrder(body.item);
+//   return c.json({ success: true, data: result });
+// });
+
+// ✅ Architectural Best Practice: Wildcard Dispatcher Gateway (Spring MVC DispatcherServlet)
+// Host maintains zero business routes; requests delegate to container aggregator with unified AOP governance (~20µs)
 app.all("*", async (c) => {
   const container = await createModularContainer({ requestContext: c });
   return await container.apiAggregator();

@@ -180,6 +180,9 @@ import type { Context } from "hono";
 export const dependencies = (allModules: string[]) =>
   allModules.filter((path) => path.startsWith("/api/"));
 
+// 极简 URL 到模块全路径映射（默认 1:1 契约匹配，如 "/api/order" 直接映射为模块全名）
+const pathToModuleKey = (path: string) => path;
+
 export const main = (container: ModularContainer) => {
   return async () => {
     // 零 any、无需 as Context 类型断言，解构直接享受 100% IDE 智能补全！

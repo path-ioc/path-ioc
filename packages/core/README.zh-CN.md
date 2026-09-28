@@ -263,18 +263,34 @@ Path-IoC 的底层设计建立在对 **Java Spring 经典控制反转 (IoC) 哲�
 
 ```typescript
 export interface IOCModule {
-  main: (container: any, moduleNames: string[]) => any | Promise<any>;
-  dependencies?: string[] | ((moduleNames: string[]) => string[]);
+  main: (
+    modularContainer: Record<string, unknown> & { $logs?: string[] },
+    moduleDeclarationNames: string[]
+  ) => Promise<unknown> | unknown;
+  dependencies?: string[] | ((moduleDeclarationNames: string[]) => string[]);
   order?: number;
   skip?: boolean;
 }
 
+export interface ModuleDeclaration {
+  name: string; // 短名称，用于依赖解析
+  fullName: string; // 完整路径名称，全局唯一
+  main: (
+    modularContainer: Record<string, unknown> & { $logs?: string[] },
+    moduleDeclarationNames: string[]
+  ) => Promise<unknown> | unknown;
+  dependencies: string[];
+  order: number;
+  skip?: boolean;
+  rawModule: IOCModule;
+}
+
 export interface CompiledModuleGraph {
-  sortedKeys: string[];
-  resolvedDepsMap: Record<string, string[]>;
-  shortKeyToFullKeyMap: Record<string, string>;
-  fullKeyToShortKeyMap: Record<string, string>;
-  moduleMap: Record<string, IOCModule>;
+  sortedDeclarations: ModuleDeclaration[];
+  resolvedDepsMap: Map<string, string[]>;
+  fullNameToModuleMap: Map<string, ModuleDeclaration>;
+  moduleDeclarationNames: string[];
+  shortNameToFullNameMap: Map<string, string | null>;
 }
 
 export function compileModuleGraph(
@@ -283,7 +299,7 @@ export function compileModuleGraph(
 ```
 
 - **算法复杂度**：时间复杂度 $O(V + E)$，空间复杂度 $O(V + E)$（基于 **DFS 后序遍历压栈拓扑排序**）；
-- **异常捕获**：若检测到环路依赖，立即抛出附带完整环路链路路径的错误；若检测到短名称命名冲突，抛出明确诊断提示。
+- **异常捕获**：若检测到环路依赖，立即抛出附带完整环路链路路径的错误；若检测到短名称命名存在歧义冲突，抛出明确诊断提示。
 
 ---
 
@@ -297,8 +313,8 @@ export function instantiateModuleContainer(
 ```
 
 - **行为规范**：
-  - 按 `compiledGraph.sortedKeys` 拓扑顺序依次唤醒模块 `main` 函数；
-  - 自动将模块执行返回值挂载到 `container[fullKey]` 与 `container[shortKey]`；
+  - 按 `compiledGraph.sortedDeclarations` 拓扑顺序依次唤醒模块 `main` 函数；
+  - 自动将模块执行返回值挂载到 `container[fullName]` 与 `container[name]`（短名称无歧义冲突时）；
   - 若模块的 `main` 为异步 Promise，引擎自动通过 Promise 记忆化反应式并发流协调后续依赖子节点。
 
 ---

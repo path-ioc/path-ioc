@@ -48,7 +48,9 @@
 我们来看一个在全栈与前端开发中最为通俗的经典模块——`i18n`（多语言字典管理器）：
 
 ```typescript
-// modules/i18n/index.ts
+// src/modules/i18n/index.ts
+export const dependencies = ["httpClient"];
+
 export const main = async (container: ModularContainer) => {
   const { httpClient } = container;
   

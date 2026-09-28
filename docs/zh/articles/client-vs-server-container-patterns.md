@@ -104,7 +104,7 @@ Path-IoC 拒绝在框架核心内引入复杂的“作用域元数据”概念�
 
 ```typescript
 // utils/memoizeModule.ts
-import type { ModularContainer } from "@path-ioc/core";
+// 注：ModularContainer 为 Path-IoC unplugin 全局声明合并接口，无需手动导入
 
 /**
  * 将模块工厂函数包装为单例闭包
@@ -138,13 +138,14 @@ export const memoizeModule = <
 > **设计要点：为什么不要把它想复杂？**
 > 1. **独立布尔标记防假值击穿**：使用 `let initialized = false` 独立记录执行状态。如果模块返回值合法地就是 `undefined`（如纯副作用初始化）、`null` 或 `false`，绝不会因 `if (cached)` 的判定缺陷而导致每次请求都被重新执行；
 > 2. **保持同步/异步行为绝对透明**：利用精确泛型推导，原函数是纯同步（如解析本地配置字典或 AST 模型），包装后依然是纯同步函数，**绝不强加 `async` 包装**，避免将同步计算强行拖入 V8 微任务队列；
-> 3. **敬畏异常（Fail-Fast 哲学）**：编程语言中的 `Error` 是程序明确向外宣告故障的最高效通道。如果数据库凭证错误或配置丢失，模块应当光明正大抛出异常中断请求，而非在缓存层私自掩盖错误搞盲目重试。
+> 3. **敬畏异常（Fail-Fast 哲学）**：编程语言中的 `Error` 是程序明确向外宣告故障的最高效通道。如果数据库凭证错误或配置丢失，模块应当光明正大抛出异常中断请求，而非在缓存层私自掩盖错误搞盲目重试；
+> 4. **连接自愈与重试职责边界**：`memoizeModule` 专注于进程级单例的闭包缓存。现代生产级驱动（如 MySQL2 / Redis 连接池）底层通常自带自动重连与心跳探测机制；若业务有特殊的自定义异步重试或冷启动自愈诉求，可在工厂函数内部自行封装。
 
 
 ### 2. 重型模块：一次初始化，进程常驻
 ```typescript
-// modules/infrastructure/database.ts
-import { memoizeModule } from "../../utils/memoizeModule";
+// src/modules/infrastructure/database/index.ts
+import { memoizeModule } from "../../../utils/memoizeModule";
 import { createPool } from "mysql2/promise";
 
 export const dependencies = [];
@@ -160,8 +161,7 @@ export const main = memoizeModule(async () => {
 
 ### 3. 轻型业务模块：请求级纯净隔离
 ```typescript
-// modules/services/orderService.ts
-import type { ModularContainer } from "@path-ioc/core";
+// src/modules/services/orderService/index.ts
 import type { Context } from "hono";
 
 export const dependencies = ["database"];
@@ -205,7 +205,17 @@ declare global {
 
 const app = new Hono();
 
-// 通配网关：为每个请求注入专属容器并调度 (单次填充仅耗时 20µs)
+// ❌ 反模式：在宿主入口为每个具体接口手写路由（相当于在 Spring MVC 里给每个 Controller 接口手写 Java Servlet）
+// 业务路由外泄至宿主，且请求完全绕过了容器内部统一的 AOP 切面防护网！
+// app.post("/api/orders", async (c) => {
+//   const container = await createModularContainer({ requestContext: c });
+//   const body = await c.req.json();
+//   const result = await container.orderService.createOrder(body.item);
+//   return c.json({ success: true, data: result });
+// });
+
+// ✅ 架构正道：通配网关分发（等同于 Spring MVC 的 DispatcherServlet）
+// 宿主入口 0 具体业务路由维护，请求全交由容器内部聚合调度与统一切面治理 (单次填充仅耗时 20µs)
 app.all("*", async (c) => {
   const container = await createModularContainer({ requestContext: c });
   return await container.apiAggregator();

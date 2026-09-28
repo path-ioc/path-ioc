@@ -127,7 +127,7 @@ Path-IoC 从不强制任何固化目录，而是将“路径即契约”的自�
      **Path-IoC 对于完全没有 AOP 经验和概念的开发者，也能凭借原生 JavaScript 动态语言特性，凭直觉写出真正的零耦合 AOP 模块——我们甚至可以直接称之为“高阶模块（Higher-Order Module）”。**
      就像 React 开发者凭直觉写高阶组件（HOC）一样，开发者无需任何框架特权 API：
      ```ts
-     // src/modules/aspects/profiler.ts —— 零 AOP 概念的“高阶模块”
+     // src/modules/aspects/profiler/index.ts —— 零 AOP 概念的“高阶模块”
      // 1. 凭直觉搜索所有 service 路径（无需理解 Pointcut）
      export const dependencies = (all: string[]) => 
        all.filter(name => name.includes('/services/'));

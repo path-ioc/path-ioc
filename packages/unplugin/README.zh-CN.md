@@ -158,26 +158,18 @@ import {
 ```typescript
 import { Hono } from "hono";
 import { createModularContainer } from "virtual:modular-container";
-import { memoizeModule } from "@path-ioc/core";
 
-const app = new Hono<{ Bindings: { DB_URL: string } }>();
+const app = new Hono();
 
-app.use("*", async (c, next) => {
+// 通配 API 网关分发：入口文件零具体业务路由，全部委托给容器内部聚合模块调度
+app.all("*", async (c) => {
   // 1. 微秒级容器点火：单图编译缓存（仅 21.2µs），高并发每请求安全隔离
-  const container = await createModularContainer();
-
-  // 2. 静态基础设施安全单例化 (利用单 Worker 实例内静态 env 缓存连接池)
-  // ⚠️ 铁律：严禁在 memoize 闭包内引用特定请求上下文 (如 c.req.header)
-  memoizeModule(container, "dbPool", () => createPostgresPool(c.env.DB_URL));
-
-  // 3. 动态注入当前请求的多租户专属上下文
-  container.$inject("requestContext", {
-    requestId: c.req.header("x-request-id") || crypto.randomUUID(),
-  });
-
-  c.set("ioc", container);
-  await next();
+  // 2. 将当前请求上下文作为种子对象直接传入容器
+  const container = await createModularContainer({ requestContext: c });
+  return await container.apiAggregator();
 });
+
+export default app;
 ```
 
 ---

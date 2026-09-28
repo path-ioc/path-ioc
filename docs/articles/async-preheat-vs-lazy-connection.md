@@ -50,7 +50,9 @@ In full-stack and backend systems, components split cleanly into two distinct ph
 Consider a ubiquitous pattern in modern full-stack development—the `i18n` (internationalization dictionary manager):
 
 ```typescript
-// modules/i18n/index.ts
+// src/modules/i18n/index.ts
+export const dependencies = ["httpClient"];
+
 export const main = async (container: ModularContainer) => {
   const { httpClient } = container;
 

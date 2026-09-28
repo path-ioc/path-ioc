@@ -158,25 +158,18 @@ import {
 ```typescript
 import { Hono } from "hono";
 import { createModularContainer } from "virtual:modular-container";
-import { memoizeModule } from "@path-ioc/core";
 
-const app = new Hono<{ Bindings: { DB_URL: string } }>();
+const app = new Hono();
 
-app.use("*", async (c, next) => {
-  // 1. Instant container ignition: single-graph cache (only 21.2µs)
-  const container = await createModularContainer();
-
-  // 2. Safe infrastructure singleton memoization
-  memoizeModule(container, "dbPool", () => createPostgresPool(c.env.DB_URL));
-
-  // 3. Dynamic injection of per-request multi-tenant context
-  container.$inject("requestContext", {
-    requestId: c.req.header("x-request-id") || crypto.randomUUID(),
-  });
-
-  c.set("ioc", container);
-  await next();
+// Wildcard Gateway: Entry defines zero business routes; delegates to container aggregator
+app.all("*", async (c) => {
+  // 1. Single-graph cache reuses compiled DAG: hydrates request-isolated container in ~21.2µs
+  // 2. Pass per-request context directly as container seed
+  const container = await createModularContainer({ requestContext: c });
+  return await container.apiAggregator();
 });
+
+export default app;
 ```
 
 ---

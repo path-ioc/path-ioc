@@ -180,6 +180,9 @@ import type { Context } from "hono";
 export const dependencies = (allModules: string[]) =>
   allModules.filter((path) => path.startsWith("/api/"));
 
+// Simple URL to full module path mapping (1:1 contract match by default, e.g. "/api/order")
+const pathToModuleKey = (path: string) => path;
+
 export const main = (container: ModularContainer) => {
   return async () => {
     // Zero 'any', zero 'as Context' type casting—enjoy 100% IDE auto-completion!
