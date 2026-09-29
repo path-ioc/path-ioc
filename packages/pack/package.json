@@ -43,7 +43,8 @@
   },
   "dependencies": {
     "javascript-obfuscator": "^4.1.0",
-    "lodash-es": "^4.17.21"
+    "lodash-es": "^4.17.21",
+    "vite-plugin-dts": "^5.1.1"
   },
   "peerDependencies": {
     "vite": "*"

@@ -9,7 +9,7 @@ describe("modularPackPlugin unit tests", () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "pack-test-"));
+    tmpDir = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "pack-test-")));
     // Create mock src/modules structure
     await fs.mkdir(path.join(tmpDir, "src/modules/math/add"), { recursive: true });
     await fs.writeFile(
@@ -30,6 +30,19 @@ describe("modularPackPlugin unit tests", () => {
         dependencies: {
           "lodash-es": "^4.17.21",
         },
+      })
+    );
+    // Create tsconfig.json
+    await fs.writeFile(
+      path.join(tmpDir, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          target: "ES2022",
+          module: "ESNext",
+          moduleResolution: "Bundler",
+          strict: false,
+        },
+        include: ["src/**/*"],
       })
     );
   });
@@ -102,11 +115,12 @@ describe("modularPackPlugin unit tests", () => {
     expect(pkgContent.types).toBe("./index.d.ts");
   });
 
-  it("should execute actual Vite build and output compiled registry index.js", async () => {
+  it("should execute actual Vite build and output compiled registry index.js and declarations", async () => {
     const outDir = path.resolve(tmpDir, "dist-plugin");
     const plugin = modularPackPlugin({
       modulesPath: "src/modules",
       outDir: "dist-plugin",
+      tsconfigPath: path.join(tmpDir, "tsconfig.json"),
     });
 
     await build({
@@ -127,5 +141,18 @@ describe("modularPackPlugin unit tests", () => {
     const dtsPath = path.join(outDir, "index.d.ts");
     const dtsExists = await fs.access(dtsPath).then(() => true).catch(() => false);
     expect(dtsExists).toBe(true);
+
+    const dtsContent = await fs.readFile(dtsPath, "utf-8");
+    expect(dtsContent).not.toContain("../../src/modules");
+    expect(dtsContent).toContain("./src/modules");
+
+    // Check module declaration files are generated in dist-plugin/src/modules
+    const mathDtsPath = path.join(outDir, "src/modules/math/add/index.d.ts");
+    const mathDtsExists = await fs.access(mathDtsPath).then(() => true).catch(() => false);
+    expect(mathDtsExists).toBe(true);
+
+    const greetDtsPath = path.join(outDir, "src/modules/util/greet/index.d.ts");
+    const greetDtsExists = await fs.access(greetDtsPath).then(() => true).catch(() => false);
+    expect(greetDtsExists).toBe(true);
   });
 });

@@ -5,9 +5,14 @@ import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import { camelCase } from "lodash-es";
 import JavaScriptObfuscator from "javascript-obfuscator";
-import type { Plugin } from "vite";
+import type { Plugin, PluginOption } from "vite";
+import dts, { type PluginOptions as DtsPluginOptions } from "vite-plugin-dts";
 
 const execAsync = promisify(exec);
+
+const getDtsPlugin = (): ((options?: DtsPluginOptions) => Plugin | Plugin[]) => {
+  return typeof dts === "function" ? dts : (dts as any).default;
+};
 
 export interface PackPluginOptions {
   /**
@@ -18,7 +23,7 @@ export interface PackPluginOptions {
 
   /**
    * Destination path for the physical entry file.
-   * @default "node_modules/.path-ioc/.modular-plugin-entry.ts"
+   * @default ".modular-plugin-entry.ts"
    */
   entryFile?: string;
 
@@ -37,21 +42,177 @@ export interface PackPluginOptions {
    * Shared container type mappings array reference (optional).
    */
   sharedContainerMappings?: string[];
+
+  /**
+   * Custom tsconfig path for declaration generation.
+   * Defaults to tsconfig.app.json (if exists) or tsconfig.json.
+   */
+  tsconfigPath?: string;
+
+  /**
+   * Whether to generate TypeScript declaration files.
+   * @default true
+   */
+  dts?: boolean;
 }
 
 export function modularPackPlugin({
   modulesPath = "src/modules",
-  entryFile = "node_modules/.path-ioc/.modular-plugin-entry.ts",
+  entryFile = ".modular-plugin-entry.ts",
   outDir = "dist-plugin",
   sharedMappings = [],
   sharedContainerMappings = [],
+  tsconfigPath,
+  dts: enableDts = true,
 }: PackPluginOptions = {}): Plugin {
   let projectRoot: string;
   let entryFilePath: string;
   let outputFullPath: string;
   let savedEntryLines: string[] = [];
+  let isDelivered = false;
 
-  return {
+  const finalizeDelivery = async () => {
+    if (isDelivered) return;
+    isDelivered = true;
+
+    try {
+      await fs.access(outputFullPath);
+    } catch {
+      return;
+    }
+
+    try {
+      // 1. 生成并修正交付标准的 index.d.ts
+      const dtsPath = path.resolve(outputFullPath, "index.d.ts");
+      const generatedEntryName = path.basename(entryFilePath).replace(/\.tsx?$/, ".d.ts");
+      const generatedEntryPath = path.resolve(outputFullPath, generatedEntryName);
+
+      try {
+        if (fsSync.existsSync(generatedEntryPath) && generatedEntryPath !== dtsPath) {
+          await fs.rename(generatedEntryPath, dtsPath);
+        }
+
+        let baseDtsContent = "";
+        if (fsSync.existsSync(dtsPath)) {
+          baseDtsContent = await fs.readFile(dtsPath, "utf-8");
+        } else {
+          baseDtsContent = savedEntryLines.filter((l) => !l.startsWith("//")).join("\n");
+        }
+
+        const globalBlock = [
+          `declare global {`,
+          `  interface ModuleMap {`,
+          ...sharedMappings,
+          `  }`,
+          ``,
+          `  interface ModularContainer {`,
+          ...sharedContainerMappings,
+          `  }`,
+          `}`,
+          ``,
+          `export {};`,
+          ``,
+        ].join("\n");
+
+        let dtsContent = baseDtsContent.trimEnd() + "\n\n" + globalBlock;
+        if (!dtsContent.includes("@path-ioc/unplugin/virtual")) {
+          dtsContent = `/// <reference types="@path-ioc/unplugin/virtual" />\n` + dtsContent;
+        }
+
+        await fs.writeFile(dtsPath, dtsContent, "utf-8");
+        console.log(`\x1b[32m[ModularPack] Generated declarations: ${path.relative(projectRoot || process.cwd(), dtsPath)}\x1b[0m`);
+      } catch (err) {
+        console.warn("[ModularPack] Failed to generate index.d.ts:", err);
+      }
+
+      // 2. 源码混淆保护
+      if (process.env.MODULAR_OBFUSCATE !== "false") {
+        try {
+          const jsFiles = await searchJsFiles(outputFullPath);
+          for (const file of jsFiles) {
+            let content = await fs.readFile(file, "utf-8");
+            content = content.replace(/process\.env\.NODE_ENV/g, "GLOBAL_VITE_PROCESS_ENV_NODE_ENV");
+            content = content.replace(/import\.meta\.env\.MODE/g, "GLOBAL_VITE_IMPORT_META_ENV_MODE");
+
+            const obfuscationResult = JavaScriptObfuscator.obfuscate(content, {
+              compact: true,
+              controlFlowFlattening: false,
+              deadCodeInjection: false,
+              identifierNamesGenerator: "hexadecimal",
+              renameGlobals: false,
+              selfDefending: false,
+              stringArray: true,
+              stringArrayEncoding: ["base64"],
+              transformObjectKeys: true,
+              unicodeEscapeSequence: false,
+              reservedStrings: ["\\.\\./assets/.*\\.js$", "\\./assets/.*\\.js$"],
+            });
+
+            let obfuscatedCode = obfuscationResult.getObfuscatedCode();
+            obfuscatedCode = obfuscatedCode.replace(/GLOBAL_VITE_PROCESS_ENV_NODE_ENV/g, "process.env.NODE_ENV");
+            obfuscatedCode = obfuscatedCode.replace(/GLOBAL_VITE_IMPORT_META_ENV_MODE/g, "import.meta.env.MODE");
+
+            await fs.writeFile(file, obfuscatedCode, "utf-8");
+          }
+          if (jsFiles.length > 0) {
+            console.log(`\x1b[32m[ModularPack] Obfuscated output JS files successfully!\x1b[0m`);
+          }
+        } catch (err) {
+          console.error("[ModularPack] Error during JS obfuscation:", err);
+        }
+      }
+
+      // 3. 生成交付专用 package.json
+      let pkg: Record<string, any> = {};
+      try {
+        const pkgPath = path.resolve(projectRoot || process.cwd(), "package.json");
+        pkg = JSON.parse(await fs.readFile(pkgPath, "utf-8"));
+      } catch {}
+
+      const mergedPeerDeps = {
+        ...(pkg.dependencies || {}),
+        ...(pkg.peerDependencies || {}),
+      };
+
+      const deliveryPkg = {
+        name: pkg.name || "modular-plugin",
+        version: pkg.version || "0.0.1",
+        type: "module",
+        main: "./index.js",
+        module: "./index.js",
+        types: "./index.d.ts",
+        files: ["index.js", "index.d.ts", "assets", "src"],
+        peerDependencies: mergedPeerDeps,
+      };
+
+      try {
+        await fs.writeFile(
+          path.resolve(outputFullPath, "package.json"),
+          JSON.stringify(deliveryPkg, null, 2),
+          "utf-8"
+        );
+      } catch (err) {
+        console.warn("[ModularPack] Failed to generate delivery package.json:", err);
+      }
+
+      // 4. 执行 npm pack 打包交付物
+      try {
+        await execAsync("npm pack", { cwd: outputFullPath });
+        console.log(`\n\x1b[32m[ModularPack] Successfully built and packed vendor package! (Version: ${deliveryPkg.version})\x1b[0m\n`);
+      } catch (err) {
+        console.warn(`[ModularPack] Failed to execute 'npm pack' in "${outDir}":`, err);
+      }
+    } finally {
+      // 5. 清理临时生成的物理入口文件
+      try {
+        if (entryFilePath && fsSync.existsSync(entryFilePath)) {
+          await fs.rm(entryFilePath, { force: true });
+        }
+      } catch {}
+    }
+  };
+
+  const mainPlugin: Plugin = {
     name: "vite-plugin-modular-pack",
     enforce: "pre",
 
@@ -205,117 +366,57 @@ export function modularPackPlugin({
     },
 
     async closeBundle() {
-      try {
-        await fs.access(outputFullPath);
-      } catch {
-        return;
-      }
-
-      // 1. 生成交付标准的 index.d.ts (与 lianhanlin-modular 一致)
-      try {
-        const dtsPath = path.resolve(outputFullPath, "index.d.ts");
-        const dtsContent = [
-          `/// <reference types="@path-ioc/unplugin/virtual" />`,
-          ...savedEntryLines.filter((l) => !l.startsWith("//")),
-          `declare global {`,
-          `  interface ModuleMap {`,
-          ...sharedMappings,
-          `  }`,
-          ``,
-          `  interface ModularContainer {`,
-          ...sharedContainerMappings,
-          `  }`,
-          `}`,
-          ``,
-          `export {};`,
-          ``,
-        ].join("\n");
-
-        await fs.writeFile(dtsPath, dtsContent, "utf-8");
-        console.log(`\x1b[32m[ModularPack] Generated declarations: ${path.relative(projectRoot, dtsPath)}\x1b[0m`);
-      } catch (err) {
-        console.warn("[ModularPack] Failed to generate index.d.ts:", err);
-      }
-
-      // 2. 源码混淆保护 (与 lianhanlin-modular 环境变量一致)
-      if (process.env.MODULAR_OBFUSCATE !== "false") {
-        try {
-          const jsFiles = await searchJsFiles(outputFullPath);
-          for (const file of jsFiles) {
-            let content = await fs.readFile(file, "utf-8");
-            content = content.replace(/process\.env\.NODE_ENV/g, "GLOBAL_VITE_PROCESS_ENV_NODE_ENV");
-            content = content.replace(/import\.meta\.env\.MODE/g, "GLOBAL_VITE_IMPORT_META_ENV_MODE");
-
-            const obfuscationResult = JavaScriptObfuscator.obfuscate(content, {
-              compact: true,
-              controlFlowFlattening: false,
-              deadCodeInjection: false,
-              identifierNamesGenerator: "hexadecimal",
-              renameGlobals: false,
-              selfDefending: false,
-              stringArray: true,
-              stringArrayEncoding: ["base64"],
-              transformObjectKeys: true,
-              unicodeEscapeSequence: false,
-              reservedStrings: ["\\.\\./assets/.*\\.js$", "\\./assets/.*\\.js$"],
-            });
-
-            let obfuscatedCode = obfuscationResult.getObfuscatedCode();
-            obfuscatedCode = obfuscatedCode.replace(/GLOBAL_VITE_PROCESS_ENV_NODE_ENV/g, "process.env.NODE_ENV");
-            obfuscatedCode = obfuscatedCode.replace(/GLOBAL_VITE_IMPORT_META_ENV_MODE/g, "import.meta.env.MODE");
-
-            await fs.writeFile(file, obfuscatedCode, "utf-8");
-          }
-          if (jsFiles.length > 0) {
-            console.log(`\x1b[32m[ModularPack] Obfuscated output JS files successfully!\x1b[0m`);
-          }
-        } catch (err) {
-          console.error("[ModularPack] Error during JS obfuscation:", err);
-        }
-      }
-
-      // 3. 生成交付专用 package.json (与 lianhanlin-modular 一致)
-      let pkg: Record<string, any> = {};
-      try {
-        const pkgPath = path.resolve(projectRoot, "package.json");
-        pkg = JSON.parse(await fs.readFile(pkgPath, "utf-8"));
-      } catch {}
-
-      const mergedPeerDeps = {
-        ...(pkg.dependencies || {}),
-        ...(pkg.peerDependencies || {}),
-      };
-
-      const deliveryPkg = {
-        name: pkg.name || "modular-plugin",
-        version: pkg.version || "0.0.1",
-        type: "module",
-        main: "./index.js",
-        module: "./index.js",
-        types: "./index.d.ts",
-        files: ["index.js", "index.d.ts", "assets", "src"],
-        peerDependencies: mergedPeerDeps,
-      };
-
-      try {
-        await fs.writeFile(
-          path.resolve(outputFullPath, "package.json"),
-          JSON.stringify(deliveryPkg, null, 2),
-          "utf-8"
-        );
-      } catch (err) {
-        console.warn("[ModularPack] Failed to generate delivery package.json:", err);
-      }
-
-      // 4. 执行 npm pack 打包交付物 (与 lianhanlin-modular 一致)
-      try {
-        await execAsync("npm pack", { cwd: outputFullPath });
-        console.log(`\n\x1b[32m[ModularPack] Successfully built and packed vendor package! (Version: ${deliveryPkg.version})\x1b[0m\n`);
-      } catch (err) {
-        console.warn(`[ModularPack] Failed to execute 'npm pack' in "${outDir}":`, err);
-      }
+      await finalizeDelivery();
     },
   };
+
+  let dtsPluginInstance: Plugin | Plugin[] | null = null;
+  if (enableDts) {
+    const dtsFn = getDtsPlugin();
+    const resolvedTsconfig = (() => {
+      if (tsconfigPath) return tsconfigPath;
+      const cwd = process.cwd();
+      const appTsconfig = path.resolve(cwd, "tsconfig.app.json");
+      if (fsSync.existsSync(appTsconfig)) return appTsconfig;
+      const rootTsconfig = path.resolve(cwd, "tsconfig.json");
+      if (fsSync.existsSync(rootTsconfig)) return rootTsconfig;
+      return undefined;
+    })();
+
+    dtsPluginInstance = dtsFn({
+      ...(resolvedTsconfig ? { tsconfigPath: resolvedTsconfig } : {}),
+      include: [
+        entryFile,
+        `${modulesPath}/**/*`,
+        "src/**/*",
+      ],
+      entryRoot: ".",
+      outDirs: outDir,
+      strictOutput: false,
+      compilerOptions: {
+        composite: false,
+        incremental: false,
+      },
+      afterBuild: async () => {
+        await finalizeDelivery();
+      },
+    });
+  }
+
+  if (!dtsPluginInstance) {
+    return mainPlugin;
+  }
+
+  const dtsPlugins = Array.isArray(dtsPluginInstance) ? dtsPluginInstance : [dtsPluginInstance];
+  const pluginGroup = [mainPlugin, ...dtsPlugins] as unknown as PluginOption & Plugin;
+  Object.assign(pluginGroup, {
+    name: mainPlugin.name,
+    enforce: mainPlugin.enforce,
+    config: mainPlugin.config,
+    closeBundle: mainPlugin.closeBundle,
+  });
+
+  return pluginGroup;
 }
 
 const searchIndexTsFiles = async (rootPath: string): Promise<string[]> => {
