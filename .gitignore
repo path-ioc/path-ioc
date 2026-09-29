@@ -13,6 +13,7 @@ build
 # Path-IoC Generated Artifacts & Virtual Modules
 .path-ioc
 .virtual-modular-container.js
+.modular-plugin-entry.ts
 **/types/ignore.modular.d.ts
 **/src/types/modular-container.d.ts
 

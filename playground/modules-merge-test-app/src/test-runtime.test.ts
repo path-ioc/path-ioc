@@ -11,7 +11,7 @@ if (typeof document === "undefined") {
 
 import { compileModuleGraph, instantiateModuleContainer } from "@path-ioc/core";
 import { modules as localModules } from "virtual:modular-container";
-import { modules as remoteFullAppModules } from "full-test-app/node_modules/.path-ioc/.modular-plugin-entry";
+import { modules as remoteFullAppModules } from "full-test-app/modular-entry";
 
 describe("modules-merge-test-app Cross-App Merge Runtime Assertions", () => {
   test("should merge remote and local modules into a unified DAG graph and execute correctly", async () => {

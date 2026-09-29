@@ -6,7 +6,7 @@
     "build": "pnpm --filter \"./packages/*\" run build",
     "build:all": "pnpm -r run build",
     "test": "vitest run",
-    "test:all": "pnpm test && pnpm --filter container-test-app run test && pnpm --filter full-test-app run test && pnpm --filter modules-merge-test-app run test && pnpm --filter full-test-app run build:vite && pnpm --filter full-test-app run build:webpack && pnpm --filter full-test-app run build:rspack && pnpm --filter modules-merge-test-app run build",
+    "test:all": "pnpm test && pnpm --filter container-test-app run test && pnpm --filter full-test-app run test && pnpm --filter full-test-app run build:vite && pnpm --filter modules-merge-test-app run test && pnpm --filter full-test-app run build:webpack && pnpm --filter full-test-app run build:rspack && pnpm --filter modules-merge-test-app run build",
     "dev": "pnpm -r run dev",
     "lint": "pnpm -r run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
