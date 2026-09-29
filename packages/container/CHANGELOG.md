@@ -1,5 +1,13 @@
 # @path-ioc/container
 
+## 0.1.6
+
+### Patch Changes
+
+- fix missing module type declaration files in modular pack distribution
+- Updated dependencies
+  - @path-ioc/core@0.1.6
+
 ## 0.1.5
 
 ### Patch Changes

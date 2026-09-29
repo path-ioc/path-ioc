@@ -1,5 +1,11 @@
 # @path-ioc/unplugin
 
+## 0.1.6
+
+### Patch Changes
+
+- fix missing module type declaration files in modular pack distribution
+
 ## 0.1.5
 
 ### Patch Changes
