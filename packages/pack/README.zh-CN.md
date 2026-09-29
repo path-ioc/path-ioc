@@ -24,7 +24,9 @@
 ## 核心特性 (Features)
 
 - **物理入口自动生成 (Physical Entrypoint Generation)**：
-  在 Vite 构建流程中，自动深度扫描 `src/modules` 下所有包含 `index.ts/tsx` 的物理子目录，并在磁盘上自动生成/更新入口文件（默认 `node_modules/.path-ioc/.modular-plugin-entry.ts`）；
+  在 Vite 构建流程中，自动深度扫描 `src/modules` 下所有包含 `index.ts/tsx` 的物理子目录，并在磁盘上自动生成/更新入口文件（默认 `.modular-plugin-entry.ts`，构建完成后自动安全移除）；
+- **全量 TypeScript 类型导出 (`dts`)**：
+  内置集成 TypeScript 声明编译器，自动在 `${outDir}/src` 下输出所有导出模块的真实物理 `.d.ts` 声明文件，并与 `${outDir}/index.d.ts` 无缝关联，保证下游消费者安装使用时具备完整、零丢失的类型推导；
 - **Mesh 注册表与类型全导出**：
   自动生成统一的模块导入别名与导出，并导出标准运行期注册表数组 `modules`：
   ```typescript
@@ -38,7 +40,7 @@
 - **内置源码深度混淆保护**：
   构建结束时（`closeBundle` 生命周期）默认集成 `javascript-obfuscator` 对产物代码进行深度混淆保护，可通过环境变量 `MODULAR_OBFUSCATE=false` 关闭；
 - **交付包全自动打包**：
-  自动生成交付标准的 `package.json` 与 `index.d.ts` 类型声明，并自动在 `outDir` 目录调用 `npm pack` 产出可分发的 `.tgz` 压缩包。
+  自动生成交付标准的 `package.json`（包含完整的 `files` 列表与声明配置），并自动在 `outDir` 目录调用 `npm pack` 产出可分发的 `.tgz` 压缩包。
 
 ---
 
@@ -68,8 +70,7 @@ export default defineConfig({
     modularPackPlugin({
       modulesPath: "src/modules",
       outDir: "dist-plugin",
-      // 可选：自定义生成的入口文件路径
-      entryFile: "node_modules/.path-ioc/.modular-plugin-entry.ts",
+      // dts: true, // 默认开启完整类型编译
       sharedMappings,
       sharedContainerMappings,
     }),
@@ -89,8 +90,10 @@ vite build --config vite.config.pack.ts
 | 配置项 | 类型 | 默认值 | 描述 |
 | :--- | :--- | :--- | :--- |
 | **`modulesPath`** | `string` | `'src/modules'` | 模块扫描的物理根目录路径。 |
-| **`entryFile`** | `string` | `'node_modules/.path-ioc/.modular-plugin-entry.ts'` | 物理生成的入口文件路径。 |
+| **`entryFile`** | `string` | `'.modular-plugin-entry.ts'` | 临时物理入口文件路径（构建后自动清理，建议加入 `.gitignore`）。 |
 | **`outDir`** | `string` | `'dist-plugin'` | 构建产物输出与 npm 打包目录。 |
+| **`dts`** | `boolean` | `true` | 是否为所有导出模块编译生成 `.d.ts` 类型声明文件。 |
+| **`tsconfigPath`** | `string` | `undefined` *(可选)* | 生成类型声明所使用的 `tsconfig` 路径。默认自动查找 `tsconfig.app.json` 或 `tsconfig.json`。 |
 | **`sharedMappings`** | `string[]` | `[]` *(可选)* | 接收生成的类型映射字符串数组引用。 |
 | **`sharedContainerMappings`** | `string[]` | `[]` *(可选)* | 接收生成的容器类型映射字符串数组引用。 |
 

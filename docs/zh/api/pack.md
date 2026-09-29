@@ -8,10 +8,11 @@
 
 ## 核心特性
 
-- **物理入口自动生成**：自动扫描 `src/modules` 下所有 Mesh 模块并生成标准的物理聚合入口文件（默认 `.modular-plugin-entry.ts`）；
+- **物理入口自动生成**：自动扫描 `src/modules` 下所有 Mesh 模块并生成标准的物理聚合入口文件（默认 `.modular-plugin-entry.ts`，构建完成后自动清理）；
+- **全量 TypeScript 类型导出 (`dts`)**：内置集成 TypeScript 声明文件编译器，自动在 `${outDir}/src` 下输出所有模块的真实 `.d.ts` 声明文件，并与 `${outDir}/index.d.ts` 关联，确保下游安装包具备完整无损的类型推导；
 - **模块注册表导出**：导出标准运行期注册表数组 `modules` 与类型映射，供宿主应用或微前端运行时直接装载；
-- **内置源码混淆保护**：构建结束时默认集成 `javascript-obfuscator` 对产物代码进行混淆保护（可通过环境变量 `MODULAR_OBFUSCATE=false` 关闭）；
-- **交付包自动打包**：自动生成交付标准的 `package.json` 与类型声明，并自动调用 `npm pack` 产出可分发的 tarball 压缩包。
+- **内置源码混淆保护**：构建结束时（`closeBundle` 生命周期）默认集成 `javascript-obfuscator` 对产物代码进行混淆保护（可通过环境变量 `MODULAR_OBFUSCATE=false` 关闭）；
+- **交付包自动打包**：自动生成交付标准的 `package.json`（自动包含 JS、类型与资源清单）并在输出目录调用 `npm pack` 产出可直接发布的 `.tgz` 压缩包。
 
 ---
 
@@ -19,9 +20,11 @@
 
 | 配置项 | 类型 | 默认值 | 描述 |
 | :--- | :--- | :--- | :--- |
-| **`modulesPath`** | `string` | `'src/modules'` | 模块扫描的相对根目录路径。 |
-| **`entryFile`** | `string` | `'node_modules/.path-ioc/.modular-plugin-entry.ts'` | 物理生成的入口文件路径。 |
+| **`modulesPath`** | `string` | `'src/modules'` | 模块扫描的物理根目录路径。 |
+| **`entryFile`** | `string` | `'.modular-plugin-entry.ts'` | 临时物理入口文件路径（构建后自动清理，建议加入 `.gitignore`）。 |
 | **`outDir`** | `string` | `'dist-plugin'` | 构建产物输出与 npm 打包目录。 |
+| **`dts`** | `boolean` | `true` | 是否为所有导出模块编译生成 `.d.ts` 类型声明文件。 |
+| **`tsconfigPath`** | `string` | `undefined` *(可选)* | 生成类型声明所使用的 `tsconfig` 路径。默认自动查找 `tsconfig.app.json` 或 `tsconfig.json`。 |
 | **`sharedMappings`** | `string[]` | `[]` *(可选)* | 接收生成的类型映射字符串数组引用。 |
 | **`sharedContainerMappings`** | `string[]` | `[]` *(可选)* | 接收生成的容器类型映射字符串数组引用。 |
 
@@ -39,6 +42,7 @@ export default defineConfig({
     modularPackPlugin({
       modulesPath: "src/modules",
       outDir: "dist-plugin",
+      // dts: true, // 默认开启完整类型编译
     }),
   ],
 });

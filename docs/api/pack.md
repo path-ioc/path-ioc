@@ -7,11 +7,12 @@
 ---
 
 ## Core Capabilities
-
-- **Physical Entrypoint Generation**: Scans `src/modules` and writes a clean physical aggregation entry file (`.modular-plugin-entry.ts`);
+ 
+- **Physical Entrypoint Generation**: Scans `src/modules` and writes a clean physical aggregation entry file (default `.modular-plugin-entry.ts`, automatically cleaned up after build);
+- **Full TypeScript Declaration Bundling (`dts`)**: Integrated declaration compiler that emits real `.d.ts` files for all exported modules under `${outDir}/src` alongside `${outDir}/index.d.ts`, guaranteeing lossless type inference in downstream packages;
 - **Registry Export**: Exports standard `modules` registry arrays and TypeScript mappings for host applications to load or merge;
 - **Built-in Obfuscation Protection**: Integrates `javascript-obfuscator` during the `closeBundle` lifecycle by default (can be disabled via `MODULAR_OBFUSCATE=false`);
-- **Automated Packaging**: Generates package-ready metadata and executes `npm pack` in the output directory automatically.
+- **Automated Packaging**: Generates package-ready metadata (`package.json`, complete file manifests) and executes `npm pack` in the output directory automatically.
 
 ---
 
@@ -20,8 +21,10 @@
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | **`modulesPath`** | `string` | `'src/modules'` | Root directory to scan for modules. |
-| **`entryFile`** | `string` | `'node_modules/.path-ioc/.modular-plugin-entry.ts'` | Destination for the generated physical entrypoint. |
+| **`entryFile`** | `string` | `'.modular-plugin-entry.ts'` | Destination for the temporary physical entrypoint (cleaned up after build; add to `.gitignore`). |
 | **`outDir`** | `string` | `'dist-plugin'` | Output directory for the packaged library bundle and npm tarball. |
+| **`dts`** | `boolean` | `true` | Whether to compile `.d.ts` declaration files for all exported modules. |
+| **`tsconfigPath`** | `string` | `undefined` *(Optional)* | Custom tsconfig path for declaration emit. Defaults to `tsconfig.app.json` or `tsconfig.json`. |
 | **`sharedMappings`** | `string[]` | `[]` *(Optional)* | Array reference populated with generated type mappings. |
 | **`sharedContainerMappings`** | `string[]` | `[]` *(Optional)* | Array reference populated with container type mappings. |
 
@@ -39,6 +42,7 @@ export default defineConfig({
     modularPackPlugin({
       modulesPath: "src/modules",
       outDir: "dist-plugin",
+      // dts: true, // Enabled by default for complete type emission
     }),
   ],
 });

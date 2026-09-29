@@ -132,7 +132,7 @@ export default defineConfig({
   plugins: [
     modularPackPlugin({
       modulesPath: "src/modules", // Module scan directory, default: "src/modules"
-      // entryFile: "node_modules/.path-ioc/.modular-plugin-entry.ts", // Optional custom entry path
+      // entryFile: ".modular-plugin-entry.ts", // Physical entry path, automatically cleaned up after build
     }),
   ],
 });
@@ -149,16 +149,16 @@ Configure a dedicated script in `package.json`:
 ```
 *(Alternatively, conditionally load it in `vite.config.ts` using custom environment variables, e.g., `process.env.BUILD_TARGET === 'pack'`)*
 
-### 3. Generated Physical Entry Specifications
-- Default output location: `node_modules/.path-ioc/.modular-plugin-entry.ts`;
-- Automatically collates all discovered modules and exports a runtime registry array:
+### 3. Generated Physical Entry & Declaration Specifications
+- Default physical entry path is `.modular-plugin-entry.ts` at the project root, automatically cleaned up upon build completion (recommended to add this pattern to `.gitignore` to prevent stray files if builds are forcefully terminated);
+- Built-in `dts` compilation automatically outputs declaration files for all exported modules under `dist-plugin/src/` and `dist-plugin/index.d.ts`, delivering full TypeScript definitions;
+- The entry file collates all discovered modules and exports a runtime registry array:
   ```typescript
   export const modules = [
     { key: "/auth/userService", module: module_0 },
     // ...
   ];
   ```
-- This physical file can be directly supplied as a build `input` in distribution scripts, micro-frontend sub-bundle entries, or Rollup pipelines.
 
 ---
 

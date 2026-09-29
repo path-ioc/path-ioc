@@ -132,7 +132,7 @@ export default defineConfig({
   plugins: [
     modularPackPlugin({
       modulesPath: "src/modules", // 模块扫描目录，默认为 "src/modules"
-      // entryFile: "node_modules/.path-ioc/.modular-plugin-entry.ts", // 可选自定义物理入口生成路径
+      // entryFile: ".modular-plugin-entry.ts", // 物理入口生成路径，构建完成后自动安全移除
     }),
   ],
 });
@@ -149,16 +149,16 @@ export default defineConfig({
 ```
 *(亦可在常规 `vite.config.ts` 中根据自定义环境变量按需决定是否挂载插件，如 `process.env.BUILD_TARGET === 'pack'`)*
 
-### 3. 生成的物理入口文件规范
-- 默认物理生成路径为：`node_modules/.path-ioc/.modular-plugin-entry.ts`；
-- 该文件会自动汇集扫描到的所有模块并导出标准的物理注册表数组：
+### 3. 生成的物理入口与声明文件规范
+- 默认物理入口生成路径为项目根目录的 `.modular-plugin-entry.ts`，构建打包完成时插件会自动将其清理（建议将该文件名加入 `.gitignore` 防止意外中断时残留）；
+- 插件内置集成 `dts` 编译器，会自动在 `dist-plugin/src/` 与 `dist-plugin/index.d.ts` 输出全部导出模块的声明文件，交付完整的类型定义；
+- 该入口文件会自动汇集扫描到的所有模块并导出标准的物理注册表数组：
   ```typescript
   export const modules = [
     { key: "/auth/userService", module: module_0 },
     // ...
   ];
   ```
-- 在发版脚本、微前端多入口配置或 Rollup 打包中，可直接将该物理文件作为 input 入口进行二次编译分发。
 
 ---
 

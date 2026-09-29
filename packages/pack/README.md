@@ -24,7 +24,9 @@
 ## Core Capabilities
 
 - **Physical Entrypoint Generation**:
-  During Vite builds, automatically scans `src/modules` for physical directories containing `index.ts/tsx` and synthesizes clean on-disk entrypoints (default `node_modules/.path-ioc/.modular-plugin-entry.ts`);
+  During Vite builds, automatically scans `src/modules` for physical directories containing `index.ts/tsx` and synthesizes clean on-disk entrypoints (default `.modular-plugin-entry.ts`, automatically removed upon build completion);
+- **Full TypeScript Declaration Bundling (`dts`)**:
+  Integrated declaration compiler that automatically outputs complete `.d.ts` declaration files for all exported modules under `${outDir}/src` alongside `${outDir}/index.d.ts`, guaranteeing lossless type inference when consuming the published package;
 - **Full Mesh Registry & Type Exports**:
   Generates unified module import aliases and exports the canonical runtime module registry array `modules`:
   ```typescript
@@ -38,7 +40,7 @@
 - **Built-in Obfuscation Protection**:
   During the `closeBundle` lifecycle, automatically performs deep code obfuscation using `javascript-obfuscator` by default. Can be disabled via environment variable `MODULAR_OBFUSCATE=false`;
 - **Automated Packaging**:
-  Automatically synthesizes package-ready metadata (`package.json`, `index.d.ts`) and triggers `npm pack` in `outDir` to produce distribution `.tgz` tarballs.
+  Automatically synthesizes package-ready metadata (`package.json`, complete `files` manifest, `index.d.ts`) and triggers `npm pack` in `outDir` to produce distribution `.tgz` tarballs.
 
 ---
 
@@ -68,8 +70,7 @@ export default defineConfig({
     modularPackPlugin({
       modulesPath: "src/modules",
       outDir: "dist-plugin",
-      // Optional: Custom on-disk entrypoint path
-      entryFile: "node_modules/.path-ioc/.modular-plugin-entry.ts",
+      // dts: true, // Enabled by default for complete type emission
       sharedMappings,
       sharedContainerMappings,
     }),
@@ -89,8 +90,10 @@ vite build --config vite.config.pack.ts
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | **`modulesPath`** | `string` | `'src/modules'` | Root directory scanned for modular IoC entrypoints. |
-| **`entryFile`** | `string` | `'node_modules/.path-ioc/.modular-plugin-entry.ts'` | Target physical path for the generated entrypoint file. |
+| **`entryFile`** | `string` | `'.modular-plugin-entry.ts'` | Target physical path for the generated entrypoint file (cleaned up after build; add to `.gitignore`). |
 | **`outDir`** | `string` | `'dist-plugin'` | Output directory for the packaged library bundle and npm tarball. |
+| **`dts`** | `boolean` | `true` | Whether to compile `.d.ts` declaration files for all exported modules. |
+| **`tsconfigPath`** | `string` | `undefined` *(optional)* | Custom tsconfig path for declaration emit. Defaults to `tsconfig.app.json` or `tsconfig.json`. |
 | **`sharedMappings`** | `string[]` | `[]` *(optional)* | Reference to an array that receives generated type mapping strings. |
 | **`sharedContainerMappings`** | `string[]` | `[]` *(optional)* | Reference to an array that receives generated container type mapping strings. |
 
