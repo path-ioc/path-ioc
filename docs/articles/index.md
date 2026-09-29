@@ -21,6 +21,15 @@ Different articles may tackle overlapping architectural concepts, but each addre
 
 </div>
 
+<div class="article-card">
+
+#### 2. [Deep Dive: Path-IoC vs. InferDI — Does "No Build Step" Equal "Lightweight"?](/articles/inferdi-vs-path-ioc)
+* **Perspective**: Empirical DX / O(1) vs O(N) Composition Root Scaling / Pure Closure Unit Testing & Vitest Integration / Strangler Pattern Migration / Type-State Accumulator Traps / Autonomous DAG Graph Scheduling
+* **Core Dilemma**: "InferDI has zero dependencies and no build plugins—isn't it lighter than Path-IoC?" Why does omitting build plugins often impose the heavy burden of manual wiring boards? How can legacy codebases adopt modern IoC without complete rewrites? What production problem does microsecond per-request isolation actually solve?
+* **Key Takeaway**: Understand the fundamental divide between empirical developer ergonomics and underlying type-theory mechanisms (type-state accumulators vs. ambient AST generation). Master the Three Canonical Dependency Lookup Patterns and the generational shift from artisanal wiring to industrial automation.
+
+</div>
+
 ---
 
 ### 📐 Graph Theory & Runtime Internals

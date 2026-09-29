@@ -183,6 +183,10 @@ gtag('config', 'G-ZK9F76DH0Z');`,
                   text: "Category Error: NestJS vs Path-IoC & ESM Modular Evolution",
                   link: "/articles/category-error-nestjs-vs-path-ioc",
                 },
+                {
+                  text: "Deep Dive: Path-IoC vs InferDI — Does 'No Build Step' Equal 'Lightweight'?",
+                  link: "/articles/inferdi-vs-path-ioc",
+                },
               ],
             },
           ],
@@ -306,6 +310,10 @@ gtag('config', 'G-ZK9F76DH0Z');`,
                 {
                   text: "范畴谬误：为什么拿 NestJS 和 Path-IoC 对比问错了问题？",
                   link: "/zh/articles/category-error-nestjs-vs-path-ioc",
+                },
+                {
+                  text: "深度对比 InferDI：免构建插件就是“轻量”吗？",
+                  link: "/zh/articles/inferdi-vs-path-ioc",
                 },
                 {
                   text: "图论视角：为什么 DI 无法实现拓扑并发？",
