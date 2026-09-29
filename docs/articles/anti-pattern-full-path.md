@@ -122,16 +122,24 @@ The proper remedies are clear and clean:
 
 ---
 
-### Sin 3: Breaking Syntactic Symmetry and Developer Ergonomics
+### Sin 3: Breaking ES6 Destructuring and Falling into the Traditional DI "Coupled Dependency" Trap
 
-In Path-IoC best practices, dependency declaration and container consumption are **perfectly symmetrical**:
+In point-to-point business code, hardcoding fully qualified paths destroys the most natural destructuring ergonomics of TypeScript:
 
 ```typescript
-// 1. Declare short-name dependencies (topological scheduling criteria)
-export const dependencies = ["orderService", "paymentGateway"];
+// ❌ Anti-Pattern: Full physical paths force clumsy string-indexed dictionary lookups
+export const dependencies = ["/trade/order/orderService", "/pay/gateway/paymentGateway"];
 
-// 2. Pure closure factory destructures directly from parameter (type inferred)
-export const main = ({ orderService, paymentGateway }: ModularContainer) => {
+export const main = (container: ModularContainer) => {
+  // Syntactic disaster: string indexing destroys destructuring elegance and IDE auto-completion
+  const orderService = container["/trade/order/orderService"];
+  const paymentGateway = container["/pay/gateway/paymentGateway"];
+};
+
+// ✅ Architectural Best Practice: Clean short names with native container destructuring
+export const main = (container: ModularContainer) => {
+  // Enjoy 100% elegant ES6 destructuring with full type inference
+  const { orderService, paymentGateway } = container;
   return {
     checkout(orderId: string) {
       const order = orderService.findById(orderId);
@@ -140,21 +148,37 @@ export const main = ({ orderService, paymentGateway }: ModularContainer) => {
   };
 };
 ```
-This pattern aligns seamlessly with idiomatic JavaScript and TypeScript syntax:
-- Every string in the declaration array corresponds 1:1 to a property on `ModularContainer`.
-- IDEs provide instant autocomplete without manual casts or dictionary indexing.
 
-Compare that to full paths:
-```typescript
-export const dependencies = ["/trade/order/orderService", "/pay/gateway/paymentGateway"];
+#### 💡 Deep Dive: Never Mistake `dependencies` for Traditional DI's "Injection List"!
 
-export const main = (container: ModularContainer) => {
-  // Syntactic disaster: string indexing destroys destructuring elegance
-  const orderService = container["/trade/order/orderService"];
-  const paymentGateway = container["/pay/gateway/paymentGateway"];
-};
+Many developers steeped in traditional Constructor Dependency Injection (Constructor DI) harbor a deep-seated mental model: *"If I consume a module in business logic, I must declare it in dependencies; conversely, whatever I declare, I must consume."*
+
+**This is the single most severe category error regarding Path-IoC! Path-IoC's greatest revolutionary breakthrough over legacy DI is physically decoupling [Initialization Sequencing] from [Runtime Consumption]:**
+
 ```
-Developers are forced into clumsy property lookups and lose the simplicity of `const { orderService } = container`.
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Path-IoC Core Decoupling Model                  │
+├──────────────────────────┬─────────────────────────────────────────────┤
+│ 1. dependencies (Declare)│ Pure 【Initialization Order Constraint】     │
+│    "Who must finish main │ Declared ONLY when main needs to read      │
+│     before I can boot?"  │ predecessor data immediately during startup │
+├──────────────────────────┼─────────────────────────────────────────────┤
+│ 2. container (Consume)   │ The Runtime 【Global Service Mesh】         │
+│    "What can I invoke    │ Entire mesh is ready after boot; consumers  │
+│     during execution?"   │ access anything freely, decoupled from deps │
+└──────────────────────────┴─────────────────────────────────────────────┘
+```
+
+Because of this separation, real-world production code naturally exhibits flexible **"Bidirectional Asymmetry"**:
+
+1. **Pattern 1: Consumption > Declaration (Consumed without Declaration)**  
+   A service (like `orderService`) needs the host request context (`requestContext`) or peer services at call time. Because the entire container is fully hydrated when requests arrive, the module needs zero wait-time during startup; `dependencies` remains a clean `[]`, while consumers freely destructure from `container`! This fundamentally eliminates the **pseudo-circular dependencies** caused by Constructor DI parameter binding.
+2. **Pattern 2: Declaration > Consumption (Declared without Consumption)**  
+   Suppose Module A's function `a()` depends on Module B (e.g. database querying) during invocation. Meanwhile, Module C needs to execute `A.a()` **during its startup phase (`main` execution)** to warm up cache data.  
+   Here, Module C's initialization physically requires Module B to be ready first. Module C **must declare Module B in its `dependencies`** to guarantee DAG topological safety; yet in Module C's code, it only destructures `const { moduleA } = container`, **consuming Module B zero times**!  
+   *(Note: The idiomatic architectural practice for such cases is setting `export const order = 1` on infrastructure modules, ensuring they boot early without burdening callers with transitive declarations.)*
+
+**Conclusion**: `dependencies` solely provides timing signals to the topological engine ("who boots before whom"); it is emphatically NOT a constructor argument list. Never constrain your architecture with the dogma of "declarations and consumption must be symmetrical"!
 
 ---
 

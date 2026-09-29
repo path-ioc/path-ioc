@@ -116,16 +116,24 @@ as it is an architectural anti-pattern.
 
 ---
 
-### 原罪三：撕裂语法与心智对称性，破坏开发者体验
+### 原罪三：破坏 ES6 原生解构语法，并误入传统 DI 的“绑定依赖”泥潭
 
-在 Path-IoC 最佳实践中，依赖声明与容器消费是**绝对对称**的：
+在点对点业务代码中，硬编码全称路径会直接摧毁 TypeScript 最自然的解构体验：
 
 ```typescript
-// 1. 声明短名称依赖（拓扑图调度依据）
-export const dependencies = ["orderService", "paymentGateway"];
+// ❌ 反模式：全称物理路径，被迫使用丑陋的字符串下标字典查找
+export const dependencies = ["/trade/order/orderService", "/pay/gateway/paymentGateway"];
 
-// 2. 闭包工厂直接从形参解构（TypeScript 自动推导类型）
-export const main = ({ orderService, paymentGateway }: ModularContainer) => {
+export const main = (container: ModularContainer) => {
+  // 语法灾难：必须通过字符串索引访问，丢失解构优雅性与 IDE 补全
+  const orderService = container["/trade/order/orderService"];
+  const paymentGateway = container["/pay/gateway/paymentGateway"];
+};
+
+// ✅ 架构正道：使用清晰的短名称，直接从 container 原生解构
+export const main = (container: ModularContainer) => {
+  // 享受 100% 优雅的 ES6 解构与强类型补全
+  const { orderService, paymentGateway } = container;
   return {
     checkout(orderId: string) {
       const order = orderService.findById(orderId);
@@ -134,21 +142,35 @@ export const main = ({ orderService, paymentGateway }: ModularContainer) => {
   };
 };
 ```
-这种书写方式符合最自然的 JavaScript/TypeScript 语法直觉：
-- 声明数组中的字符串，直接映射到 `ModularContainer` 上的属性名；
-- IDE 提供纯净的自动补全，不需要任何额外的断言或映射。
 
-而一旦写成全称：
-```typescript
-export const dependencies = ["/trade/order/orderService", "/pay/gateway/paymentGateway"];
+#### 💡 深度辨析：别把 Path-IoC 的 `dependencies` 理解成传统 DI 的“注入清单”！
 
-export const main = (container: ModularContainer) => {
-  // 语法灾难：必须通过字符串索引访问，丢失解构优雅性
-  const orderService = container["/trade/order/orderService"];
-  const paymentGateway = container["/pay/gateway/paymentGateway"];
-};
+许多受传统构造器依赖注入（Constructor DI）影响深刻的开发者，常会产生一个根深蒂固的思维误区：*“既然我在业务里解构了某个模块，我就必须在 dependencies 里声明它；反过来，我声明了什么，我就必须消费什么。”*
+
+**这是对 Path-IoC 最严重的范畴误解！Path-IoC 相比传统 DI 的最大革命性飞跃，正是将【初始化先决时序】与【调用期消费】在物理上彻底解耦：**
+
 ```
-开发者不得不写出冗长丑陋的字典查找，且彻底丧失了 `const { orderService } = container` 的极简解构能力。
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Path-IoC 核心解耦模型                           │
+├──────────────────────────┬─────────────────────────────────────────────┤
+│ 1. dependencies (声明端) │ 纯粹的【初始化先决时序】 (拓扑 DAG 算法输入)    │
+│    "我执行 main 时必须等谁"│ 仅在 main 初始化期需要立即读取前置数据时才需声明 │
+├──────────────────────────┼─────────────────────────────────────────────┤
+│ 2. container (消费端)    │ 运行期的【全景服务网格】 (Runtime Service Mesh)    │
+│    "我在调用期能使用谁"  │ 点火后全域就绪，消费端随取随用，与 dependencies 解耦│
+└──────────────────────────┴─────────────────────────────────────────────┘
+```
+
+正因如此，在真实生产场景中，依赖声明与容器消费往往呈现出极为灵活的**“双向不对称性”**：
+
+1. **场景一：消费端 > 声明端（消费了，但无需声明）**  
+   业务 Service（如 `orderService`）在运行期需要消费宿主外部上下文（`requestContext`）或其他业务服务。由于在调用期整个容器早已点火完毕，模块在初始化期根本无需等待它们，因此 `dependencies` 保持纯净的 `[]`，消费端直接从 `container` 随心所欲解构！彻底消灭了传统 DI 构造器绑死导致的**伪循环依赖**。
+2. **场景二：声明端 > 消费端（声明了，但根本不消费）**  
+   假设模块 A 的函数 `a()` 调用期依赖模块 B（例如底层数据库查询）；而模块 C 在其**初始化阶段（`main` 执行期）**需要立即调用 `A.a()` 预热数据。  
+   此时，模块 C 的初始化在物理上实际依赖模块 B 先就绪。因此模块 C **必须在 `dependencies` 中声明模块 B** 以确保 DAG 拓扑时序安全；但在模块 C 的代码中，它只需解构 `const { moduleA } = container`，**从头到尾 0 次消费模块 B**！
+   *(注：针对此类初始化时序，最佳工程实践是通过 `export const order = 1` 将底层基础设施下沉为高优先级的先驱模块，避免上层模块背负传递性声明负担。)*
+
+**结论**：`dependencies` 只是告诉拓扑引擎“谁先跑、谁后跑”的时序编排信号；它绝非传统 DI 的构造函数参数，切勿用“声明与消费必须对称”的僵化教条来束缚双手！
 
 ---
 
