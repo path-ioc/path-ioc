@@ -77,7 +77,7 @@ export function modularPackPlugin({
   sharedContainerMappings = [],
   tsconfigPath,
   dts: enableDts = true,
-}: PackPluginOptions = {}): Plugin {
+}: PackPluginOptions = {}): any {
   let projectRoot: string;
   let entryFilePath: string;
   let outputFullPath: string;
