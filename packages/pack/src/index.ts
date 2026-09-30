@@ -31,7 +31,7 @@ export type ModularPackPluginItem = Pick<Plugin, "name" | "enforce"> & {
   config?: (config: any, env: any) => any;
   closeBundle?: () => Promise<void> | void;
 };
-export type ModularPackPlugin = ModularPackPluginItem | ModularPackPluginItem[];
+export type ModularPackPlugin = ModularPackPluginItem & ModularPackPluginItem[];
 
 export interface PackPluginOptions {
   /**
@@ -434,7 +434,9 @@ export function modularPackPlugin({
   }
 
   if (!dtsPluginInstance) {
-    return mainPlugin;
+    const single = [mainPlugin] as unknown as ModularPackPlugin;
+    Object.assign(single, mainPlugin);
+    return single;
   }
 
   const dtsPlugins = Array.isArray(dtsPluginInstance) ? dtsPluginInstance : [dtsPluginInstance];
