@@ -30,6 +30,15 @@
 
 </div>
 
+<div class="article-card">
+
+#### 3. [深度剖析：为什么现代架构应该拒绝“作用域（Scope）”概念通胀？——从捕获依赖陷阱到闭包缓存原语](/zh/articles/scope-isolation-and-concept-inflation)
+* **核心视角**：概念通胀 (Concept Inflation) / ESM 单例并发状态穿透 / 捕获依赖陷阱 (Captive Dependency) / 1% 基础设施 vs 99% 无状态业务 / memoizeModule 闭包原语
+* **受众痛点**：为什么不能直接用 `export const logger = new Logger()`？为什么父子作用域容器会导致概念爆炸与隐蔽内存泄漏？为什么声明式 `@Scope` 反而是一种架构退化？
+* **阅读收获**：彻底理解多租户服务端并发状态隔离的物理本质，洞悉传统父子容器无法自行消解的“捕获依赖”缺陷，掌握 Path-IoC 如何用默认纯隔离网格与函数式闭包终结作用域复杂度。
+
+</div>
+
 ---
 
 ### 📐 图论与运行时底层思辨

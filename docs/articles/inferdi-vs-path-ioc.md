@@ -362,6 +362,29 @@ createModularContainer();
 
 ---
 
+### 8. The Inflation of Scope Concepts: Hierarchical Trees and Captive Dependencies vs. Closure Primitives
+
+In server-side high-concurrency environments, scope isolation is a strict requirement—because native ES module singletons (`export const a = new A()`) cannot isolate multi-tenant contexts under single-threaded Event Loops, resulting in severe state leakage and race conditions.
+
+However, in addressing scope isolation, the two frameworks represent a profound conflict between **Concept Inflation** and **Occam's Razor**:
+
+#### InferDI's Inflationary Route: Hierarchical Container Trees & Captive Dependencies
+Adhering to classical OOP hierarchical scopes, InferDI triggers an avalanche of conceptual overhead:
+1. **Surging Conceptual Tax**: To support request scopes, developers must learn and maintain `declareScopeInputs` slots, manual `.createScope()` invocations, and three lifecycle modes (`'singleton'`, `'scoped'`, `'transient'`);
+2. **The #1 Ghost Defect: Captive Dependencies**:
+   If a singleton service accidentally injects a request-scoped dependency, the singleton will permanently hold that request's context, causing insidious **cross-tenant data leakage and memory leaks**. InferDI is forced to construct complex Lifetime Guards at compile and run times to intercept this, burdening developers with constant troubleshooting;
+3. **Pervasive Decision Fatigue**: For every service across a codebase, developers must pause and debate: "Should this be scoped or singleton?"
+
+#### Path-IoC's Orthogonal Minimalism: Default Total Isolation + Closure Memoization (`memoizeModule`)
+While adding hierarchical scope tags to Path-IoC would be trivial to implement, it resolutely **rejects concept inflation**, returning to the raw arithmetic of production systems:
+* **1% Stateful Infrastructure vs. 99% Stateless Business**: In a real full-stack codebase of 200 modules, the resources that genuinely require process-level persistence can be counted on one hand (typically 3 to 5: database connection pools, Redis clients, message queue producers). The remaining 195 modules represent purely stateless domain logic;
+* **Refusing to Penalize 99% of Code for a 1% Edge Case**:
+  * **Default Philosophy**: Everything is pristine per-request isolation! Leveraging **`21.2µs`** microsecond instantiation, every HTTP request simply ignites a brand-new `ModularContainer`, eliminating multi-tenant cross-talk at the root;
+  * **On-Demand Closure Caching**: Those 3 to 5 low-level connection pools require zero scope tags; they are explicitly wrapped with the pure higher-order closure primitive `memoizeModule`.
+* **Architectural Dividend**: Business modules feature **zero scope annotations, zero parent-child containers, and zero captive dependency traps**. Using pure JavaScript functional closures, scope isolation is solved completely while eliminating conceptual inflation.
+
+---
+
 ## Part III: Architectural Decision Matrix & Conclusion
 
 | Decision Dimension | InferDI | Path-IoC |

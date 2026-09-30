@@ -30,6 +30,15 @@ Different articles may tackle overlapping architectural concepts, but each addre
 
 </div>
 
+<div class="article-card">
+
+#### 3. [Architectural Deep Dive: Why Modern Systems Should Reject "Scope" Concept Inflation — From Captive Dependencies to Closure Primitives](/articles/scope-isolation-and-concept-inflation)
+* **Perspective**: Concept Inflation / ESM Singleton Concurrency Leakage / Captive Dependency Traps / 1% Stateful Resources vs 99% Stateless Code / memoizeModule Closure Primitives
+* **Core Dilemma**: Why can't we simply use `export const logger = new Logger()`? Why do hierarchical container trees trigger conceptual explosion and memory leaks? Why are declarative `@Scope` annotations an architectural regression?
+* **Key Takeaway**: Master the physical realities of multi-tenant concurrency isolation in single-threaded event loops. Understand the captive dependency defect inherent in hierarchical containers, and discover how Path-IoC dissolves scope complexity using universal per-request isolation and functional closures.
+
+</div>
+
 ---
 
 ### 📐 Graph Theory & Runtime Internals

@@ -187,6 +187,10 @@ gtag('config', 'G-ZK9F76DH0Z');`,
                   text: "Deep Dive: Path-IoC vs InferDI — Does 'No Build Step' Equal 'Lightweight'?",
                   link: "/articles/inferdi-vs-path-ioc",
                 },
+                {
+                  text: "Architectural Deep Dive: Why Modern Systems Should Reject 'Scope' Concept Inflation",
+                  link: "/articles/scope-isolation-and-concept-inflation",
+                },
               ],
             },
           ],
@@ -314,6 +318,10 @@ gtag('config', 'G-ZK9F76DH0Z');`,
                 {
                   text: "深度对比 InferDI：免构建插件就是“轻量”吗？",
                   link: "/zh/articles/inferdi-vs-path-ioc",
+                },
+                {
+                  text: "深度剖析：为什么现代架构应该拒绝“作用域”概念通胀？",
+                  link: "/zh/articles/scope-isolation-and-concept-inflation",
                 },
                 {
                   text: "图论视角：为什么 DI 无法实现拓扑并发？",
