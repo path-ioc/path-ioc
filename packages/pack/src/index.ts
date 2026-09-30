@@ -26,6 +26,13 @@ export function extractBaseDir(pattern: string): string {
   return rawPrefix.replace(/\/+$/, "");
 }
 
+export type ModularPackPluginItem = Pick<Plugin, "name" | "enforce"> & {
+  apply?: "build" | "serve";
+  config?: (config: any, env: any) => any;
+  closeBundle?: () => Promise<void> | void;
+};
+export type ModularPackPlugin = ModularPackPluginItem | ModularPackPluginItem[];
+
 export interface PackPluginOptions {
   /**
    * Root directory or glob brace pattern to scan for modules containing index.ts or index.tsx.
@@ -77,7 +84,7 @@ export function modularPackPlugin({
   sharedContainerMappings = [],
   tsconfigPath,
   dts: enableDts = true,
-}: PackPluginOptions = {}): any {
+}: PackPluginOptions = {}): ModularPackPlugin {
   let projectRoot: string;
   let entryFilePath: string;
   let outputFullPath: string;
@@ -225,7 +232,7 @@ export function modularPackPlugin({
     }
   };
 
-  const mainPlugin: Plugin = {
+  const mainPlugin: ModularPackPluginItem = {
     name: "vite-plugin-modular-pack",
     enforce: "pre",
 
@@ -380,7 +387,7 @@ export function modularPackPlugin({
         config.build.rollupOptions.output = {};
       }
       if (Array.isArray(config.build.rollupOptions.output)) {
-        config.build.rollupOptions.output.forEach((out) => {
+        config.build.rollupOptions.output.forEach((out: any) => {
           out.entryFileNames = "index.js";
         });
       } else {
@@ -431,7 +438,7 @@ export function modularPackPlugin({
   }
 
   const dtsPlugins = Array.isArray(dtsPluginInstance) ? dtsPluginInstance : [dtsPluginInstance];
-  const pluginGroup = [mainPlugin, ...dtsPlugins] as unknown as PluginOption & Plugin;
+  const pluginGroup = [mainPlugin, ...dtsPlugins] as unknown as ModularPackPlugin;
   Object.assign(pluginGroup, {
     name: mainPlugin.name,
     enforce: mainPlugin.enforce,
