@@ -155,4 +155,34 @@ describe("modularPackPlugin unit tests", () => {
     const greetDtsExists = await fs.access(greetDtsPath).then(() => true).catch(() => false);
     expect(greetDtsExists).toBe(true);
   });
+
+  it("should selectively package only specified modules when modulesPath uses brace expansion", async () => {
+    // 增加一个私有敏感模块，验证白名单机制绝不会扫描/打包它
+    await fs.mkdir(path.join(tmpDir, "src/modules/secret/private-logic"), { recursive: true });
+    await fs.writeFile(
+      path.join(tmpDir, "src/modules/secret/private-logic/index.ts"),
+      `export const main = () => "classified";\n`
+    );
+
+    const entryFile = ".test-selective-entry.ts";
+    const plugin = modularPackPlugin({
+      modulesPath: "src/modules/{math,util}",
+      entryFile,
+    });
+
+    const mockViteConfig: any = {
+      root: tmpDir,
+      build: {},
+    };
+
+    await (plugin.config as Function)(mockViteConfig, { command: "build", mode: "production" });
+
+    const entryContent = await fs.readFile(path.resolve(tmpDir, entryFile), "utf-8");
+    // 1. 白名单内模块正常打包
+    expect(entryContent).toContain("/math/add");
+    expect(entryContent).toContain("/util/greet");
+    // 2. 白名单外模块严格物理排除，0 泄漏
+    expect(entryContent).not.toContain("secret");
+    expect(entryContent).not.toContain("private-logic");
+  });
 });

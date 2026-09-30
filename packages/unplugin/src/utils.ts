@@ -51,3 +51,16 @@ export function createTrailingRunner<Args extends unknown[], Result>(
     });
   };
 }
+
+/**
+ * 从可能包含 Glob 表达式的模块路径中提取出静态物理基准目录
+ * @example
+ * extractBaseDir("src/modules/{common,component}") => "src/modules"
+ * extractBaseDir("src/modules") => "src/modules"
+ * extractBaseDir("./src/modules/{core,ext}") => "./src/modules"
+ */
+export function extractBaseDir(pattern: string): string {
+  const match = pattern.match(/^([^{*?[]+)/);
+  const rawPrefix = match ? match[1] : pattern;
+  return rawPrefix.replace(/\/+$/, "");
+}

@@ -92,4 +92,51 @@ describe("unplugin", () => {
       "end:Call_5",
     ]);
   });
+
+  describe("extractBaseDir & glob brace patterns", () => {
+    it("should accurately extract physical base directory from various glob patterns", async () => {
+      const { extractBaseDir } = await import("../src/utils");
+      expect(extractBaseDir("src/modules")).toBe("src/modules");
+      expect(extractBaseDir("src/modules/")).toBe("src/modules");
+      expect(extractBaseDir("src/modules/{common,component}")).toBe("src/modules");
+      expect(extractBaseDir("src/modules/{common,component,page}")).toBe("src/modules");
+      expect(extractBaseDir("src/modules/{a,b}/sub")).toBe("src/modules");
+      expect(extractBaseDir("./src/modules/{core,admin}")).toBe("./src/modules");
+      expect(extractBaseDir("/src/modules/*")).toBe("/src/modules");
+    });
+
+    it("should generate Vite import.meta.glob with brace pattern and strip baseDir cleanly", () => {
+      const plugin = rollupPlugin({
+        modulesPath: "src/modules/{common,component}",
+      }) as any;
+
+      const output = plugin.load("\0virtual:modular-container");
+      // 1. import.meta.glob 包含大括号子模式
+      expect(output).toContain("import.meta.glob(['/src/modules/{common,component}/**/index.{ts,tsx}', './src/modules/{common,component}/**/index.{ts,tsx}']");
+      // 2. 剥离的是物理根目录 'src/modules'，而不是未展开的大括号字符串
+      expect(output).toContain(".replace('src/modules', '')");
+      expect(output).not.toContain(".replace('src/modules/{common,component}', '')");
+    });
+
+    it("should correctly compute module full names relative to baseDir when using brace patterns in type generation", async () => {
+      const { generateModuleMapContent } = await import("../src/generator");
+      const folders = [
+        "src/modules/common/service",
+        "src/modules/component/button",
+      ];
+
+      const content = generateModuleMapContent(
+        folders,
+        "/root",
+        "types",
+        "src/modules/{common,component}"
+      );
+
+      // Full names must be cleanly rooted at baseDir ('src/modules')
+      expect(content).toContain('"/common/service":');
+      expect(content).toContain('"/component/button":');
+      expect(content).toContain('"service":');
+      expect(content).toContain('"button":');
+    });
+  });
 });

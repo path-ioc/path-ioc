@@ -14,9 +14,22 @@ const getDtsPlugin = (): ((options?: DtsPluginOptions) => Plugin | Plugin[]) => 
   return typeof dts === "function" ? dts : (dts as any).default;
 };
 
+/**
+ * 从可能包含 Glob 表达式的模块路径中提取出静态物理基准目录
+ * @example
+ * extractBaseDir("src/modules/{common,component}") => "src/modules"
+ * extractBaseDir("src/modules") => "src/modules"
+ */
+export function extractBaseDir(pattern: string): string {
+  const match = pattern.match(/^([^{*?[]+)/);
+  const rawPrefix = match ? match[1] : pattern;
+  return rawPrefix.replace(/\/+$/, "");
+}
+
 export interface PackPluginOptions {
   /**
-   * Root directory to scan for modules containing index.ts or index.tsx.
+   * Root directory or glob brace pattern to scan for modules containing index.ts or index.tsx.
+   * e.g. "src/modules" or "src/modules/{common,component,page}"
    * @default "src/modules"
    */
   modulesPath?: string;
@@ -220,13 +233,23 @@ export function modularPackPlugin({
       projectRoot = path.resolve(config.root || process.cwd());
       outputFullPath = path.resolve(projectRoot, outDir);
 
-      const modulesRoot = path.resolve(projectRoot, modulesPath);
+      const baseDir = extractBaseDir(modulesPath);
+      const modulesRoot = path.resolve(projectRoot, baseDir);
       entryFilePath = path.resolve(projectRoot, entryFile);
       const entryFileDir = path.dirname(entryFilePath);
 
       await fs.mkdir(entryFileDir, { recursive: true });
 
-      const absoluteFolders = await searchIndexTsFiles(modulesRoot);
+      const subPattern = modulesPath.slice(baseDir.length).replace(/^\/+/, "");
+      const scanRoots =
+        subPattern && subPattern.startsWith("{") && subPattern.endsWith("}")
+          ? subPattern
+              .slice(1, -1)
+              .split(",")
+              .map((s) => path.join(modulesRoot, s.trim()))
+          : [subPattern ? path.join(modulesRoot, subPattern) : modulesRoot];
+
+      const absoluteFolders = await searchIndexTsFiles(scanRoots);
       const entryLines: string[] = [];
       const runtimeModulesArray: string[] = [];
 
@@ -419,36 +442,39 @@ export function modularPackPlugin({
   return pluginGroup;
 }
 
-const searchIndexTsFiles = async (rootPath: string): Promise<string[]> => {
-  try {
-    await fs.access(rootPath);
-  } catch {
-    return [];
-  }
-
-  const dirsToScan = [rootPath];
+const searchIndexTsFiles = async (rootPaths: string | string[]): Promise<string[]> => {
+  const roots = Array.isArray(rootPaths) ? rootPaths : [rootPaths];
   const result: string[] = [];
 
-  while (dirsToScan.length > 0) {
-    const currentDir = dirsToScan.shift();
-    if (!currentDir) continue;
-
+  for (const rootPath of roots) {
     try {
-      const entries = await fs.readdir(currentDir);
-      for (const entry of entries) {
-        if (entry === "node_modules" || entry.startsWith(".")) continue;
+      await fs.access(rootPath);
+    } catch {
+      continue;
+    }
 
-        const fullPath = path.join(currentDir, entry);
-        const stats = await fs.stat(fullPath);
+    const dirsToScan = [rootPath];
+    while (dirsToScan.length > 0) {
+      const currentDir = dirsToScan.shift();
+      if (!currentDir) continue;
 
-        if (stats.isDirectory()) {
-          dirsToScan.push(fullPath);
-        } else if (["index.ts", "index.tsx"].includes(entry)) {
-          result.push(fullPath);
+      try {
+        const entries = await fs.readdir(currentDir);
+        for (const entry of entries) {
+          if (entry === "node_modules" || entry.startsWith(".")) continue;
+
+          const fullPath = path.join(currentDir, entry);
+          const stats = await fs.stat(fullPath);
+
+          if (stats.isDirectory()) {
+            dirsToScan.push(fullPath);
+          } else if (["index.ts", "index.tsx"].includes(entry)) {
+            result.push(fullPath);
+          }
         }
+      } catch (e) {
+        // Ignore
       }
-    } catch (e) {
-      // Ignore
     }
   }
 

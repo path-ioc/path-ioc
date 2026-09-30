@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import { camelCase } from "lodash-es";
 import fg from "fast-glob";
-import { createTrailingRunner } from "./utils";
+import { createTrailingRunner, extractBaseDir } from "./utils";
 
 let cachedFolderSet: Set<string> | null = null;
 
@@ -30,7 +30,8 @@ export {};
   }
 
   const dtsDir = path.resolve(rootDir, typeDir);
-  const modulesRoot = path.resolve(rootDir, modulesPathStr);
+  const baseDir = extractBaseDir(modulesPathStr);
+  const modulesRoot = path.resolve(rootDir, baseDir);
 
   const moduleFolderMap = new Map<string, string>();
   const shortNameFullNamesMap = new Map<string, string[]>();
@@ -98,7 +99,8 @@ const doGenerateTypeDefinitions = async (
   modulesPathStr: string,
 ) => {
   try {
-    const modulesRoot = path.resolve(rootDir, modulesPathStr);
+    const baseDir = extractBaseDir(modulesPathStr);
+    const modulesRoot = path.resolve(rootDir, baseDir);
     const dotIgnorePath = path.resolve(rootDir, ".gitignore");
     try {
       const dotIgnoreContent = await fs.readFile(dotIgnorePath, "utf-8");
@@ -117,7 +119,10 @@ const doGenerateTypeDefinitions = async (
     const dtsPath = path.resolve(dtsDir, "ignore.modular.d.ts");
 
     // 使用 fast-glob 进行更高效的扫描
-    const searchPattern = path.posix.join(modulesRoot.replace(/\\/g, "/"), "**/index.{ts,tsx}");
+    const subPattern = modulesPathStr.slice(baseDir.length).replace(/^\/+/, "");
+    const searchPattern = subPattern
+      ? path.posix.join(modulesRoot.replace(/\\/g, "/"), subPattern, "**/index.{ts,tsx}")
+      : path.posix.join(modulesRoot.replace(/\\/g, "/"), "**/index.{ts,tsx}");
     const files = await fg(searchPattern, { absolute: true });
     const folders = files.map((f) => path.relative(rootDir, path.dirname(f)));
 

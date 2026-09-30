@@ -3,6 +3,7 @@ import fsSync from "node:fs";
 import { createUnplugin } from "unplugin";
 import type { Plugin as VitePlugin } from "vite";
 import { generateTypeDefinitions } from "./generator";
+import { extractBaseDir } from "./utils";
 // @ts-ignore
 import VirtualModulesPlugin from "webpack-virtual-modules/lib/index.js";
 
@@ -13,7 +14,10 @@ export interface PathIocPluginOptions {
    */
   typeFileOutput?: string;
   /**
-   * 模块扫描的根目录，相对于项目根目录
+   * 模块扫描的根目录或 Glob 表达式，相对于项目根目录
+   * 支持纯路径或正向大括号白名单，例如：
+   * - "src/modules" (默认)
+   * - "src/modules/{common,component,page}"
    * @default 'src/modules'
    */
   modulesPath?: string;
@@ -26,6 +30,16 @@ export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>((o
   const { typeFileOutput = "types", modulesPath = "src/modules" } = options;
   let projectRoot: string = process.cwd();
   const isWebpackLike = meta.framework === "webpack" || meta.framework === "rspack";
+
+  const baseDir = extractBaseDir(modulesPath);
+  const cleanBaseDir = baseDir.replace(/^(\.\/|\/)+/, "").replace(/\/+$/, "");
+  const subPattern = modulesPath.slice(baseDir.length).replace(/^\/+/, "");
+  const globSub = subPattern ? `${subPattern}/**/index.{ts,tsx}` : `**/index.{ts,tsx}`;
+  const webpackRegexStr = subPattern
+    ? (subPattern.startsWith("{") && subPattern.endsWith("}")
+        ? `^\\./(${subPattern.slice(1, -1).split(",").map((s) => s.trim()).join("|")})/.*\\/index\\.[jt]sx?$`
+        : `^\\./${subPattern}/.*\\/index\\.[jt]sx?$`)
+    : "/\\/index\\.[jt]sx?$/";
 
   return {
     name: "unplugin-path-ioc",
@@ -42,7 +56,7 @@ export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>((o
         if (ctx && typeof ctx === "object" && "file" in ctx && typeof ctx.file === "string") {
           const file = ctx.file;
           if (file.endsWith(".d.ts") || file.includes("ignore.")) return;
-          const relativeModulesPath = path.normalize(modulesPath);
+          const relativeModulesPath = path.normalize(baseDir);
           if (file.includes(path.join(projectRoot, relativeModulesPath))) {
             await generateTypeDefinitions(projectRoot, typeFileOutput, modulesPath);
           }
@@ -51,14 +65,13 @@ export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>((o
     },
     webpack(compiler) {
       projectRoot = compiler.context;
-      const cleanPath = modulesPath.replace(/\/$/, "");
       const virtualPath = path.resolve(projectRoot, "node_modules/.virtual-modular-container.js");
-      const absModulesPath = path.resolve(projectRoot, cleanPath).replace(/\\/g, "/");
+      const absModulesPath = path.resolve(projectRoot, cleanBaseDir).replace(/\\/g, "/");
 
       const virtualCode = `
         import { compileModuleGraph, instantiateModuleContainer } from '@path-ioc/core';
 
-        const reqContext = require.context('${absModulesPath}', true, /\\/index\\.[jt]sx?$/);
+        const reqContext = require.context('${absModulesPath}', true, ${subPattern ? `new RegExp('${webpackRegexStr}')` : `/\\/index\\.[jt]sx?$/`});
         export const modules = reqContext.keys().map((k) => {
           const rawKey = k.replace(/^\\.\\//, '').replace(/\\/index\\.[jt]sx?$/, '');
           return { key: '/' + rawKey, module: reqContext(k) };
@@ -105,14 +118,12 @@ export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>((o
     load(id) {
       const virtualPath = path.resolve(projectRoot, "node_modules/.virtual-modular-container.js");
       if (id === RESOLVED_VIRTUAL_MODULE_ID || id === virtualPath || id.endsWith(".virtual-modular-container.js") || id.includes("virtual:modular-container")) {
-        const cleanPath = modulesPath.replace(/\/$/, "");
-
         if (isWebpackLike) {
-          const absModulesPath = path.resolve(projectRoot, cleanPath).replace(/\\/g, "/");
+          const absModulesPath = path.resolve(projectRoot, cleanBaseDir).replace(/\\/g, "/");
           return `
             import { compileModuleGraph, instantiateModuleContainer } from '@path-ioc/core';
 
-            const reqContext = require.context('${absModulesPath}', true, /\\/index\\.[jt]sx?$/);
+            const reqContext = require.context('${absModulesPath}', true, ${subPattern ? `new RegExp('${webpackRegexStr}')` : `/\\/index\\.[jt]sx?$/`});
             export const modules = reqContext.keys().map((k) => {
               const rawKey = k.replace(/^\\.\\//, '').replace(/\\/index\\.[jt]sx?$/, '');
               return { key: '/' + rawKey, module: reqContext(k) };
@@ -133,9 +144,9 @@ export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>((o
         return `
           import { compileModuleGraph, instantiateModuleContainer } from '@path-ioc/core';
 
-          const viteModules = import.meta.glob(['/${cleanPath}/**/index.{ts,tsx}', './${cleanPath}/**/index.{ts,tsx}'], { eager: true });
+          const viteModules = import.meta.glob(['/${cleanBaseDir}/${globSub}', './${cleanBaseDir}/${globSub}'], { eager: true });
           export const modules = Object.entries(viteModules).map(([k, iocModule]) => {
-            const rawKey = k.replace(/^(\\.\\/|\\/)+/, '').replace('${cleanPath}', '').replace(/^(\\.\\/|\\/)+/, '').replace(/\\/index\\.(ts|tsx)$/, '');
+            const rawKey = k.replace(/^(\\.\\/|\\/)+/, '').replace('${cleanBaseDir}', '').replace(/^(\\.\\/|\\/)+/, '').replace(/\\/index\\.(ts|tsx)$/, '');
             return { key: '/' + rawKey, module: iocModule };
           });
 
