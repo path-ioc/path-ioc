@@ -12,22 +12,6 @@ export default defineConfig({
     ["meta", { name: "theme-color", content: "#FC6401" }],
     [
       "meta",
-      {
-        property: "og:title",
-        content: "Path-IoC - Pure Topological IoC for Modern TypeScript",
-      },
-    ],
-    [
-      "meta",
-      {
-        property: "og:description",
-        content:
-          "Zero decorators, zero reflection, microsecond-level dependency resolution based on physical file paths for Vite, Webpack, and Cloudflare Workers.",
-      },
-    ],
-    ["meta", { property: "og:url", content: "https://path-ioc.dev" }],
-    [
-      "meta",
       { property: "og:image", content: "https://path-ioc.dev/og-image.png" },
     ],
     [
@@ -69,6 +53,67 @@ gtag('js', new Date());
 gtag('config', 'G-ZK9F76DH0Z');`,
     ],
   ],
+
+  transformHead({ pageData, title, description }) {
+    const rawPath = pageData.relativePath;
+    let canonicalUrl = `https://path-ioc.dev/${rawPath}`
+      .replace(/(^|\/)index\.md$/, "$1")
+      .replace(/\.md$/, ".html");
+    if (!canonicalUrl.endsWith("/") && !canonicalUrl.endsWith(".html")) {
+      canonicalUrl += "/";
+    }
+
+    const pageTitle = pageData.title ? `${pageData.title} | Path-IoC` : title;
+    const pageDesc = pageData.description || description;
+
+    const heads: import("vitepress").HeadConfig[] = [
+      ["link", { rel: "canonical", href: canonicalUrl }],
+      ["meta", { property: "og:title", content: pageTitle }],
+      ["meta", { property: "og:description", content: pageDesc }],
+      ["meta", { property: "og:url", content: canonicalUrl }],
+      ["meta", { property: "og:site_name", content: "Path-IoC" }],
+      ["meta", { property: "og:type", content: "website" }],
+      ["meta", { name: "twitter:card", content: "summary_large_image" }],
+      ["meta", { name: "twitter:title", content: pageTitle }],
+      ["meta", { name: "twitter:description", content: pageDesc }],
+      [
+        "meta",
+        {
+          name: "twitter:image",
+          content: "https://path-ioc.dev/og-image.png",
+        },
+      ],
+    ];
+
+    if (rawPath.includes("articles/")) {
+      heads.push([
+        "script",
+        { type: "application/ld+json" },
+        JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "TechArticle",
+          headline: pageData.title,
+          description: pageData.description || description,
+          url: canonicalUrl,
+          image: "https://path-ioc.dev/og-image.png",
+          author: {
+            "@type": "Person",
+            name: "Lian HanLin",
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "Path-IoC",
+            logo: {
+              "@type": "ImageObject",
+              url: "https://path-ioc.dev/logo.svg",
+            },
+          },
+        }),
+      ]);
+    }
+
+    return heads;
+  },
 
   locales: {
     root: {

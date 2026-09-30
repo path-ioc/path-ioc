@@ -181,3 +181,37 @@ order.createOrder("ORD_101", 99);
 - `@path-ioc/unplugin`: Universal build plugin for Vite, Webpack, Rspack, and Rollup. Performs AST scanning and virtual type synthesis (`ModularContainer`).
 - `@path-ioc/container`: Experimental comparison package exploring synchronous getter lazy loading (`demand`/`turbo`). Not recommended for production.
 - `@path-ioc/pack`: Dedicated Vite plugin for packaging mesh modules into distributable standalone npm packages (`dist-plugin`, obfuscation).
+
+---
+
+## 7. Deep Dive: Path-IoC vs. InferDI (The "No Build Step" Fallacy)
+
+### 7.1 Does "No Build Step" Equal "Lightweight"?
+InferDI claims zero dependencies and no build plugins. However, in software engineering, omitting a one-time build-time plugin shifts the burden to developers as manual wiring overhead:
+- **$O(N)$ Composition Root Scaling**: Every new module in InferDI requires manually editing a centralized `container.ts`, adding imports, preserving topological registration order, and chaining `.register()`. In Path-IoC, daily business module addition is $O(1)$—zero central wiring files, zero relative imports.
+- **Type-State Accumulator Limitations**: InferDI relies on TypeScript recursive generic accumulator types (`Container<T & { ... }>`). When attempting dynamic lookup or pattern matching (`allTokens.filter(...)`), TypeScript types collapse to `any`. Path-IoC compiles ambient `.d.ts` types via AST scanning, maintaining full IDE intellisense across dynamic discovery.
+- **Three Canonical Dependency Lookup Patterns**:
+  1. *AOP Dynamic Decorator Pattern*: `dependencies: (all) => all.filter(k => k.endsWith('Service'))` enables universal tracing and metrics without invasive class inheritance.
+  2. *Aggregator Pattern*: Collecting heterogeneous modules (e.g. routes, plugins) into a single composite without coupling.
+  3. *Starter Ignition Pattern*: Terminal bootstrap modules that drive execution from inside the mesh rather than treating the container as an external service locator.
+
+---
+
+## 8. Scope Isolation: Rejecting Scope Concept Inflation
+
+### 8.1 Why Native ESM Singletons Fail on Multi-Tenant Servers
+- Single-threaded Event Loop interleaves concurrent HTTP requests. Writing to an ESM singleton property (`logger.tenantId = 'Alice'`) causes state leakage when concurrent request B overwrites it during async I/O suspension.
+- Async Top-Level Await locks the process upon startup network failures.
+- Concurrently executed test suites contaminate global module cache.
+
+### 8.2 The Historical Misconception: Spring Reality vs. TypeScript Cargo Cult
+- **Spring Core is 99.9% Singleton**: Request scopes (`@RequestScope`) do not exist in `spring-core`/`spring-beans`; they are web-aware extensions in `spring-web`. In enterprise production, Java teams rarely use `@RequestScope`.
+- **Java's Thread-per-Request Concurrency**: Concurrency isolation in Java is provided by thread stacks and `ThreadLocal` (e.g., `SecurityContextHolder`). Spring never derives child container trees per request; it uses CGLIB dynamic proxies backed by `ThreadLocal`.
+- **The TypeScript Cargo Cult**: Lacking thread stacks, frameworks like NestJS and InferDI emulated request scopes by derive-allocating hierarchical container trees in memory on every request. This causes massive GC pauses, 70% throughput drops, and introduces the fatal **Captive Dependency** trap (a singleton permanently holding request instances).
+
+### 8.3 Path-IoC's Minimalist Solution: Universal Request Isolation + `memoizeModule`
+- **1% Stateful Resources vs. 99% Stateless Logic**: In a 200-module system, only 3-5 resources (DB connection pool, Redis, MQ) need process-level persistence. 99% of business modules are pure, stateless domain logic.
+- **Default Per-Request Isolation (21.2 µs)**: Path-IoC compiles the graph once at boot and instantiates a pristine `ModularContainer` per request in just 21.2 microseconds. Multi-tenant cross-talk is eliminated by default, and Captive Dependencies are rendered mathematically impossible.
+- **Closure Memoization Primitive**: The 1% heavy connection pools are wrapped explicitly with `memoizeModule(async () => ...)`.
+- **Result**: Zero `@Scope()` annotations, zero parent-child containers, zero captive dependency traps, and zero cognitive overhead.
+

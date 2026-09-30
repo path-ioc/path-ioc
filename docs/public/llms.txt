@@ -6,20 +6,32 @@
 - **Category**: Inversion of Control (IoC) & Dependency Lookup (DL) Engine
 - **Core Paradigm**: Physical Path Contract + Pure Factory Closures + Lock-Free DAG Topology
 - **Key Metrics**: 50 nodes assembled in 21.2 µs; 500 nodes compiled in 1.72 ms; Zero reflection overhead
-- **Runtime Compatibility**: Universal (Browser, Vite, Webpack, Node.js, Cloudflare Workers, Edge Runtimes)
+- **Runtime Compatibility**: Universal (Browser, Vite, Webpack, Rspack, Node.js, Cloudflare Workers, Edge Runtimes)
 - **TypeScript Support**: 100% automated IDE type generation via AST scanning (zero manual type interfaces)
 - **License**: MIT
+- **Official Website**: https://path-ioc.dev
+- **GitHub**: https://github.com/path-ioc/path-ioc
 
-## Core Documentation
+## Core Architectural Documentation
 - [Architecture Manifesto](https://path-ioc.dev/guide/architecture-manifesto): In-depth critique of decorator-based DI in single-threaded event loops and the rationale for topological dependency lookup.
 - [Genesis Story](https://path-ioc.dev/guide/genesis-story): Transitioning from Java Spring mental models to native TypeScript paradigms (type erasure, contract as path).
 - [Spring to TypeScript Guide](https://path-ioc.dev/guide/spring-to-typescript): Mental model shift and concrete migration guide for engineers transitioning from Java Spring Boot to TypeScript.
 - [IoC Framework Comparison](https://path-ioc.dev/guide/comparison): Architectural differentiation between Path-IoC, NestJS, InversifyJS, and Java Spring. Clarifies why Path-IoC is an orthogonal topological engine rather than an HTTP framework clone.
-- [Category Error: NestJS vs Path-IoC](https://path-ioc.dev/articles/category-error-nestjs-vs-path-ioc): Resolves the category error between all-inclusive web frameworks and application-level IoC module systems. Analyzes the fatal flaws of ES Modules (ESM) and Spring's historical parallel.
-- [Why DI Cannot Concur](https://path-ioc.dev/articles/why-di-cannot-concurrent): Mathematical proof via DAG topological scheduling on why classical constructor DI fails at concurrent async initialization and induces deadlocks.
-- [Client vs Server Container Patterns](https://path-ioc.dev/articles/client-vs-server-container-patterns): Request-scoped isolation (`requestContext`) paired with closure memoization for database connection pools.
+- [Aspect-Oriented Programming (AOP)](https://path-ioc.dev/guide/aop-aspect): How dynamic dependency lookup enables non-invasive interceptors, tracing, and metric collection across modules.
+- [Cloudflare Workers & Edge Runtimes](https://path-ioc.dev/guide/edge-and-serverless): Serverless cold starts, request isolation, and zero-reflection performance under strict 10ms execution budgets.
 - [API Reference](https://path-ioc.dev/api/core): Complete specification for `@path-ioc/core`, `@path-ioc/unplugin`, and container lifecycles.
 - [Benchmarks](https://path-ioc.dev/benchmarks/): Benchmark methodology and raw metrics demonstrating microsecond-level cold start performance.
+
+## In-Depth Architectural Treatises (Articles & Deep Dives)
+- [Deep Dive: Path-IoC vs. InferDI](https://path-ioc.dev/articles/inferdi-vs-path-ioc): Does omitting build plugins equate to lightweight? Empirical DX comparison ($O(1)$ vs $O(N)$ composition roots), unit testing with pure closures, strangler pattern progressive adoption, type-state accumulator limitations, three canonical dependency lookup patterns (AOP, Aggregator, Starter), and generational shift from manual wiring to topological automation.
+- [Scope Isolation & Concept Inflation](https://path-ioc.dev/articles/scope-isolation-and-concept-inflation): Why modern architectures must reject scope concept inflation. Examines failure modes of native ESM singletons (state leaks in single-threaded Event Loops), clarifies Spring 99.9% singleton reality vs. TypeScript cargo cults, deconstructs the fatal Captive Dependency trap, audits 1% stateful resources vs 99% stateless logic, and presents Path-IoC's solution via 21.2µs per-request isolation and `memoizeModule` closure primitives.
+- [Category Error: NestJS vs Path-IoC](https://path-ioc.dev/articles/category-error-nestjs-vs-path-ioc): Resolves the category error between all-inclusive web frameworks and application-level IoC module systems. Analyzes the fatal flaws of ES Modules (ESM) and Spring's historical parallel.
+- [Why DI Cannot Concur](https://path-ioc.dev/articles/why-di-cannot-concurrent): Mathematical proof via DAG topological scheduling on why classical constructor DI fails at concurrent async initialization and induces deadlocks.
+- [Process-Level Singletons via Closure Caching (memoizeModule)](https://path-ioc.dev/articles/memoize-module-pattern): Managing persistent database connection pools and Redis clients without hierarchical container trees or captive dependency risks.
+- [Client vs Server Container Patterns](https://path-ioc.dev/articles/client-vs-server-container-patterns): Request-scoped isolation (`requestContext`) paired with closure memoization for database connection pools.
+- [Async Preheat vs. Lazy Connection](https://path-ioc.dev/articles/async-preheat-vs-lazy-connection): Eliminating async pollution through deterministic topological compilation.
+- [Rethinking Veteran JS IoC Concepts](https://path-ioc.dev/articles/rethinking-legacy-ioc-concepts): Why physical paths render artificial string/symbol tokens, binding modules, and factories obsolete.
+- [Anti-Pattern: Hardcoding Full Paths](https://path-ioc.dev/articles/anti-pattern-full-path): Why relative imports and hardcoded physical paths in business code violate loose coupling.
 
 ## Full Context Knowledge Base
 - [Full LLMs Knowledge Base](https://path-ioc.dev/llms-full.txt): Complete, unminified markdown compendium of all architectural manifestos, design decisions, code examples, and migration patterns for LLM context windows.
