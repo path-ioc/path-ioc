@@ -40,6 +40,6 @@ jobs:
           publish-script: pnpm release
           pr-title: "chore(release): version packages"
           commit-message: "chore(release): version packages"
-          createGithubReleases: aggregate
+          create-github-releases: aggregate
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
