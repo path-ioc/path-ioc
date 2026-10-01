@@ -258,6 +258,14 @@ export function modularPackPlugin({
       projectRoot = path.resolve(config.root || process.cwd());
       outputFullPath = path.resolve(projectRoot, outDir);
 
+      // 强约束：只允许“纯静态路径”或“静态前缀+{模块1,模块2}”这种极其确定性的正向白名单
+      // 拒绝任何模糊通配符（*、?、[]），且限制 {} 只能出现在路径最末尾
+      if (!/^[^*?[\]{}]+(?:\{[^/{}]+})?$/.test(modulesPath)) {
+        throw new Error(
+          `[ModularPack] 'modulesPath' syntax is strictly constrained. It must be an exact static path (e.g., 'src/modules') or end with a deterministic brace group (e.g., 'src/modules/{a,b}'). Wildcards (*, ?) or nested/mid-path braces are forbidden.`,
+        );
+      }
+
       const baseDir = extractBaseDir(modulesPath);
       const modulesRoot = path.resolve(projectRoot, baseDir);
       entryFilePath = path.resolve(projectRoot, entryFile);
@@ -438,7 +446,11 @@ export function modularPackPlugin({
 
   const dtsPluginInstance = dtsFn({
     ...(resolvedTsconfig ? { tsconfigPath: resolvedTsconfig } : {}),
-    include: [entryFile, `${modulesPath}/**/*`, "src/**/*"],
+    include: [
+      entryFile,
+      `${modulesPath}/**/*`,
+      ...(resolvedTsconfig ? getGlobalTypeGlobs(resolvedTsconfig) : ["src/**/*.d.ts"])
+    ],
     entryRoot: ".",
     outDirs: outDir,
     strictOutput: false,
@@ -510,4 +522,27 @@ const searchJsFiles = async (dirPath: string): Promise<string[]> => {
     // Ignore
   }
   return result;
+};
+
+const getGlobalTypeGlobs = (tsconfigPath: string): string[] => {
+  try {
+    let content = fsSync.readFileSync(tsconfigPath, "utf-8");
+    // Strip single and multi-line comments
+    content = content.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "");
+    const parsed = JSON.parse(content);
+    if (parsed.include && Array.isArray(parsed.include)) {
+      return parsed.include.map((p: string) => {
+        if (p.endsWith("/**/*") || p.endsWith("/*")) {
+          return p + ".d.ts";
+        }
+        if (!p.includes("*") && !p.endsWith(".ts") && !p.endsWith(".d.ts")) {
+          return p.replace(/\/+$/, "") + "/**/*.d.ts";
+        }
+        return p;
+      });
+    }
+  } catch (err) {
+    // Fallback if parsing fails
+  }
+  return ["src/**/*.d.ts"];
 };

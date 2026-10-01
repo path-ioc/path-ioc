@@ -27,6 +27,13 @@ const RESOLVED_VIRTUAL_MODULE_ID = "\0" + VIRTUAL_MODULE_ID;
 export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>(
   (options = {}, meta) => {
     const { typeFileOutput = "types", modulesPath = "src/modules" } = options;
+
+    if (!/^[^*?[\]{}]+(?:\{[^/{}]+})?$/.test(modulesPath)) {
+      throw new Error(
+        `[@path-ioc/unplugin] 'modulesPath' syntax is strictly constrained. It must be an exact static path (e.g., 'src/modules') or end with a deterministic brace group (e.g., 'src/modules/{a,b}'). Wildcards (*, ?) or nested/mid-path braces are forbidden.`,
+      );
+    }
+
     let projectRoot: string = process.cwd();
     const isWebpackLike = meta.framework === "webpack" || meta.framework === "rspack";
 
