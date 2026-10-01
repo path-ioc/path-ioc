@@ -150,7 +150,7 @@ import { esbuildPlugin as pathIoc } from "@path-ioc/unplugin";
 
 | Option               | Type     | Default         | Description                                                          |
 | :------------------- | :------- | :-------------- | :------------------------------------------------------------------- |
-| **`modulesPath`**    | `string` | `'src/modules'` | Root directory scanned for modular IoC entrypoints (`index.ts/tsx`). |
+| **`modulesPath`**    | `string` | `'src/modules'` | Root directory scanned for modular IoC entrypoints (`index.ts/tsx`). **v0.1.7+**: Supports targeted multi-module compilation using brace syntax (e.g., `src/modules/{core,admin}`). To maintain path determinism, wildcards (`*`, `?`) and nested braces are not supported. |
 | **`typeFileOutput`** | `string` | `'types'`       | Target directory where `ignore.modular.d.ts` is generated.           |
 
 ---

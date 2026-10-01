@@ -150,7 +150,7 @@ import { esbuildPlugin as pathIoc } from "@path-ioc/unplugin";
 
 | 配置项               | 类型     | 默认值          | 描述                                                        |
 | :------------------- | :------- | :-------------- | :---------------------------------------------------------- |
-| **`modulesPath`**    | `string` | `'src/modules'` | 模块扫描的物理根目录路径。                                  |
+| **`modulesPath`**    | `string` | `'src/modules'` | 模块扫描的物理根目录路径。**v0.1.7+**：支持使用大括号语法进行按需多模块编译（例如 `src/modules/{core,admin}`）。为保证路径的确定性，不支持通配符（`*`, `?`）与嵌套括号。 |
 | **`typeFileOutput`** | `string` | `'types'`       | 自动生成的类型声明文件 `ignore.modular.d.ts` 存放相对目录。 |
 
 ---

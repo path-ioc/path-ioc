@@ -20,7 +20,7 @@
 
 | Option                        | Type       | Default                      | Description                                                                                      |
 | :---------------------------- | :--------- | :--------------------------- | :----------------------------------------------------------------------------------------------- |
-| **`modulesPath`**             | `string`   | `'src/modules'`              | Root directory to scan for modules.                                                              |
+| **`modulesPath`**             | `string`   | `'src/modules'`              | Root directory to scan for modules. **v0.1.7+**: Supports targeted multi-module compilation using brace syntax (e.g., `src/modules/{core,admin}`). To maintain path determinism, wildcards (`*`, `?`) and nested braces are not supported. |
 | **`entryFile`**               | `string`   | `'.modular-plugin-entry.ts'` | Destination for the temporary physical entrypoint (cleaned up after build; add to `.gitignore`). |
 | **`outDir`**                  | `string`   | `'dist-plugin'`              | Output directory for the packaged library bundle and npm tarball.                                |
 | **`dts`**                     | `boolean`  | `true`                       | Whether to compile `.d.ts` declaration files for all exported modules.                           |

@@ -90,7 +90,7 @@ vite build --config vite.config.pack.ts
 
 | Option                        | Type       | Default                      | Description                                                                                           |
 | :---------------------------- | :--------- | :--------------------------- | :---------------------------------------------------------------------------------------------------- |
-| **`modulesPath`**             | `string`   | `'src/modules'`              | Root directory scanned for modular IoC entrypoints.                                                   |
+| **`modulesPath`**             | `string`   | `'src/modules'`              | Root directory scanned for modular IoC entrypoints. **v0.1.7+**: Supports targeted multi-module compilation using brace syntax (e.g., `src/modules/{core,admin}`). To maintain path determinism, wildcards (`*`, `?`) and nested braces are not supported. |
 | **`entryFile`**               | `string`   | `'.modular-plugin-entry.ts'` | Target physical path for the generated entrypoint file (cleaned up after build; add to `.gitignore`). |
 | **`outDir`**                  | `string`   | `'dist-plugin'`              | Output directory for the packaged library bundle and npm tarball.                                     |
 | **`dts`**                     | `boolean`  | `true`                       | Whether to compile `.d.ts` declaration files for all exported modules.                                |

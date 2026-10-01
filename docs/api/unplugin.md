@@ -37,7 +37,7 @@ import {
 
 | Option               | Type     | Default         | Description                                                                          |
 | :------------------- | :------- | :-------------- | :----------------------------------------------------------------------------------- |
-| **`modulesPath`**    | `string` | `'src/modules'` | Root directory to scan for modules containing `index.ts` or `index.tsx`.             |
+| **`modulesPath`**    | `string` | `'src/modules'` | Root directory to scan for modules. **v0.1.7+**: Supports targeted multi-module compilation using brace syntax (e.g., `src/modules/{core,admin}`). To maintain path determinism, wildcards (`*`, `?`) and nested braces are not supported. |
 | **`typeFileOutput`** | `string` | `'types'`       | Destination directory for auto-generated `ignore.modular.d.ts`. Add to `.gitignore`. |
 
 ---
