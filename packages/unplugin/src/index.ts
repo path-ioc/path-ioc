@@ -40,15 +40,23 @@ export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>(
     const baseDir = extractBaseDir(modulesPath);
     const cleanBaseDir = baseDir.replace(/^(\.\/|\/)+/, "").replace(/\/+$/, "");
     const subPattern = modulesPath.slice(baseDir.length).replace(/^\/+/, "");
-    const globSub = subPattern ? `${subPattern}/**/index.{ts,tsx}` : `**/index.{ts,tsx}`;
-    const webpackRegexStr = subPattern
-      ? subPattern.startsWith("{") && subPattern.endsWith("}")
-        ? `^\\./(${subPattern
+    let cleanSubPattern = subPattern;
+    if (cleanSubPattern.startsWith("{") && cleanSubPattern.endsWith("}")) {
+      const inner = cleanSubPattern.slice(1, -1);
+      if (!inner.includes(",")) {
+        cleanSubPattern = inner;
+      }
+    }
+
+    const globSub = cleanSubPattern ? `${cleanSubPattern}/**/index.{ts,tsx}` : `**/index.{ts,tsx}`;
+    const webpackRegexStr = cleanSubPattern
+      ? cleanSubPattern.startsWith("{") && cleanSubPattern.endsWith("}")
+        ? `^\\./(${cleanSubPattern
             .slice(1, -1)
             .split(",")
             .map((s) => s.trim())
             .join("|")})/.*\\/index\\.[jt]sx?$`
-        : `^\\./${subPattern}/.*\\/index\\.[jt]sx?$`
+        : `^\\./${cleanSubPattern}/.*\\/index\\.[jt]sx?$`
       : "/\\/index\\.[jt]sx?$/";
 
     return {

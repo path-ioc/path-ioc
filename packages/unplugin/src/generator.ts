@@ -113,8 +113,17 @@ const doGenerateTypeDefinitions = async (
 
     // 使用 fast-glob 进行更高效的扫描
     const subPattern = modulesPathStr.slice(baseDir.length).replace(/^\/+/, "");
-    const searchPattern = subPattern
-      ? path.posix.join(modulesRoot.replace(/\\/g, "/"), subPattern, "**/index.{ts,tsx}")
+    
+    let cleanSubPattern = subPattern;
+    if (cleanSubPattern.startsWith("{") && cleanSubPattern.endsWith("}")) {
+      const inner = cleanSubPattern.slice(1, -1);
+      if (!inner.includes(",")) {
+        cleanSubPattern = inner;
+      }
+    }
+
+    const searchPattern = cleanSubPattern
+      ? path.posix.join(modulesRoot.replace(/\\/g, "/"), cleanSubPattern, "**/index.{ts,tsx}")
       : path.posix.join(modulesRoot.replace(/\\/g, "/"), "**/index.{ts,tsx}");
     const files = await fg(searchPattern, { absolute: true });
     const folders = files.map((f) => path.relative(rootDir, path.dirname(f)));
