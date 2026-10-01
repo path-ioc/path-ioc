@@ -129,7 +129,7 @@ gtag('config', 'G-ZK9F76DH0Z');`,
           { text: "Pro Boilerplate", link: "/templates/pro-boilerplate" },
           { text: "Sponsor", link: "/sponsor" },
           {
-            text: "v0.1.5",
+            text: "v0.1.8",
             items: [
               {
                 text: "Changelog",

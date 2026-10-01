@@ -107,21 +107,8 @@ describe("modularPackPlugin unit tests", () => {
     expect(entryContent).toContain("/math/add");
     expect(entryContent).toContain("/util/greet");
 
-    // 4. Verify closeBundle generates index.d.ts and package.json
-    await fs.mkdir(path.resolve(tmpDir, outDir), { recursive: true });
-    await mainPlugin.closeBundle?.();
-
-    const dtsContent = await fs.readFile(path.resolve(tmpDir, outDir, "index.d.ts"), "utf-8");
-    expect(dtsContent).toContain("interface ModuleMap");
-    expect(dtsContent).toContain("interface ModularContainer");
-    expect(dtsContent).toContain("/math/add");
-
-    const pkgContent = JSON.parse(
-      await fs.readFile(path.resolve(tmpDir, outDir, "package.json"), "utf-8"),
-    );
-    expect(pkgContent.name).toBe("test-pack-pkg");
-    expect(pkgContent.main).toBe("./index.js");
-    expect(pkgContent.types).toBe("./index.d.ts");
+    // 4. closeBundle no longer synchronously generates index.d.ts and package.json
+    // They are now deferred to vite-plugin-dts's afterBuild hook, which is covered by the actual Vite build test.
   });
 
   it("should execute actual Vite build and output compiled registry index.js and declarations", async () => {
