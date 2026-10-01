@@ -1,5 +1,14 @@
 # @path-ioc/pack
 
+## 0.1.8
+
+### Patch Changes
+
+- fix: resolve missing type generation in modular build
+
+  1. fix: properly expand single-item braces (e.g. `{codebase}`) in modulesPath to prevent fast-glob from incorrectly ignoring matched typescript files in unplugin-dts include array.
+  2. fix: defer `npm pack` execution to `vite-plugin-dts`'s `afterBuild` hook to avoid a race condition where the tgz was packed before the types had finished generating.
+
 ## 0.1.7
 
 ### Patch Changes

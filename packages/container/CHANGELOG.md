@@ -1,5 +1,11 @@
 # @path-ioc/container
 
+## 0.1.8
+
+### Patch Changes
+
+- @path-ioc/core@0.1.8
+
 ## 0.1.7
 
 ### Patch Changes
