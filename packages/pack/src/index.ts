@@ -429,7 +429,9 @@ export function modularPackPlugin({
     },
 
     async closeBundle() {
-      await finalizeDelivery();
+      // Defer to vite-plugin-dts's afterBuild hook to ensure .d.ts files are written
+      // before running npm pack.
+      // await finalizeDelivery();
     },
   };
 
@@ -444,12 +446,25 @@ export function modularPackPlugin({
     return undefined;
   })();
 
+  const expandedModules = (() => {
+    const baseDir = extractBaseDir(modulesPath);
+    const subPattern = modulesPath.slice(baseDir.length).replace(/^\/+/, "");
+    if (subPattern && subPattern.startsWith("{") && subPattern.endsWith("}")) {
+      const parts = subPattern
+        .slice(1, -1)
+        .split(",")
+        .map((s) => s.trim());
+      return parts.map((p) => `${baseDir}/${p}/**/*`);
+    }
+    return [`${modulesPath}/**/*`];
+  })();
+
   const dtsPluginInstance = dtsFn({
     ...(resolvedTsconfig ? { tsconfigPath: resolvedTsconfig } : {}),
     include: [
       entryFile,
-      `${modulesPath}/**/*`,
-      ...(resolvedTsconfig ? getGlobalTypeGlobs(resolvedTsconfig) : ["src/**/*.d.ts"])
+      ...expandedModules,
+      ...(resolvedTsconfig ? getGlobalTypeGlobs(resolvedTsconfig) : ["src/**/*.d.ts"]),
     ],
     entryRoot: ".",
     outDirs: outDir,
@@ -541,7 +556,7 @@ const getGlobalTypeGlobs = (tsconfigPath: string): string[] => {
         return p;
       });
     }
-  } catch (err) {
+  } catch {
     // Fallback if parsing fails
   }
   return ["src/**/*.d.ts"];
