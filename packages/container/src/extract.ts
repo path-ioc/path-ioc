@@ -22,7 +22,7 @@ export const extractSubModules = (
     let fullName = entry;
     if (!graph.fullNameToModuleMap.has(fullName)) {
       const mapped = graph.moduleDeclarationNames.find(
-        (n) => n.endsWith("/" + entry) || n === entry
+        (n) => n.endsWith("/" + entry) || n === entry,
       );
       if (mapped) fullName = mapped;
       else continue;
@@ -54,4 +54,3 @@ export const extractSubModules = (
     })
     .filter(Boolean) as { key: string; module: IOCModule }[];
 };
-

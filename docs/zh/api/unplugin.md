@@ -35,10 +35,10 @@ import {
 
 ## 配置选项 (`PathIocPluginOptions`)
 
-| 配置项 | 类型 | 默认值 | 说明 |
-| :--- | :--- | :--- | :--- |
-| **`modulesPath`** | `string` | `'src/modules'` | 业务模块存放的物理根路径。插件会自动扫描该目录下所有的 `index.ts` / `index.tsx` 文件。 |
-| **`typeFileOutput`** | `string` | `'types'` | 自动生成的类型声明文件 `ignore.modular.d.ts` 存放目录。建议配置在 `.gitignore` 中。 |
+| 配置项               | 类型     | 默认值          | 说明                                                                                   |
+| :------------------- | :------- | :-------------- | :------------------------------------------------------------------------------------- |
+| **`modulesPath`**    | `string` | `'src/modules'` | 业务模块存放的物理根路径。插件会自动扫描该目录下所有的 `index.ts` / `index.tsx` 文件。 |
+| **`typeFileOutput`** | `string` | `'types'`       | 自动生成的类型声明文件 `ignore.modular.d.ts` 存放目录。建议配置在 `.gitignore` 中。    |
 
 ---
 
@@ -48,8 +48,8 @@ import {
 
 ```typescript
 import {
-  modules,                 // 全量模块描述数组: { key: string, module: IOCModule }[]
-  createModularContainer,  // 高性能实例化入口: (targetContainer?: Record<string, any>) => Promise<ModularContainer>
+  modules, // 全量模块描述数组: { key: string, module: IOCModule }[]
+  createModularContainer, // 高性能实例化入口: (targetContainer?: Record<string, any>) => Promise<ModularContainer>
 } from "virtual:modular-container";
 ```
 

@@ -42,25 +42,32 @@
 ## 编译器-运行时协同三大支柱
 
 ### 1. 单图编译缓存闭包 (`compiledGraph`)
+
 在插件自动生成的 `virtual:modular-container` 内部，维护了模块级闭包变量 `compiledGraph`：
+
 - **进程冷启动仅编译一次**：应用的依赖 DAG 图在进程冷启动时仅进行一次静态拓扑分析与环路深搜（500 节点仅需 **1.72 ms**）；
 - **请求级极致微秒点火**：后续所有 `createModularContainer()` 调用均直接复用该闭包静态图，实例化隔离容器仅耗时 **21.2 微秒 (µs)**；
 - **消除运行时重复构建开销**：在高并发场景（如 Cloudflare Workers、Node.js 服务端），彻底杜绝重复解析依赖树的 CPU 浪费。
 
 ### 2. 零负担微秒级 AST 实时类型推导 (`0.04 ms`)
+
 开发态与 HMR 热更新期间，插件的 AST 监听器在开发者每次保存代码瞬间触发，耗时仅 **0.04 毫秒** 即可生成 `types/ignore.modular.d.ts`：
+
 - 无缝扩充全局 `ModularContainer` 接口，解构享受 100% 准确的 IDE 提示；
 - 开发者直接书写 `const { db, logger } = container;`，无需手动声明任何类型胶水代码；
 - 自动写入 `.gitignore` 自愈规则，避免临时声明污染版本控制。
 
 ### 3. 清晰的宿主点火边界 (Host Ignition Boundary)
+
 传统框架用专有语法侵入应用入口，造成强框架绑定。而在 Path-IoC 中，宿主仅负责一行点火：
+
 ```typescript
 import { createModularContainer } from "virtual:modular-container";
 
 // 宿主一行点火 (无论 Hono、Express、Koa、Workers、Next.js API 还是 CLI)
 const container = await createModularContainer();
 ```
+
 业务模块在网格（Mesh）内部自闭环运转，不挑宿主，实现真正的架构解耦。
 
 ---
@@ -77,6 +84,7 @@ pnpm add @path-ioc/core
 ### 2. 构建工具配置速查
 
 #### Vite (`vite.config.ts`)
+
 ```typescript
 import { defineConfig } from "vite";
 import { vitePlugin as pathIoc } from "@path-ioc/unplugin";
@@ -87,6 +95,7 @@ export default defineConfig({
 ```
 
 #### Rolldown (`rolldown.config.ts`)
+
 ```typescript
 import { defineConfig } from "rolldown";
 import { rolldownPlugin as pathIoc } from "@path-ioc/unplugin";
@@ -97,6 +106,7 @@ export default defineConfig({
 ```
 
 #### Rspack (`rspack.config.js`)
+
 ```javascript
 const { rspackPlugin: pathIoc } = require("@path-ioc/unplugin");
 
@@ -106,6 +116,7 @@ module.exports = {
 ```
 
 #### Webpack 5 (`webpack.config.js`)
+
 ```javascript
 const { webpackPlugin: pathIoc } = require("@path-ioc/unplugin");
 
@@ -115,6 +126,7 @@ module.exports = {
 ```
 
 #### Rollup (`rollup.config.js`) / Esbuild
+
 ```javascript
 // Rollup
 import { rollupPlugin as pathIoc } from "@path-ioc/unplugin";
@@ -124,21 +136,22 @@ import { esbuildPlugin as pathIoc } from "@path-ioc/unplugin";
 ```
 
 > **零配置开箱即用**：各构建器插件均完全支持零参调用 `pathIoc()`。若项目目录结构特殊，可按需传入自定义配置：
+>
 > ```typescript
 > pathIoc({
->   modulesPath: "src/modules",   // 自定义模块根目录（默认: "src/modules"）
->   typeFileOutput: "types",     // 自定义类型输出目录（默认: "types"）
-> })
+>   modulesPath: "src/modules", // 自定义模块根目录（默认: "src/modules"）
+>   typeFileOutput: "types", // 自定义类型输出目录（默认: "types"）
+> });
 > ```
 
 ---
 
 ## 插件配置项 (`PathIocPluginOptions`)
 
-| 配置项 | 类型 | 默认值 | 描述 |
-| :--- | :--- | :--- | :--- |
-| **`modulesPath`** | `string` | `'src/modules'` | 模块扫描的物理根目录路径。 |
-| **`typeFileOutput`** | `string` | `'types'` | 自动生成的类型声明文件 `ignore.modular.d.ts` 存放相对目录。 |
+| 配置项               | 类型     | 默认值          | 描述                                                        |
+| :------------------- | :------- | :-------------- | :---------------------------------------------------------- |
+| **`modulesPath`**    | `string` | `'src/modules'` | 模块扫描的物理根目录路径。                                  |
+| **`typeFileOutput`** | `string` | `'types'`       | 自动生成的类型声明文件 `ignore.modular.d.ts` 存放相对目录。 |
 
 ---
 
@@ -148,8 +161,8 @@ import { esbuildPlugin as pathIoc } from "@path-ioc/unplugin";
 
 ```typescript
 import {
-  modules,                 // 全量模块描述数组: { key: string, module: IOCModule }[]
-  createModularContainer,  // 高性能实例化入口: (targetContainer?: Record<string, any>) => Promise<ModularContainer>
+  modules, // 全量模块描述数组: { key: string, module: IOCModule }[]
+  createModularContainer, // 高性能实例化入口: (targetContainer?: Record<string, any>) => Promise<ModularContainer>
 } from "virtual:modular-container";
 ```
 

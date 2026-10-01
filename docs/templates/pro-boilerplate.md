@@ -7,6 +7,7 @@ The production-ready, full-stack micro-modular starter kit for independent maker
 ## Commercial Value Proposition
 
 When launching a modern software-as-a-service (SaaS) product internationally, teams typically spend **4 to 8 weeks** reinventing generic infrastructure:
+
 - Orchestrating Hono routing, CORS, and environment bindings inside Cloudflare Workers;
 - Structuring micro-modular domain logic to prevent architecture from decaying into spaghetti code;
 - Integrating Stripe international billing, recurring subscriptions, and reliable webhook fulfillment;
@@ -19,15 +20,15 @@ When launching a modern software-as-a-service (SaaS) product internationally, te
 
 ## Full-Stack Architectural Specifications
 
-| Tier | Technology | Description |
-| :--- | :--- | :--- |
-| **Global Edge Network** | Cloudflare Workers | Deployed across 300+ Anycast edge data centers with sub-10ms cold boot |
-| **Backend Framework** | Hono.js + Path-IoC | Microsecond request container isolation (21.2 µs) with zero repeated graph compilation |
-| **Modern Frontend** | React 19 + Vite + Tailwind CSS | Fluid responsive design with instantaneous Hot Module Replacement |
-| **Monetization Engine** | Stripe Billing & Webhooks | Pre-built checkout flows, customer portal, and idempotent webhook handlers |
-| **Edge Database** | Cloudflare D1 / Neon PostgreSQL | Transaction-safe database layer with automated schema migrations |
-| **Authentication** | OAuth 2.0 + JWT | Google / GitHub single sign-on with secure password hashing |
-| **Transactional Email** | Resend API | Pre-styled email templates for onboarding, invoices, and password resets |
+| Tier                    | Technology                      | Description                                                                            |
+| :---------------------- | :------------------------------ | :------------------------------------------------------------------------------------- |
+| **Global Edge Network** | Cloudflare Workers              | Deployed across 300+ Anycast edge data centers with sub-10ms cold boot                 |
+| **Backend Framework**   | Hono.js + Path-IoC              | Microsecond request container isolation (21.2 µs) with zero repeated graph compilation |
+| **Modern Frontend**     | React 19 + Vite + Tailwind CSS  | Fluid responsive design with instantaneous Hot Module Replacement                      |
+| **Monetization Engine** | Stripe Billing & Webhooks       | Pre-built checkout flows, customer portal, and idempotent webhook handlers             |
+| **Edge Database**       | Cloudflare D1 / Neon PostgreSQL | Transaction-safe database layer with automated schema migrations                       |
+| **Authentication**      | OAuth 2.0 + JWT                 | Google / GitHub single sign-on with secure password hashing                            |
+| **Transactional Email** | Resend API                      | Pre-styled email templates for onboarding, invoices, and password resets               |
 
 ---
 
@@ -48,16 +49,16 @@ src/modules/
 
 ## Plan Comparison & Commercial Licensing
 
-| Feature | Open-Source Core | Pro Boilerplate | Enterprise Advisory |
-| :--- | :--- | :--- | :--- |
-| **Positioning** | Core Topological Engine | Turnkey SaaS Foundation | Monorepo Decoupling & Architecture Audit |
-| **Pricing** | **Free (MIT)** | **$149 Early Bird / $249 Standard** | **Custom Engagement** |
-| **Core Packages** | All 4 NPM packages | All 4 NPM packages | Full stack + proprietary extensions |
-| **Stripe Integration** | Manual setup required | Turnkey checkout & webhooks | Custom multi-tenant billing models |
-| **Auth System** | Manual setup required | Turnkey OAuth & JWT | Enterprise SSO / SAML integration |
-| **Edge Database Setup** | Manual setup required | Pre-configured D1 & migrations | High-availability cross-region replicas |
-| **Distribution** | NPM registry | Private GitHub repo access | Dedicated private codebase delivery |
-| **Technical Support** | GitHub Discussions / Issues | Dedicated email support | 1-on-1 architect advisory sessions |
+| Feature                 | Open-Source Core            | Pro Boilerplate                     | Enterprise Advisory                      |
+| :---------------------- | :-------------------------- | :---------------------------------- | :--------------------------------------- |
+| **Positioning**         | Core Topological Engine     | Turnkey SaaS Foundation             | Monorepo Decoupling & Architecture Audit |
+| **Pricing**             | **Free (MIT)**              | **$149 Early Bird / $249 Standard** | **Custom Engagement**                    |
+| **Core Packages**       | All 4 NPM packages          | All 4 NPM packages                  | Full stack + proprietary extensions      |
+| **Stripe Integration**  | Manual setup required       | Turnkey checkout & webhooks         | Custom multi-tenant billing models       |
+| **Auth System**         | Manual setup required       | Turnkey OAuth & JWT                 | Enterprise SSO / SAML integration        |
+| **Edge Database Setup** | Manual setup required       | Pre-configured D1 & migrations      | High-availability cross-region replicas  |
+| **Distribution**        | NPM registry                | Private GitHub repo access          | Dedicated private codebase delivery      |
+| **Technical Support**   | GitHub Discussions / Issues | Dedicated email support             | 1-on-1 architect advisory sessions       |
 
 ---
 

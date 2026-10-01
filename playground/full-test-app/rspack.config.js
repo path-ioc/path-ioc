@@ -1,6 +1,6 @@
+import pathIoc from "@path-ioc/unplugin";
 import path from "path";
 import { fileURLToPath } from "url";
-import pathIoc from "@path-ioc/unplugin";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

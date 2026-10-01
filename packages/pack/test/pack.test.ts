@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import path from "node:path";
 import fs from "node:fs/promises";
 import os from "node:os";
+import path from "node:path";
 import { build } from "vite";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { modularPackPlugin } from "../src/index";
 
 describe("modularPackPlugin unit tests", () => {
@@ -14,12 +14,12 @@ describe("modularPackPlugin unit tests", () => {
     await fs.mkdir(path.join(tmpDir, "src/modules/math/add"), { recursive: true });
     await fs.writeFile(
       path.join(tmpDir, "src/modules/math/add/index.ts"),
-      `export const main = () => ({ add: (a: number, b: number) => a + b });\n`
+      `export const main = () => ({ add: (a: number, b: number) => a + b });\n`,
     );
     await fs.mkdir(path.join(tmpDir, "src/modules/util/greet"), { recursive: true });
     await fs.writeFile(
       path.join(tmpDir, "src/modules/util/greet/index.ts"),
-      `export const main = () => "hello";\n`
+      `export const main = () => "hello";\n`,
     );
     // Create package.json
     await fs.writeFile(
@@ -30,7 +30,7 @@ describe("modularPackPlugin unit tests", () => {
         dependencies: {
           "lodash-es": "^4.17.21",
         },
-      })
+      }),
     );
     // Create tsconfig.json
     await fs.writeFile(
@@ -43,41 +43,48 @@ describe("modularPackPlugin unit tests", () => {
           strict: false,
         },
         include: ["src/**/*"],
-      })
+      }),
     );
   });
 
   afterEach(async () => {
     try {
       await fs.rm(tmpDir, { recursive: true, force: true });
-    } catch {}
+    } catch {
+      // Ignore
+    }
   });
 
   it("should generate a plugin config with all hooks", () => {
-    const plugin = modularPackPlugin();
-    expect(plugin.name).toBe("vite-plugin-modular-pack");
-    expect(plugin.enforce).toBe("pre");
-    expect(typeof plugin.config).toBe("function");
-    expect(typeof plugin.closeBundle).toBe("function");
+    const pluginResult = modularPackPlugin();
+    // dts by default is false in some contexts, but let's check if it's an array or object
+    const mainPlugin = Array.isArray(pluginResult) ? pluginResult[0] : pluginResult;
+    expect(mainPlugin.name).toBe("vite-plugin-modular-pack");
+    expect(mainPlugin.enforce).toBe("pre");
+    expect(typeof mainPlugin.config).toBe("function");
+    expect(typeof mainPlugin.closeBundle).toBe("function");
   });
 
   it("should configure build.lib and external dependencies aligned with lianhanlin-modular", async () => {
     const entryFile = ".test-modular-entry.ts";
     const outDir = "dist-test-plugin";
 
-    const plugin = modularPackPlugin({
+    const pluginResult = modularPackPlugin({
       modulesPath: "src/modules",
       entryFile,
       outDir,
     });
+    const mainPlugin = Array.isArray(pluginResult) ? pluginResult[0] : pluginResult;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mockViteConfig: any = {
       root: tmpDir,
       build: {},
     };
 
     // Run config hook
-    await (plugin.config as Function)(mockViteConfig, { command: "build", mode: "production" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await mainPlugin.config?.(mockViteConfig, { command: "build", mode: "production" } as any);
 
     // 1. Verify build.lib configuration
     expect(mockViteConfig.build.lib).toBeDefined();
@@ -102,14 +109,16 @@ describe("modularPackPlugin unit tests", () => {
 
     // 4. Verify closeBundle generates index.d.ts and package.json
     await fs.mkdir(path.resolve(tmpDir, outDir), { recursive: true });
-    await (plugin.closeBundle as Function)();
+    await mainPlugin.closeBundle?.();
 
     const dtsContent = await fs.readFile(path.resolve(tmpDir, outDir, "index.d.ts"), "utf-8");
     expect(dtsContent).toContain("interface ModuleMap");
     expect(dtsContent).toContain("interface ModularContainer");
     expect(dtsContent).toContain("/math/add");
 
-    const pkgContent = JSON.parse(await fs.readFile(path.resolve(tmpDir, outDir, "package.json"), "utf-8"));
+    const pkgContent = JSON.parse(
+      await fs.readFile(path.resolve(tmpDir, outDir, "package.json"), "utf-8"),
+    );
     expect(pkgContent.name).toBe("test-pack-pkg");
     expect(pkgContent.main).toBe("./index.js");
     expect(pkgContent.types).toBe("./index.d.ts");
@@ -131,7 +140,10 @@ describe("modularPackPlugin unit tests", () => {
 
     // Check that index.js was bundled into outDir
     const indexJsPath = path.join(outDir, "index.js");
-    const jsExists = await fs.access(indexJsPath).then(() => true).catch(() => false);
+    const jsExists = await fs
+      .access(indexJsPath)
+      .then(() => true)
+      .catch(() => false);
     expect(jsExists).toBe(true);
 
     const jsContent = await fs.readFile(indexJsPath, "utf-8");
@@ -139,7 +151,10 @@ describe("modularPackPlugin unit tests", () => {
 
     // Check index.d.ts
     const dtsPath = path.join(outDir, "index.d.ts");
-    const dtsExists = await fs.access(dtsPath).then(() => true).catch(() => false);
+    const dtsExists = await fs
+      .access(dtsPath)
+      .then(() => true)
+      .catch(() => false);
     expect(dtsExists).toBe(true);
 
     const dtsContent = await fs.readFile(dtsPath, "utf-8");
@@ -148,11 +163,17 @@ describe("modularPackPlugin unit tests", () => {
 
     // Check module declaration files are generated in dist-plugin/src/modules
     const mathDtsPath = path.join(outDir, "src/modules/math/add/index.d.ts");
-    const mathDtsExists = await fs.access(mathDtsPath).then(() => true).catch(() => false);
+    const mathDtsExists = await fs
+      .access(mathDtsPath)
+      .then(() => true)
+      .catch(() => false);
     expect(mathDtsExists).toBe(true);
 
     const greetDtsPath = path.join(outDir, "src/modules/util/greet/index.d.ts");
-    const greetDtsExists = await fs.access(greetDtsPath).then(() => true).catch(() => false);
+    const greetDtsExists = await fs
+      .access(greetDtsPath)
+      .then(() => true)
+      .catch(() => false);
     expect(greetDtsExists).toBe(true);
   });
 
@@ -161,21 +182,24 @@ describe("modularPackPlugin unit tests", () => {
     await fs.mkdir(path.join(tmpDir, "src/modules/secret/private-logic"), { recursive: true });
     await fs.writeFile(
       path.join(tmpDir, "src/modules/secret/private-logic/index.ts"),
-      `export const main = () => "classified";\n`
+      `export const main = () => "classified";\n`,
     );
 
     const entryFile = ".test-selective-entry.ts";
-    const plugin = modularPackPlugin({
+    const pluginResult = modularPackPlugin({
       modulesPath: "src/modules/{math,util}",
       entryFile,
     });
+    const mainPlugin = Array.isArray(pluginResult) ? pluginResult[0] : pluginResult;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mockViteConfig: any = {
       root: tmpDir,
       build: {},
     };
 
-    await (plugin.config as Function)(mockViteConfig, { command: "build", mode: "production" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await mainPlugin.config?.(mockViteConfig, { command: "build", mode: "production" } as any);
 
     const entryContent = await fs.readFile(path.resolve(tmpDir, entryFile), "utf-8");
     // 1. 白名单内模块正常打包

@@ -9,9 +9,10 @@
 ## 现象与思辨：“所有模块都纯同步”的陷阱
 
 在微服务、边缘计算（Cloudflare Workers）与 Serverless 场景中，许多架构师追求极致的冷启动，极力推崇**“所有模块必须纯同步初始化”**：
-* 数据库连接？搞成连接池懒连接；
-* Redis 客户端？在调用方法时再去 `await promise`；
-* 所有的模块工厂 `main` 全写成同步函数，容器启动只需数十微秒。
+
+- 数据库连接？搞成连接池懒连接；
+- Redis 客户端？在调用方法时再去 `await promise`；
+- 所有的模块工厂 `main` 全写成同步函数，容器启动只需数十微秒。
 
 这种做法在绝大多数天然 I/O 的场景下运转良好。**但工程世界中存在着一种极其关键的极端边界：**
 
@@ -53,10 +54,10 @@ export const dependencies = ["httpClient"];
 
 export const main = async (container: ModularContainer) => {
   const { httpClient } = container;
-  
+
   // 1. 启动初始化阶段：异步从远程 CDN 或配置中心拉取翻译字典包
   const dictionary = await httpClient.get<Record<string, string>>("/locales/zh-CN.json");
-  
+
   // 2. 返回轻量纯同步查询对象
   return {
     t(key: string, fallback = ""): string {
@@ -64,12 +65,13 @@ export const main = async (container: ModularContainer) => {
     },
     has(key: string): boolean {
       return key in dictionary;
-    }
+    },
   };
 };
 ```
 
 在业务组件或服务中，消费者的调用体验是纯粹、自然的纯同步直觉：
+
 ```tsx
 // React / Vue 组件渲染函数（纯同步）：
 export function WelcomeBanner() {
@@ -126,18 +128,19 @@ class BrokenI18n {
 **正是因为真实工程中必然存在“模式 B（启动期异步加载数据快照，换取运行期全量纯同步消费）”的模块，异步初始化才具备了不可替代的物理合法性！**
 
 ### 1. 模式 B 在不同容器下的启动调度对比
+
 首先必须明确：**在功能实现层面，传统框架（如 NestJS）通过异步 Provider (`useFactory`) 完全可以实现模式 B**，下游组件也能正常注入并纯同步调用，并不会发生功能性失效。
 
 两者的真实差异，在于**多模块并行预热时的冷启动调度效率**：
-* **传统框架的串行累加**：
+
+- **传统框架的串行累加**：
   在 NestJS 等框架中，当系统中存在 3 个独立的模式 B 预热模块（如 Schema 拉取 800ms、离线规则 500ms、IP 库 600ms）时，由于内核 `InstanceLoader` 没有内置基于 DAG 的分层并发调度器，流水线会对 providers 进行严格的串行 `await` 遍历。冷启动耗时呈现累加求和：`Sum(t) = 800 + 500 + 600 = 1900ms`；
-* **Path-IoC 的原生拓扑并发点火**：
+- **Path-IoC 的原生拓扑并发点火**：
   在 Path-IoC 中，模块通过 `dependencies: [...]` 显式构成了纯净的 DAG。引擎在微秒级计算出这 3 个模块处于同一拓扑层级（互不依赖），直接将其推入 `Promise.all` 级联并发点火。冷启动耗时仅取决于单点瓶颈：`Max(800, 500, 600) = 800ms`。
 
 > **边界厘清：模式属于业务，调度属于框架**：
 > 无论是纯函数闭包单例（`memoizeModule`）还是驱动底层的延迟 Promise 懒连接，**本质上都是开发者在业务应用层利用原生 JavaScript 特性自由实现的通用设计模式，绝非框架特权**。
 > Path-IoC 的价值在于保持核心极致克制（零多余抽象），同时在底层提供纳秒级的 DAG 并发调度引擎，让模式 B 模块的预热代价降至物理极限。
-
 
 ---
 
@@ -168,6 +171,7 @@ class BrokenI18n {
 ## 六、结语
 
 优秀的架构师从不迷信非黑即白的极端教条：
+
 - 说“所有模块都必须 async 初始化”，是放弃了对冷启动和懒连接的性能追求；
 - 说“所有模块都应该纯同步初始化”，是对“函数颜色陷阱”和业务代码可读性的冷漠忽视。
 

@@ -1,12 +1,11 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 
 // 模拟 DOM 环境进行真实的 JS 运行时逻辑断言
 if (typeof document === "undefined") {
-  // @ts-ignore
   const { JSDOM } = await import("jsdom");
   const dom = new JSDOM('<!DOCTYPE html><html><body><div id="app"></div></body></html>');
-  (globalThis as any).document = dom.window.document;
-  (globalThis as any).window = dom.window;
+  (globalThis as unknown as { document: unknown }).document = dom.window.document;
+  (globalThis as unknown as { window: unknown }).window = dom.window;
 }
 
 import { createModularContainer } from "virtual:modular-container";
@@ -14,7 +13,7 @@ import { createModularContainer } from "virtual:modular-container";
 describe("full-test-app JS Runtime Assertions", () => {
   test("should execute full IoC graph with AOP, ORM, DB and DOM rendering", async () => {
     console.log("👉 [full-test-app] Executing real JS runtime test...");
-    const container: any = await createModularContainer();
+    const container = await createModularContainer();
 
     // 1. 运行时数据库连接断言
     expect(container.db?.type).toBe("PostgreSQL");

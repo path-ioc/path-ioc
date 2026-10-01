@@ -18,7 +18,7 @@ sequenceDiagram
 
     Worker->>Engine: 1. compileModuleGraph(modules)
     Note over Engine: 执行 1 次 DFS 拓扑排序与校验 (约 1.7ms)<br>生成静态 CompiledGraph 全局缓存
-    
+
     Request->>Engine: 2. instantiateModuleContainer(compiledGraph, reqContainer)
     Note over Engine: 直通装配当前请求容器 (耗时仅 21.2 µs)<br>挂载 c.requestContext 请求上下文
     Engine-->>Request: 返回隔离后的请求容器 (零重复拓扑损耗)
@@ -66,7 +66,7 @@ import type { Context } from "hono";
 // 1. 标记 skip: true，运行时容器跳过执行，由外部种子对象注入；
 // 2. unplugin 自动提取类型推导，为全局容器挂载强类型 requestContext。
 export const skip = true;
-export const main = (): Context => ({} as Context);
+export const main = (): Context => ({}) as Context;
 ```
 
 ---
@@ -94,8 +94,8 @@ export const main = memoizeModule(async (container: ModularContainer) => {
 ```
 
 > 💡 **边缘环境环境变量与跨请求单例说明**：  
-> 在 Cloudflare Workers / Hono 环境中，所有外部 Bindings 与环境变量（如 `DATABASE_URL`）均统一挂载在请求上下文 `c.env` 上，并不存在传统 Node.js 的全局 `process.env`。  
-> 
-> 由于同一个 Worker 实例内的基础设施配置（`c.env.DATABASE_URL`）跨请求是不可变的，因此利用 `memoizeModule` 在首个请求到达时提取配置、初始化全局连接池并在后续请求中持续复用，是完全顺应边缘物理运行时的设计范式。  
-> 
+> 在 Cloudflare Workers / Hono 环境中，所有外部 Bindings 与环境变量（如 `DATABASE_URL`）均统一挂载在请求上下文 `c.env` 上，并不存在传统 Node.js 的全局 `process.env`。
+>
+> 由于同一个 Worker 实例内的基础设施配置（`c.env.DATABASE_URL`）跨请求是不可变的，因此利用 `memoizeModule` 在首个请求到达时提取配置、初始化全局连接池并在后续请求中持续复用，是完全顺应边缘物理运行时的设计范式。
+>
 > ⚠️ **安全边界**：请确保在 `memoizeModule` 闭包内部**仅提取跨请求不可变的基础设施配置（如 `requestContext.env`）**，绝不能在单例闭包中持有特定请求的动态数据（如 `requestContext.req.header` 或用户会话），以免引起跨请求上下文泄漏。

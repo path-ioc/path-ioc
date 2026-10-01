@@ -1,19 +1,8 @@
-import {
-  compileModuleGraph,
-  instantiateModuleContainer,
-  IOCModule,
-} from "./graph";
+import { compileModuleGraph, type IOCModule, instantiateModuleContainer } from "./graph";
 
+export type { CompiledModuleGraph, IOCModule, ModuleDeclaration } from "./graph";
 // --- 重新导出底层图计算的核心类型与函数，保持 100% API 兼容与高并发优化能力 ---
-export {
-  compileModuleGraph,
-  instantiateModuleContainer,
-} from "./graph";
-export type {
-  IOCModule,
-  CompiledModuleGraph,
-  ModuleDeclaration,
-} from "./graph";
+export { compileModuleGraph, instantiateModuleContainer } from "./graph";
 
 /**
  * 无锁反应式模块化初始化函数 (兼容包壳)。

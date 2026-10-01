@@ -12,10 +12,10 @@ In modern full-stack engineering, microservices, and Serverless / Edge computing
 
 **Container bootstrap latency scales linearly with the number of infrastructure and business components ($\sum t_i$).**
 
-* Database handshake: `800ms`
-* Redis sentinel cluster initialization: `500ms`
-* Distributed configuration fetch: `600ms`
-* Kafka / Message Queue producer handshake: `700ms`
+- Database handshake: `800ms`
+- Redis sentinel cluster initialization: `500ms`
+- Distributed configuration fetch: `600ms`
+- Kafka / Message Queue producer handshake: `700ms`
 
 From an architectural standpoint, these four infrastructure modules are **completely independent of one another with zero mutual dependencies**. Within the single-threaded, non-blocking Event Loop of Node.js / V8, they ought to be dispatched concurrently at the microsecond level, yielding a total cold-start duration equal to the bottleneck node: `Max(800, 500, 600, 700) = 800ms`.
 
@@ -32,6 +32,7 @@ The technical truth is stark: **Traditional Dependency Injection (DI) cannot ach
 To schedule concurrent executions across a dependency graph, computer science dictates one unyielding mathematical rule: **The directed graph must be strictly acyclic (Directed Acyclic Graph, DAG).**
 
 Under the classic **Kahn's Algorithm for Topological Sorting**:
+
 1. Calculate the in-degree of all nodes in the graph;
 2. Identify all frontier nodes with an in-degree of $0$—these nodes possess zero unsatisfied prerequisites;
 3. Dispatch all in-degree $0$ nodes concurrently into the execution pool (`Promise.all` in JavaScript);
@@ -58,14 +59,18 @@ Why do cycles appear so frequently in traditional DI applications? Is it because
 **No. Over 90% of architectural cycles are pseudo-cycles fabricated by the syntax constraints of Constructor Dependency Injection.**
 
 ### Real-World Business: Invocation Collaboration
+
 In production systems, mutual runtime method calls are standard and clean:
-* `OrderService.checkout()` needs to invoke `PaymentService.pay()`;
-* `PaymentService.handleWebhook()` needs to invoke `OrderService.markSuccess()`.
+
+- `OrderService.checkout()` needs to invoke `PaymentService.pay()`;
+- `PaymentService.handleWebhook()` needs to invoke `OrderService.markSuccess()`.
 
 On the physical timeline, at the precise moment of application startup ($t_0$), **neither service needs to execute the other's methods**. They merely need access to each other's references at future runtime execution ($t_1, t_2...$).
 
 ### Constructor DI Syntax Kidnapping
+
 Under the constructor injection paradigm popularized by Java and mirrored by NestJS:
+
 ```typescript
 @Injectable()
 export class OrderService {
@@ -74,11 +79,12 @@ export class OrderService {
 
 @Injectable()
 export class PaymentService {
-  constructor(private orderService: OrderService) {}     // Demands: Cannot construct Payment without a complete Order instance
+  constructor(private orderService: OrderService) {} // Demands: Cannot construct Payment without a complete Order instance
 }
 ```
 
 The language runtime enforces:
+
 - "To construct `OrderService`, the call stack must first resolve a fully initialized `PaymentService` instance."
 - "To construct `PaymentService`, the call stack must first resolve a fully initialized `OrderService` instance."
 
@@ -106,12 +112,13 @@ Spring architects recognized that cyclic graphs cannot be topologically sorted. 
 4. `PaymentService` finishes instantiation and unwinds the stack, allowing `OrderService` to complete.
 
 ### Why Spring Never Dared Parallelize Bean Creation
+
 Why must Spring's container bootstrap remain strictly serial?
 
 > **The JVM Concurrency Reality**:
 > The three-tier cache depends entirely on the **deterministic call stack of single-threaded recursive backtracking**.
 > If multiple threads concurrently created beans, Thread A could expose an incomplete bean pointer whose fields are unpopulated and whose AOP proxies are unlinked. If Thread B read that half-baked bean concurrently and invoked a method, the Java Memory Model (JMM) would trigger **memory visibility corruptions, race conditions, and catastrophic NullPointerExceptions**.
-> 
+>
 > **Conclusion: To accommodate cycles and 3-tier caches, Spring was forced to abandon concurrency, locking itself into a strictly serial pipeline.**
 
 ---
@@ -121,6 +128,7 @@ Why must Spring's container bootstrap remain strictly serial?
 When NestJS attempted to duplicate Spring's architecture inside the TypeScript / Node.js ecosystem, it ran into an insurmountable barrier: **The Asynchronous Event Loop**.
 
 ### 1. Promises Cannot Serve as Early Raw Pointer Proxies
+
 In Java, memory allocation is synchronous and raw pointers are physically tangible. In modern TypeScript backends, infrastructure initialization is overwhelmingly asynchronous (`useFactory` / `async`):
 
 ```typescript
@@ -135,6 +143,7 @@ In Java, memory allocation is synchronous and raw pointers are physically tangib
 A pending `Promise` possesses no underlying business instance in memory. You cannot hand an un-resolved Promise to another class as a "half-baked bean" expecting normal synchronous property access. `forwardRef(() => ...)` paired with async factories causes immediate deadlocks or runtime crashes (`undefined is not a function`).
 
 ### 2. NestJS Kernel Surrender: Hardcoded Serial Pipelines
+
 Unable to build an asynchronous three-tier cache and unable to resolve async cycles, NestJS core maintainers made a pragmatic decision: **Abandon topological concurrent scheduling entirely.**
 
 Inspecting the NestJS core source code in `packages/core/injector/instance-loader.ts` reveals the reality:
@@ -153,16 +162,17 @@ No matter how independent your async providers are, NestJS forces them into a si
 ## 5. Can Userland Manual Lookup (ModuleRef.get) Fix NestJS?
 
 Senior developers often ask:
-> *"If constructor injection causes cycles, what if I don't inject services into constructors? In Spring, we frequently encapsulate an `ApplicationContext.getBean()` lookup utility to fetch dependencies dynamically at invocation time. If I use `this.moduleRef.get(ServiceB)` inside NestJS methods, can I unlock topological concurrency?"*
+
+> _"If constructor injection causes cycles, what if I don't inject services into constructors? In Spring, we frequently encapsulate an `ApplicationContext.getBean()` lookup utility to fetch dependencies dynamically at invocation time. If I use `this.moduleRef.get(ServiceB)` inside NestJS methods, can I unlock topological concurrency?"_
 
 **Answer: It fixes your DX and kills `forwardRef()`, but it cannot fix NestJS's serial startup.**
 
-| Dimension | Userland `ModuleRef.get()` Lookup | Does It Save NestJS Concurrency? |
-| :--- | :--- | :--- |
-| **Eliminating Cycles** | **100% Effective.** Breaks constructor-level graph cycles; removes `forwardRef`. | Only decouples userland classes; does not alter framework bootstrap. |
-| **Constructor Bloat** | **100% Effective.** Eliminates constructor parameter sprawl. | Improves code readability and local modularity. |
-| **Topological Concurrency** | **0% Effective.** | **NestJS bootstrap is driven by centralized module scanning.** Every provider registered in `@Module({ providers: [...] })` is still evaluated by the hardcoded `for...of await` loop. The engine lacks a DAG concurrent scheduler. |
-| **Lazy Invocation Loading** | **Triggers Thundering Herd stampedes.** | If you defer connection initialization to runtime method calls, an incoming spike of 1,000 concurrent requests will trigger simultaneous connection attempts, exhausting pool limits and destroying P99 latencies. |
+| Dimension                   | Userland `ModuleRef.get()` Lookup                                                | Does It Save NestJS Concurrency?                                                                                                                                                                                                    |
+| :-------------------------- | :------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Eliminating Cycles**      | **100% Effective.** Breaks constructor-level graph cycles; removes `forwardRef`. | Only decouples userland classes; does not alter framework bootstrap.                                                                                                                                                                |
+| **Constructor Bloat**       | **100% Effective.** Eliminates constructor parameter sprawl.                     | Improves code readability and local modularity.                                                                                                                                                                                     |
+| **Topological Concurrency** | **0% Effective.**                                                                | **NestJS bootstrap is driven by centralized module scanning.** Every provider registered in `@Module({ providers: [...] })` is still evaluated by the hardcoded `for...of await` loop. The engine lacks a DAG concurrent scheduler. |
+| **Lazy Invocation Loading** | **Triggers Thundering Herd stampedes.**                                          | If you defer connection initialization to runtime method calls, an incoming spike of 1,000 concurrent requests will trigger simultaneous connection attempts, exhausting pool limits and destroying P99 latencies.                  |
 
 ---
 
@@ -184,12 +194,13 @@ export const main = (container: ModularContainer) => {
     async handlePayment(orderId: string) {
       // Free to call orderService at runtime without affecting bootstrap order!
       return orderService.complete(orderId);
-    }
+    },
   };
 };
 ```
 
 ### Why Path-IoC Achieves True Topological Concurrency
+
 1. **100% Mathematically Pure DAG**: The `dependencies` array expresses only physical startup sequencing (e.g., migrations must run before database connections). Runtime method calls never enter the bootstrap graph. The probability of cycles drops to zero.
 2. **DFS Compilation & Reactive Promise Memoization**: With a pure DAG, Path-IoC's compiler performs DFS post-order topological compilation and cycle detection in **21 microseconds** for 50+ nodes. At runtime, the `initPromises` reactive cache automatically activates independent nodes concurrently via `Promise.all`.
 3. **Native Tier-Wise `Promise.all` Cascading Activation**:
@@ -201,13 +212,13 @@ export const main = (container: ModularContainer) => {
 
 ## 7. Architectural Summary
 
-| Architectural Dimension | Traditional DI (Spring / NestJS) | Topological IoC-DL (Path-IoC) |
-| :--- | :--- | :--- |
-| **Dependency Declaration** | Bound into class constructor arguments | Explicit DAG array + closure lookup (DL) |
-| **Graph Topology** | High cycle frequency (pseudo-cycles) | **Guaranteed 100% pure DAG** |
-| **Bootstrap Scheduling** | Single-threaded serial queue (`Sum(t)`) | **Native DAG tier-wise concurrency (`Max(t)`)** |
-| **Cycle Mitigations** | Spring 3-tier cache / NestJS deadlocks | **Zero hacks needed (DFS Fail-Fast validation)** |
-| **Serverless & Cold Start** | Degrades linearly with provider count | **Instantaneous (21µs graph compile + `Max(t)`)** |
+| Architectural Dimension     | Traditional DI (Spring / NestJS)        | Topological IoC-DL (Path-IoC)                     |
+| :-------------------------- | :-------------------------------------- | :------------------------------------------------ |
+| **Dependency Declaration**  | Bound into class constructor arguments  | Explicit DAG array + closure lookup (DL)          |
+| **Graph Topology**          | High cycle frequency (pseudo-cycles)    | **Guaranteed 100% pure DAG**                      |
+| **Bootstrap Scheduling**    | Single-threaded serial queue (`Sum(t)`) | **Native DAG tier-wise concurrency (`Max(t)`)**   |
+| **Cycle Mitigations**       | Spring 3-tier cache / NestJS deadlocks  | **Zero hacks needed (DFS Fail-Fast validation)**  |
+| **Serverless & Cold Start** | Degrades linearly with provider count   | **Instantaneous (21µs graph compile + `Max(t)`)** |
 
 Dependency Injection was engineered 20 years ago for Java 1.4—a statically typed, object-locked language devoid of first-class functions. Transposing its constructor constraints onto the asynchronous, single-threaded Event Loop of TypeScript produced a cascade of performance penalties.
 

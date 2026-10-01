@@ -25,7 +25,9 @@
 因此，**服务端必须做到“请求级容器隔离”**——为每个到达的 HTTP 请求实例化一个全新的轻量容器（在 Path-IoC 中，复用编译后的 DAG 静态图，单次纯同步装配仅耗时 **21.2 微秒**）。
 
 ### 新的挑战：重型资源的跨请求复用
+
 请求隔离解决了上下文安全，但立即引出了矛盾：
+
 - 数据库连接池（如 `mysql2/promise` 的 `Pool`、Prisma Client、TypeORM DataSource）；
 - Redis 客户端连接池；
 - 预热好的复杂分词字典或本地规则 AST 模型。
@@ -48,6 +50,7 @@
 ```
 
 为了维护这些“作用域元数据”，框架不得不付出高昂代价：
+
 1. **原型链与 Proxy 查表开销**：每个依赖获取都需要经过多层作用域解析器判断；
 2. **致命的“作用域蔓延（Scope Bubble）”**：在 NestJS 中，一旦底层某个叶子节点被标记为 `REQUEST` 作用域，**所有依赖它的上游模块将被强制传染为 REQUEST 作用域**，导致依赖树大面积被重新实例化，性能断崖式下跌；
 3. **框架强绑定与黑盒魔法**：开发者必须深刻背诵框架内部关于 Scope 的继承规则与注入限制。
@@ -62,7 +65,9 @@
 为了让重型模块工厂函数在跨请求时只执行一次，我们来实现高阶包装函数 `memoizeModule`。它的演进过程极具启发性。
 
 ### 阶段一：玩具级实现（隐蔽的假值击穿 Bug）
+
 最容易写出的直觉代码如下：
+
 ```typescript
 // ❌ 错误示范：玩具级实现
 export const memoizeModule = (main: Function) => {
@@ -74,18 +79,23 @@ export const memoizeModule = (main: Function) => {
   };
 };
 ```
+
 > **致命缺陷**：如果模块的工厂函数合法地返回了假值（Falsy Value，如 `undefined` 纯副作用初始化、`null` 或 `false`），`if (cached)` 将永远判定为 `false`，导致每一个 HTTP 请求都重新执行一次模块初始化，缓存机制形同虚设！
 
 ---
 
 ### 阶段二：状态独立标记与透明签名
+
 针对假值击穿，我们引入独立的布尔状态标记 `initialized`，并利用 TypeScript 精确泛型推导保持原函数签名透明：
+
 ```typescript
 // ⚠️ 基础版：具备状态标记
 export const memoizeModule = <
   Result,
-  T extends (modularContainer: ModularContainer, moduleDeclarationNames: string[]) => Result
->(main: T): T => {
+  T extends (modularContainer: ModularContainer, moduleDeclarationNames: string[]) => Result,
+>(
+  main: T,
+): T => {
   let result: Result;
   let initialized = false;
 
@@ -98,7 +108,9 @@ export const memoizeModule = <
   }) as T;
 };
 ```
+
 > **设计考量**：
+>
 > 1. **独立布尔标记防击穿**：使用 `let initialized = false` 独立记录执行状态，彻底解决假值重复执行问题；
 > 2. **绝不强加 `async` 包装**：若原函数是同步计算（如解析本地配置字典），包装后依然是纯同步函数，绝不强行包裹 `Promise`，避免将同步计算打入 V8 微任务队列。
 
@@ -129,20 +141,14 @@ export const memoizeModule = <
  */
 export const memoizeModule = <
   Result,
-  T extends (
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => Result
+  T extends (modularContainer: ModularContainer, moduleDeclarationNames: string[]) => Result,
 >(
-  main: T
+  main: T,
 ): T => {
   let result: Result;
   let initialized = false;
 
-  return ((
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => {
+  return ((modularContainer: ModularContainer, moduleDeclarationNames: string[]) => {
     if (!initialized) {
       const val = main(modularContainer, moduleDeclarationNames);
 
@@ -167,6 +173,7 @@ export const memoizeModule = <
 ## 四、双物理场景生产实战
 
 ### 场景 A：传统 Node.js 常驻环境（基于 process.env）
+
 在标准 Node.js / Docker 容器中，数据库连接配置直接通过全局 `process.env` 读取，数据库模块完全独立自治，无需依赖特定请求上下文：
 
 ```typescript
@@ -193,6 +200,7 @@ export const main = memoizeModule(async (): Promise<Pool> => {
 ---
 
 ### 场景 B：Cloudflare Workers / 边缘计算环境（基于首请求 c.env）
+
 在 Cloudflare Workers 等 Serverless 运行时中，不存在传统 Node.js 的全局 `process.env`，所有环境变量与外部 Bindings 均挂载在每次请求的上下文 `c.env` 上。
 
 但同一个 Worker 实例内的基础设施配置跨请求是绝对不可变的。因此，利用 `memoizeModule` 在首个请求到达时提取 `env` 初始化连接池，是完全顺应边缘物理运行时的标准范式：
@@ -206,12 +214,12 @@ export const dependencies = [];
 
 export const main = memoizeModule(async (container: ModularContainer): Promise<RedisClientType> => {
   const { requestContext } = container;
-  
+
   // 仅在当前 Worker 实例的首个请求到达时提取环境变量并建立持久连接
   const client = createClient({
     url: requestContext.env.REDIS_URL,
   });
-  
+
   await client.connect();
   console.log("[Edge Infrastructure] Redis connected successfully in Worker instance.");
   return client;
@@ -243,6 +251,7 @@ export const main = memoizeModule(() => {
 ```
 
 ### 生产自查准则：
+
 1. **重型基础设施才用 `memoizeModule`**：连接池、HttpClient 实例、静态元数据树等跨请求无状态资源才应包装；
 2. **轻量业务逻辑保持纯净隔离**：业务 Service（如 `orderService`、`userService`）直接保持默认的每请求纯净实例化（耗时仅 21µs），天然享受零上下文泄漏的极致安全；
 3. **连接自愈分工**：`memoizeModule` 负责解决 Promise 毒化清理；底层驱动（如 MySQL2 / ioredis）负责运行期的连接重试与心跳保活，各司其职，体系井然。

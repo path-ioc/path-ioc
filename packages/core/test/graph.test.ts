@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { compileModuleGraph, instantiateModuleContainer } from "../src/graph";
+import { describe, expect, it } from "vitest";
 import type { IOCModule } from "../src/graph";
+import { compileModuleGraph, instantiateModuleContainer } from "../src/graph";
 
 describe("compileModuleGraph", () => {
   it("should compile a basic DAG and sort topologically", () => {
@@ -20,7 +20,7 @@ describe("compileModuleGraph", () => {
     ];
 
     const graph = compileModuleGraph(modules);
-    
+
     // A should be initialized first, then B or C
     const names = graph.sortedDeclarations.map((d) => d.fullName);
     expect(names.indexOf("/a")).toBeLessThan(names.indexOf("/b"));
@@ -55,7 +55,7 @@ describe("compileModuleGraph", () => {
     ];
 
     const graph = compileModuleGraph(modules);
-    expect(graph.sortedDeclarations.find(d => d.fullName === "/a")?.skip).toBe(true);
+    expect(graph.sortedDeclarations.find((d) => d.fullName === "/a")?.skip).toBe(true);
   });
 
   it("should throw on ambiguous short name dependency", () => {
@@ -65,9 +65,7 @@ describe("compileModuleGraph", () => {
       { key: "/app", module: { main: () => "App", dependencies: ["service"] } },
     ];
 
-    expect(() => compileModuleGraph(modules)).toThrow(
-      /has an ambiguous dependency on 'service'/
-    );
+    expect(() => compileModuleGraph(modules)).toThrow(/has an ambiguous dependency on 'service'/);
   });
 
   it("should omit mounting ambiguous short names on container during instantiation", async () => {
@@ -148,4 +146,3 @@ describe("compileModuleGraph", () => {
     expect(container["LoginPage"]).toBe("FlowSenseLoginPage");
   });
 });
-

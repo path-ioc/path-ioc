@@ -1,5 +1,5 @@
-import { compileModuleGraph } from "@path-ioc/core";
 import { createContainer } from "@path-ioc/container";
+import { compileModuleGraph } from "@path-ioc/core";
 
 console.log("==================================================");
 console.log("🚀 [playground/container-test-app] Extension Modes & Edge Case Fail-Fast Test");
@@ -19,7 +19,7 @@ const userServiceModule = {
 
 const orderServiceModule = {
   dependencies: ["user", "/infra/db"],
-  main: (container: any) => ({
+  main: (container: Record<string, unknown>) => ({
     orderId: "ORD_CONTAINER_888",
     db: container.db,
     user: container.user,
@@ -37,7 +37,10 @@ const compiledGraph = compileModuleGraph(modules);
 // --- 测试 1: Demand Proxy 模式按需延迟求值 ---
 async function testDemandMode() {
   console.log("\n[Test 1] Container Demand Proxy Mode:");
-  const demandContainer: any = createContainer(compiledGraph, { strategy: "demand", mode: "async" });
+  const demandContainer: Record<string, unknown> = createContainer(compiledGraph, {
+    strategy: "demand",
+    mode: "async",
+  });
   console.log("👉 Triggering lazy-load for 'order'...");
   const result = await demandContainer.order;
   console.log("✅ Demand Container Order Result:", result);
@@ -49,8 +52,10 @@ function testTurboModeFailFast() {
   try {
     createContainer(compiledGraph, { strategy: "eager", mode: "turbo" });
     console.error("❌ Turbo mode should have thrown for async db module!");
-  } catch (e: any) {
-    console.log("✅ Expected Turbo Fail-Fast Error Caught:", e.message);
+  } catch (e) {
+    if (e instanceof Error) {
+      console.log("✅ Expected Turbo Fail-Fast Error Caught:", e.message);
+    }
   }
 }
 
@@ -64,8 +69,10 @@ function testCycleDetectionFailFast() {
   try {
     compileModuleGraph(cycleModules);
     console.error("❌ Cycle detection should have thrown!");
-  } catch (e: any) {
-    console.log("✅ Expected Cycle Error Caught:", e.message);
+  } catch (e) {
+    if (e instanceof Error) {
+      console.log("✅ Expected Cycle Error Caught:", e.message);
+    }
   }
 }
 
@@ -73,13 +80,20 @@ function testCycleDetectionFailFast() {
 function testMissingMainFailFast() {
   console.log("\n[Test 4] Edge Case Fail-Fast: Missing 'main' Function Catch:");
   const invalidModules = [
-    { key: "/badModule", module: { default: { main: () => {} } } as any },
+    {
+      key: "/badModule",
+      module: { default: { main: () => {} } } as unknown as Parameters<
+        typeof compileModuleGraph
+      >[0][number]["module"],
+    },
   ];
   try {
     compileModuleGraph(invalidModules);
     console.error("❌ Missing main should have thrown!");
-  } catch (e: any) {
-    console.log("✅ Expected Invalid Module Error Caught:", e.message);
+  } catch (e) {
+    if (e instanceof Error) {
+      console.log("✅ Expected Invalid Module Error Caught:", e.message);
+    }
   }
 }
 

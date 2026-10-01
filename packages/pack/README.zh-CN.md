@@ -79,6 +79,7 @@ export default defineConfig({
 ```
 
 执行打包命令：
+
 ```bash
 vite build --config vite.config.pack.ts
 ```
@@ -87,15 +88,15 @@ vite build --config vite.config.pack.ts
 
 ## 配置选项 (PackPluginOptions)
 
-| 配置项 | 类型 | 默认值 | 描述 |
-| :--- | :--- | :--- | :--- |
-| **`modulesPath`** | `string` | `'src/modules'` | 模块扫描的物理根目录路径。 |
-| **`entryFile`** | `string` | `'.modular-plugin-entry.ts'` | 临时物理入口文件路径（构建后自动清理，建议加入 `.gitignore`）。 |
-| **`outDir`** | `string` | `'dist-plugin'` | 构建产物输出与 npm 打包目录。 |
-| **`dts`** | `boolean` | `true` | 是否为所有导出模块编译生成 `.d.ts` 类型声明文件。 |
-| **`tsconfigPath`** | `string` | `undefined` *(可选)* | 生成类型声明所使用的 `tsconfig` 路径。默认自动查找 `tsconfig.app.json` 或 `tsconfig.json`。 |
-| **`sharedMappings`** | `string[]` | `[]` *(可选)* | 接收生成的类型映射字符串数组引用。 |
-| **`sharedContainerMappings`** | `string[]` | `[]` *(可选)* | 接收生成的容器类型映射字符串数组引用。 |
+| 配置项                        | 类型       | 默认值                       | 描述                                                                                        |
+| :---------------------------- | :--------- | :--------------------------- | :------------------------------------------------------------------------------------------ |
+| **`modulesPath`**             | `string`   | `'src/modules'`              | 模块扫描的物理根目录路径。                                                                  |
+| **`entryFile`**               | `string`   | `'.modular-plugin-entry.ts'` | 临时物理入口文件路径（构建后自动清理，建议加入 `.gitignore`）。                             |
+| **`outDir`**                  | `string`   | `'dist-plugin'`              | 构建产物输出与 npm 打包目录。                                                               |
+| **`dts`**                     | `boolean`  | `true`                       | 是否为所有导出模块编译生成 `.d.ts` 类型声明文件。                                           |
+| **`tsconfigPath`**            | `string`   | `undefined` _(可选)_         | 生成类型声明所使用的 `tsconfig` 路径。默认自动查找 `tsconfig.app.json` 或 `tsconfig.json`。 |
+| **`sharedMappings`**          | `string[]` | `[]` _(可选)_                | 接收生成的类型映射字符串数组引用。                                                          |
+| **`sharedContainerMappings`** | `string[]` | `[]` _(可选)_                | 接收生成的容器类型映射字符串数组引用。                                                      |
 
 ---
 

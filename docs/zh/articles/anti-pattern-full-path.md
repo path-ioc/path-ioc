@@ -9,14 +9,15 @@
 
 在初接触 Path-IoC 时，部分开发者常常提出类似疑问：
 
-> *“既然模块在容器内部的全限定标识是带物理路径的（例如 `/common/dbConnection` 或 `/user/service`），那如果两个深层目录出现了同名模块 `service`，我直接在 `dependencies` 里写 `["/user/service"]` 不就能精准区分了吗？”*  
-> *“文档不是说只有短名称冲突时才需要全称吗？”*
+> _“既然模块在容器内部的全限定标识是带物理路径的（例如 `/common/dbConnection` 或 `/user/service`），那如果两个深层目录出现了同名模块 `service`，我直接在 `dependencies` 里写 `["/user/service"]` 不就能精准区分了吗？”_  
+> _“文档不是说只有短名称冲突时才需要全称吗？”_
 
 **这是对 Path-IoC 依赖设计哲学的严重误解。**
 
 在 Path-IoC 的核心设计规范中：
-* **业务开发层（Business Layer）**：点对点业务依赖 **100% 严禁手写任何全称物理路径**，必须使用驼峰短名称（Short Name）；
-* **架构编排层（Orchestration Layer）**：全称物理路径的唯一正统用途是**函数式特征模式匹配**（如批量路由聚合、AOP 切面网格），用于非侵入式横切基础设施。
+
+- **业务开发层（Business Layer）**：点对点业务依赖 **100% 严禁手写任何全称物理路径**，必须使用驼峰短名称（Short Name）；
+- **架构编排层（Orchestration Layer）**：全称物理路径的唯一正统用途是**函数式特征模式匹配**（如批量路由聚合、AOP 切面网格），用于非侵入式横切基础设施。
 
 如果在业务模块的 `dependencies` 中直接枚举全称字符串，代码虽然在技术上可以被容器编译并运行，但在架构治理上，它已经沦为了**随时会引爆重构灾难的“烂代码”**。
 
@@ -57,18 +58,23 @@ export const main = ({ dbConnection, userService }: ModularContainer) => {
 ### 原罪一：破坏“位置透明性”，重构直接引发雪崩
 
 控制反转（IoC）与依赖查找（DL）的核心承诺之一是**位置无关性与位置透明性（Location Transparency）**：
+
 > **调用方只关心“我需要什么服务契约”，而绝不关心“该服务存放在文件系统的哪一层抽屉里”。**
 
 传统前端最令人深恶痛绝的痛点之一，就是相对路径地狱：
+
 ```typescript
 import { UserService } from "../../../../domain/user/services/userService";
 ```
+
 当项目目录进行领域重构、分包或者目录扁平化时，哪怕只是把一个文件夹往上提了一级，所有下游几十个调用方文件的 `import` 路径全部失效。
 
 如果我们在 Path-IoC 的 `dependencies` 中硬编码物理全称：
+
 ```typescript
 export const dependencies = ["/domain/user/services/userService"];
 ```
+
 **这在本质上与相对路径地狱毫无二致！** 你仅仅是将 `import` 后的字符串搬运到了 `dependencies` 数组中。一旦架构师调整目录结构，重构工具无法预知字符串内的深层依赖，导致系统在运行时发生静默崩溃。
 
 使用短名称 `userService`，无论物理目录如何重构、归类、拆分子目录，只要业务语义未变，**所有下游业务模块的代码 0 行修改**。
@@ -103,14 +109,15 @@ export const dependencies = ["/domain/user/services/userService"];
 **Path-IoC 选择在遇到歧义短名称依赖时 Fail-Fast 抛出异常，正是为了逼退这种架构腐化：**
 
 ```bash
-[Dependency Error] Module '/biz/dashboard' has an ambiguous dependency on 'service'. 
-This short name is used by '/user/service' and '/admin/service'. 
-Please disambiguate by renaming the module (e.g. 'userService', 'adminService') 
-or refactoring domain boundaries. Avoid hardcoding full paths in business dependencies 
+[Dependency Error] Module '/biz/dashboard' has an ambiguous dependency on 'service'.
+This short name is used by '/user/service' and '/admin/service'.
+Please disambiguate by renaming the module (e.g. 'userService', 'adminService')
+or refactoring domain boundaries. Avoid hardcoding full paths in business dependencies
 as it is an architectural anti-pattern.
 ```
 
 解决冲突的真正优雅方案只有两种：
+
 1. **语义重构**：将目录重命名为清晰的领域名词（如 `src/modules/adminService` 与 `src/modules/userService`）；
 2. **限界上下文隔离 / Facade 门面聚合**：若属于独立子域，通过门面聚合模块向外暴露统一短名称。
 
@@ -138,14 +145,14 @@ export const main = (container: ModularContainer) => {
     checkout(orderId: string) {
       const order = orderService.findById(orderId);
       return paymentGateway.pay(order.amount);
-    }
+    },
   };
 };
 ```
 
 #### 💡 深度辨析：别把 Path-IoC 的 `dependencies` 理解成传统 DI 的“注入清单”！
 
-许多受传统构造器依赖注入（Constructor DI）影响深刻的开发者，常会产生一个根深蒂固的思维误区：*“既然我在业务里解构了某个模块，我就必须在 dependencies 里声明它；反过来，我声明了什么，我就必须消费什么。”*
+许多受传统构造器依赖注入（Constructor DI）影响深刻的开发者，常会产生一个根深蒂固的思维误区：_“既然我在业务里解构了某个模块，我就必须在 dependencies 里声明它；反过来，我声明了什么，我就必须消费什么。”_
 
 **这是对 Path-IoC 最严重的范畴误解！Path-IoC 相比传统 DI 的最大革命性飞跃，正是将【初始化先决时序】与【调用期消费】在物理上彻底解耦：**
 
@@ -168,7 +175,7 @@ export const main = (container: ModularContainer) => {
 2. **场景二：声明端 > 消费端（声明了，但根本不消费）**  
    假设模块 A 的函数 `a()` 调用期依赖模块 B（例如底层数据库查询）；而模块 C 在其**初始化阶段（`main` 执行期）**需要立即调用 `A.a()` 预热数据。  
    此时，模块 C 的初始化在物理上实际依赖模块 B 先就绪。因此模块 C **必须在 `dependencies` 中声明模块 B** 以确保 DAG 拓扑时序安全；但在模块 C 的代码中，它只需解构 `const { moduleA } = container`，**从头到尾 0 次消费模块 B**！
-   *(注：针对此类初始化时序，最佳工程实践是通过 `export const order = 1` 将底层基础设施下沉为高优先级的先驱模块，避免上层模块背负传递性声明负担。)*
+   _(注：针对此类初始化时序，最佳工程实践是通过 `export const order = 1` 将底层基础设施下沉为高优先级的先驱模块，避免上层模块背负传递性声明负担。)_
 
 **结论**：`dependencies` 只是告诉拓扑引擎“谁先跑、谁后跑”的时序编排信号；它绝非传统 DI 的构造函数参数，切勿用“声明与消费必须对称”的僵化教条来束缚双手！
 
@@ -201,6 +208,7 @@ export const main = (container: ModularContainer) => {
 传统方案中，必须有人手写一个巨大的中央注册文件（如 `allPages.ts`），每新增一个页面都要手动 `import`。
 
 在 Path-IoC 中，路径就是语义标签：
+
 ```typescript
 // src/modules/router/index.ts
 // 架构层：通过函数式依赖，按路径前缀批量动态发现
@@ -215,6 +223,7 @@ export const main = (container: ModularContainer, allModuleNames: string[]) => {
   return createRouter(routes);
 };
 ```
+
 在此处，`router` 模块根本不需要提前知道具体的短名称是什么，它通过路径特征完成了“去中心化服务发现”。
 
 ---
@@ -237,7 +246,7 @@ export const main = (container: ModularContainer, allModuleNames: string[]) => {
   const targetPaths = dependencies(allModuleNames);
   for (const path of targetPaths) {
     const targetService = container[path] as Record<string, Function>;
-    
+
     // 对目标服务进行纯函数式高阶代理增强
     for (const [methodName, originalMethod] of Object.entries(targetService)) {
       if (typeof originalMethod === "function") {
@@ -246,7 +255,9 @@ export const main = (container: ModularContainer, allModuleNames: string[]) => {
           try {
             return await originalMethod.apply(targetService, args);
           } finally {
-            console.log(`[Telemetry] ${path}#${methodName} took ${(performance.now() - start).toFixed(2)}ms`);
+            console.log(
+              `[Telemetry] ${path}#${methodName} took ${(performance.now() - start).toFixed(2)}ms`,
+            );
           }
         };
       }
@@ -265,20 +276,20 @@ export const main = (container: ModularContainer, allModuleNames: string[]) => {
 
 为帮助开发团队在日常代码审查（Code Review）中统一标准，请参考下表执行：
 
-| 维度 | 短名称依赖 (`"userService"`) | 函数式路径匹配 (`p => p.startsWith(...)`) | ❌ 静态硬编码全路径 (`["/user/service"]`) |
-| :--- | :--- | :--- | :--- |
-| **设计定位** | **业务点对点依赖 (Bean ID)** | **架构宏观编排 / AOP 网格** | **架构反模式 (严禁在生产中出现)** |
-| **适用场景** | 99% 的日常业务模块协作 | 页面自动路由、ORM 实体扫描、全局切面 | 无任何合理场景 |
-| **位置透明性** | **完全透明** (目录重构不影响代码) | **模式绑定** (按规范约定组织目录) | **强耦合物理文件层级** (重构极易失效) |
-| **冲突处理** | 强制重命名，厘清领域语义 | 天然支持批量模式 | 苟且掩盖命名冲突 |
-| **语法优雅性** | 原生对象解构，类型推导自然 | 循环遍历装配 | 字符串下标访问，丑陋且易错 |
-| **团队约束** | **推荐强制使用** | **推荐在架构/基础设施中使用** | **CI / Code Review 一票否决** |
+| 维度           | 短名称依赖 (`"userService"`)      | 函数式路径匹配 (`p => p.startsWith(...)`) | ❌ 静态硬编码全路径 (`["/user/service"]`) |
+| :------------- | :-------------------------------- | :---------------------------------------- | :---------------------------------------- |
+| **设计定位**   | **业务点对点依赖 (Bean ID)**      | **架构宏观编排 / AOP 网格**               | **架构反模式 (严禁在生产中出现)**         |
+| **适用场景**   | 99% 的日常业务模块协作            | 页面自动路由、ORM 实体扫描、全局切面      | 无任何合理场景                            |
+| **位置透明性** | **完全透明** (目录重构不影响代码) | **模式绑定** (按规范约定组织目录)         | **强耦合物理文件层级** (重构极易失效)     |
+| **冲突处理**   | 强制重命名，厘清领域语义          | 天然支持批量模式                          | 苟且掩盖命名冲突                          |
+| **语法优雅性** | 原生对象解构，类型推导自然        | 循环遍历装配                              | 字符串下标访问，丑陋且易错                |
+| **团队约束**   | **推荐强制使用**                  | **推荐在架构/基础设施中使用**             | **CI / Code Review 一票否决**             |
 
 ---
 
 ## 总结：短名称是身份证，物理路径是语义标签
 
-* **短名称（Short Name）是模块的“身份证（Bean ID）”**：它直接代表业务领域中的实体概念。业务调用只认身份证，天王老子把身份证的主人搬到哪座城市（哪个物理目录），业务关系永远稳如泰山。
-* **物理路径（Full Path）是模块的“分类标签（Metadata Tag）”**：它像 Java 中的注解或微服务中的标签（Tags），供切面网格和聚合器做批量分类感知。
+- **短名称（Short Name）是模块的“身份证（Bean ID）”**：它直接代表业务领域中的实体概念。业务调用只认身份证，天王老子把身份证的主人搬到哪座城市（哪个物理目录），业务关系永远稳如泰山。
+- **物理路径（Full Path）是模块的“分类标签（Metadata Tag）”**：它像 Java 中的注解或微服务中的标签（Tags），供切面网格和聚合器做批量分类感知。
 
 **永远不要为了解决重名问题而在业务依赖里写全称路径。保持领域命名的自解释与清晰，是通往高内聚、低耦合架构的不二法门。**

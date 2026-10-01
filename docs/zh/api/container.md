@@ -20,12 +20,12 @@
 
 通过 `strategy` (加载范围: `eager` | `demand`) 与 `mode` (执行引擎: `async` | `turbo`) 构成 4 种调度范式：
 
-| 范式 (`strategy` + `mode`) | 触发机制 | 核心物理特性 | 适用场景说明 |
-| :--- | :--- | :--- | :--- |
-| **`eager` + `async`** | 容器创建时立刻触发 | 全量 DAG 拓扑并发预热，挂载不可枚举的 `$ready: Promise<void>` 句柄 | 全量异步预热评测 |
-| **`eager` + `turbo`** | 容器创建时立刻触发 | 启动时全量拓扑纯同步求值；严禁异步 `main` 工厂（遇 Promise 抛错）；支持免写 `dependencies` | 纯同步工具库测试 |
-| **`demand` + `async`** | 外部按需访问属性触发 | 正向子图切片提取，属性访问返回 Promise。**注意**：存在串行互斥保护，必须串行 `await`，严禁 `Promise.all` 并发访问多个未就绪属性 | 按需异步切片实验 |
-| **`demand` + `turbo`** | 外部按需访问属性触发 | 属性访问纯同步子图求值直通，零 Promise 延迟；**完全支持免写 `dependencies`**；严禁异步 `main` 工厂；遇环同样 Fail-Fast 报错 | 纯同步命令行/管线测试 |
+| 范式 (`strategy` + `mode`) | 触发机制             | 核心物理特性                                                                                                                    | 适用场景说明          |
+| :------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------------------------------ | :-------------------- |
+| **`eager` + `async`**      | 容器创建时立刻触发   | 全量 DAG 拓扑并发预热，挂载不可枚举的 `$ready: Promise<void>` 句柄                                                              | 全量异步预热评测      |
+| **`eager` + `turbo`**      | 容器创建时立刻触发   | 启动时全量拓扑纯同步求值；严禁异步 `main` 工厂（遇 Promise 抛错）；支持免写 `dependencies`                                      | 纯同步工具库测试      |
+| **`demand` + `async`**     | 外部按需访问属性触发 | 正向子图切片提取，属性访问返回 Promise。**注意**：存在串行互斥保护，必须串行 `await`，严禁 `Promise.all` 并发访问多个未就绪属性 | 按需异步切片实验      |
+| **`demand` + `turbo`**     | 外部按需访问属性触发 | 属性访问纯同步子图求值直通，零 Promise 延迟；**完全支持免写 `dependencies`**；严禁异步 `main` 工厂；遇环同样 Fail-Fast 报错     | 纯同步命令行/管线测试 |
 
 ---
 
@@ -39,13 +39,13 @@
   ```typescript
   function createContainer(
     graph: CompiledModuleGraph,
-    options: CreateContainerOptions
+    options: CreateContainerOptions,
   ): Record<string, unknown>;
   ```
 - **配置项 (`CreateContainerOptions`)**：
   - `strategy`: `'eager'` | `'demand'`（必填）
   - `mode`: `'async'` | `'turbo'`（必填）
-  - *(注：`eager + async` 模式下返回的对象挂载了不可枚举的 `$ready: Promise<void>`)*
+  - _(注：`eager + async` 模式下返回的对象挂载了不可枚举的 `$ready: Promise<void>`)_
 
 - **使用示例**：
   ```typescript
@@ -74,4 +74,4 @@
 2. **提纯子图**：严格仅收集目标节点及其下游依赖模块，排除无关模块；
 3. **即刻编译装配**：将提取出的极简原始模块子集传递给 `compileModuleGraph(subModules)` 编译后就地装配。
 
-*(注：`extractSubModules` 属于 `@path-ioc/container` 内部算法实现，不对外作为公共 API 导出，由 `demand` 模式 Proxy Getter 自动调度。)*
+_(注：`extractSubModules` 属于 `@path-ioc/container` 内部算法实现，不对外作为公共 API 导出，由 `demand` 模式 Proxy Getter 自动调度。)_

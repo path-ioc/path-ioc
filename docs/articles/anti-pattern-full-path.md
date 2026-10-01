@@ -9,14 +9,15 @@
 
 When first exploring Path-IoC, engineers occasionally ask:
 
-> *"Since modules are indexed internally by their fully qualified physical paths (e.g. `/common/dbConnection` or `/user/service`), if two deep directories both define a module named `service`, can't I just write `dependencies = ["/user/service"]` to disambiguate them?"*  
-> *"Doesn't the documentation imply that full names are only needed when short names collide?"*
+> _"Since modules are indexed internally by their fully qualified physical paths (e.g. `/common/dbConnection` or `/user/service`), if two deep directories both define a module named `service`, can't I just write `dependencies = ["/user/service"]` to disambiguate them?"_  
+> _"Doesn't the documentation imply that full names are only needed when short names collide?"_
 
 **This is a critical architectural misconception.**
 
 In Path-IoC's core design doctrine:
-* **The Business Layer**: Point-to-point business collaboration **strictly prohibits hardcoding full physical paths**. It must always use camelCase Short Names.
-* **The Orchestration Layer**: Fully qualified paths are reserved exclusively for **functional pattern matching** (such as dynamic route aggregation and non-invasive AOP aspect meshes).
+
+- **The Business Layer**: Point-to-point business collaboration **strictly prohibits hardcoding full physical paths**. It must always use camelCase Short Names.
+- **The Orchestration Layer**: Fully qualified paths are reserved exclusively for **functional pattern matching** (such as dynamic route aggregation and non-invasive AOP aspect meshes).
 
 Hardcoding full-path string literals in a business module's `dependencies` array might physically pass the compiler and run, but architecturally, it introduces **latent tech debt that turns routine refactoring into an outage waiting to happen**.
 
@@ -63,18 +64,23 @@ Why do we adamantly categorize hardcoding full paths in business dependencies as
 ### Sin 1: Shattering "Location Transparency" and Causing Refactoring Avalanches
 
 One of the foundational tenets of Inversion of Control (IoC) and Dependency Lookup (DL) is **Location Transparency**:
+
 > **A consumer module cares solely about "what contract/service I depend upon", never "in which drawer of the filesystem that service is stored."**
 
 One of the most notorious pain points in legacy frontend architectures is relative path import hell:
+
 ```typescript
 import { UserService } from "../../../../domain/user/services/userService";
 ```
+
 Whenever a folder is moved, split, or flattened during domain refactoring, every single relative `import` across dozens of downstream files breaks instantly.
 
 If we hardcode physical paths inside Path-IoC's `dependencies`:
+
 ```typescript
 export const dependencies = ["/domain/user/services/userService"];
 ```
+
 **This is conceptually identical to relative import hell!** You have simply shifted the path string from an `import` statement into an array literal. The moment an architect reorganizes directory structures, refactoring tools fail to update dynamic string references, resulting in runtime lookup failures.
 
 By using short names (`userService`), regardless of how modules are categorized, relocated, or nested across subdirectories, **zero downstream lines of code need to be modified** as long as the domain concept remains unchanged.
@@ -109,14 +115,15 @@ If the framework permitted engineers to bypass collisions simply by writing `["/
 **Path-IoC enforces Fail-Fast compilation errors upon encountering ambiguous short names specifically to halt this architectural decay:**
 
 ```bash
-[Dependency Error] Module '/biz/dashboard' has an ambiguous dependency on 'service'. 
-This short name is used by '/user/service' and '/admin/service'. 
-Please disambiguate by renaming the module (e.g. 'userService', 'adminService') 
-or refactoring domain boundaries. Avoid hardcoding full paths in business dependencies 
+[Dependency Error] Module '/biz/dashboard' has an ambiguous dependency on 'service'.
+This short name is used by '/user/service' and '/admin/service'.
+Please disambiguate by renaming the module (e.g. 'userService', 'adminService')
+or refactoring domain boundaries. Avoid hardcoding full paths in business dependencies
 as it is an architectural anti-pattern.
 ```
 
 The proper remedies are clear and clean:
+
 1. **Semantic Refactoring**: Rename the modules to represent their true domain role (e.g., `src/modules/adminService` and `src/modules/userService`).
 2. **Bounded Context & Facade Aggregation**: If subdomains are truly isolated, expose a clean facade module with an unambiguous short name.
 
@@ -144,14 +151,14 @@ export const main = (container: ModularContainer) => {
     checkout(orderId: string) {
       const order = orderService.findById(orderId);
       return paymentGateway.pay(order.amount);
-    }
+    },
   };
 };
 ```
 
 #### 💡 Deep Dive: Never Mistake `dependencies` for Traditional DI's "Injection List"!
 
-Many developers steeped in traditional Constructor Dependency Injection (Constructor DI) harbor a deep-seated mental model: *"If I consume a module in business logic, I must declare it in dependencies; conversely, whatever I declare, I must consume."*
+Many developers steeped in traditional Constructor Dependency Injection (Constructor DI) harbor a deep-seated mental model: _"If I consume a module in business logic, I must declare it in dependencies; conversely, whatever I declare, I must consume."_
 
 **This is the single most severe category error regarding Path-IoC! Path-IoC's greatest revolutionary breakthrough over legacy DI is physically decoupling [Initialization Sequencing] from [Runtime Consumption]:**
 
@@ -176,7 +183,7 @@ Because of this separation, real-world production code naturally exhibits flexib
 2. **Pattern 2: Declaration > Consumption (Declared without Consumption)**  
    Suppose Module A's function `a()` depends on Module B (e.g. database querying) during invocation. Meanwhile, Module C needs to execute `A.a()` **during its startup phase (`main` execution)** to warm up cache data.  
    Here, Module C's initialization physically requires Module B to be ready first. Module C **must declare Module B in its `dependencies`** to guarantee DAG topological safety; yet in Module C's code, it only destructures `const { moduleA } = container`, **consuming Module B zero times**!  
-   *(Note: The idiomatic architectural practice for such cases is setting `export const order = 1` on infrastructure modules, ensuring they boot early without burdening callers with transitive declarations.)*
+   _(Note: The idiomatic architectural practice for such cases is setting `export const order = 1` on infrastructure modules, ensuring they boot early without burdening callers with transitive declarations.)_
 
 **Conclusion**: `dependencies` solely provides timing signals to the topological engine ("who boots before whom"); it is emphatically NOT a constructor argument list. Never constrain your architecture with the dogma of "declarations and consumption must be symmetrical"!
 
@@ -211,6 +218,7 @@ In enterprise systems, routers need to discover all pages, rule engines need to 
 Traditionally, developers maintain a bloated central file (e.g. `allPages.ts`), manually importing every newly created view.
 
 In Path-IoC, directory conventions act as implicit category tags:
+
 ```typescript
 // src/modules/router/index.ts
 // Orchestration: dynamic batch discovery via functional dependency filtering
@@ -225,6 +233,7 @@ export const main = (container: ModularContainer, allModuleNames: string[]) => {
   return createRouter(routes);
 };
 ```
+
 Here, the `router` module does not need prior knowledge of specific short names; it discovers them dynamically through architectural conventions.
 
 ---
@@ -247,7 +256,7 @@ export const main = (container: ModularContainer, allModuleNames: string[]) => {
   const targetPaths = dependencies(allModuleNames);
   for (const path of targetPaths) {
     const targetService = container[path] as Record<string, Function>;
-    
+
     // Non-invasively wrap target methods with higher-order proxies
     for (const [methodName, originalMethod] of Object.entries(targetService)) {
       if (typeof originalMethod === "function") {
@@ -256,7 +265,9 @@ export const main = (container: ModularContainer, allModuleNames: string[]) => {
           try {
             return await originalMethod.apply(targetService, args);
           } finally {
-            console.log(`[Telemetry] ${path}#${methodName} took ${(performance.now() - start).toFixed(2)}ms`);
+            console.log(
+              `[Telemetry] ${path}#${methodName} took ${(performance.now() - start).toFixed(2)}ms`,
+            );
           }
         };
       }
@@ -275,20 +286,20 @@ Business services remain 100% pure and completely unaware that they are being in
 
 To assist engineering teams during Code Reviews, adhere to the following standard:
 
-| Dimension | Short Name (`"userService"`) | Functional Path Match (`p => p.startsWith(...)`) | ❌ Static Hardcoded Full Path (`["/user/service"]`) |
-| :--- | :--- | :--- | :--- |
-| **Design Purpose** | **Business Point-to-Point (Bean ID)** | **Macroscopic Orchestration / AOP Mesh** | **Architectural Anti-Pattern** |
-| **Target Scope** | 99% of day-to-day business modules | Page routing, entity harvesting, aspect meshes | No valid use case |
+| Dimension                 | Short Name (`"userService"`)                          | Functional Path Match (`p => p.startsWith(...)`)                   | ❌ Static Hardcoded Full Path (`["/user/service"]`)    |
+| :------------------------ | :---------------------------------------------------- | :----------------------------------------------------------------- | :----------------------------------------------------- |
+| **Design Purpose**        | **Business Point-to-Point (Bean ID)**                 | **Macroscopic Orchestration / AOP Mesh**                           | **Architectural Anti-Pattern**                         |
+| **Target Scope**          | 99% of day-to-day business modules                    | Page routing, entity harvesting, aspect meshes                     | No valid use case                                      |
 | **Location Transparency** | **100% Transparent** (folder moves do not break code) | **Convention-Bound** (relies on architectural directory standards) | **Tightly Coupled** (refactoring causes silent breaks) |
-| **Collision Handling** | Forces semantic renaming and DDD clarity | Naturally handles bulk patterns | Masks domain ambiguity |
-| **Syntactic Ergonomics** | Native destructuring, instant autocomplete | Structured array iteration | Clumsy dictionary subscript lookups |
-| **Team Governance** | **Enforced by default** | **Recommended for infrastructure** | **Vetoed in CI & Code Review** |
+| **Collision Handling**    | Forces semantic renaming and DDD clarity              | Naturally handles bulk patterns                                    | Masks domain ambiguity                                 |
+| **Syntactic Ergonomics**  | Native destructuring, instant autocomplete            | Structured array iteration                                         | Clumsy dictionary subscript lookups                    |
+| **Team Governance**       | **Enforced by default**                               | **Recommended for infrastructure**                                 | **Vetoed in CI & Code Review**                         |
 
 ---
 
 ## Conclusion: Short Names are Passports; Paths are Metadata Tags
 
-* **Short Names are a module's "Passport (Bean ID)"**: They denote the concrete domain identity of a service. Business consumers reference only this identity; no matter where the passport holder resides in the filesystem, business relationships stay rock solid.
-* **Physical Paths are a module's "Metadata Tags"**: Like Java annotations or microservice labels, they enable aspect meshes and aggregators to detect and weave cross-cutting concerns at scale.
+- **Short Names are a module's "Passport (Bean ID)"**: They denote the concrete domain identity of a service. Business consumers reference only this identity; no matter where the passport holder resides in the filesystem, business relationships stay rock solid.
+- **Physical Paths are a module's "Metadata Tags"**: Like Java annotations or microservice labels, they enable aspect meshes and aggregators to detect and weave cross-cutting concerns at scale.
 
 **Never hardcode full paths in business dependencies to sidestep naming collisions. Preserving self-describing domain semantics is the only path to a maintainable, loosely-coupled architecture.**

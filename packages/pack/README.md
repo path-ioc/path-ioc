@@ -79,6 +79,7 @@ export default defineConfig({
 ```
 
 To build and package your mesh bundle:
+
 ```bash
 vite build --config vite.config.pack.ts
 ```
@@ -87,15 +88,15 @@ vite build --config vite.config.pack.ts
 
 ## Configuration Options (`PackPluginOptions`)
 
-| Option | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| **`modulesPath`** | `string` | `'src/modules'` | Root directory scanned for modular IoC entrypoints. |
-| **`entryFile`** | `string` | `'.modular-plugin-entry.ts'` | Target physical path for the generated entrypoint file (cleaned up after build; add to `.gitignore`). |
-| **`outDir`** | `string` | `'dist-plugin'` | Output directory for the packaged library bundle and npm tarball. |
-| **`dts`** | `boolean` | `true` | Whether to compile `.d.ts` declaration files for all exported modules. |
-| **`tsconfigPath`** | `string` | `undefined` *(optional)* | Custom tsconfig path for declaration emit. Defaults to `tsconfig.app.json` or `tsconfig.json`. |
-| **`sharedMappings`** | `string[]` | `[]` *(optional)* | Reference to an array that receives generated type mapping strings. |
-| **`sharedContainerMappings`** | `string[]` | `[]` *(optional)* | Reference to an array that receives generated container type mapping strings. |
+| Option                        | Type       | Default                      | Description                                                                                           |
+| :---------------------------- | :--------- | :--------------------------- | :---------------------------------------------------------------------------------------------------- |
+| **`modulesPath`**             | `string`   | `'src/modules'`              | Root directory scanned for modular IoC entrypoints.                                                   |
+| **`entryFile`**               | `string`   | `'.modular-plugin-entry.ts'` | Target physical path for the generated entrypoint file (cleaned up after build; add to `.gitignore`). |
+| **`outDir`**                  | `string`   | `'dist-plugin'`              | Output directory for the packaged library bundle and npm tarball.                                     |
+| **`dts`**                     | `boolean`  | `true`                       | Whether to compile `.d.ts` declaration files for all exported modules.                                |
+| **`tsconfigPath`**            | `string`   | `undefined` _(optional)_     | Custom tsconfig path for declaration emit. Defaults to `tsconfig.app.json` or `tsconfig.json`.        |
+| **`sharedMappings`**          | `string[]` | `[]` _(optional)_            | Reference to an array that receives generated type mapping strings.                                   |
+| **`sharedContainerMappings`** | `string[]` | `[]` _(optional)_            | Reference to an array that receives generated container type mapping strings.                         |
 
 ---
 

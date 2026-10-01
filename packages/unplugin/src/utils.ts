@@ -2,7 +2,7 @@
  * 包装异步函数，实现“同一时间最多只有一个在执行，执行期间的新调用全部折叠阻塞，直到上一轮结束后以最新参数循环补跑最后一次”
  */
 export function createTrailingRunner<Args extends unknown[], Result>(
-  asyncFn: (...args: Args) => Promise<Result>
+  asyncFn: (...args: Args) => Promise<Result>,
 ): (...args: Args) => Promise<Result> {
   let isRunning = false;
   let pendingArgs: Args | null = null;

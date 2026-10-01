@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { createContainer } from "../src/index";
 import { compileModuleGraph, type IOCModule } from "@path-ioc/core";
+import { describe, expect, it } from "vitest";
+import { createContainer } from "../src/index";
 
 describe("createContainer", () => {
   it("should support turbo mode (sync getter with demand strategy)", () => {
@@ -12,7 +12,8 @@ describe("createContainer", () => {
       {
         key: "/b",
         module: {
-          main: (deps: any) => `B depends on ${deps["a"] || deps["/a"]}`,
+          main: (deps: Record<string, unknown>) =>
+            `B depends on ${String(deps["a"] || deps["/a"])}`,
           dependencies: ["/a"],
         },
       },
@@ -20,7 +21,7 @@ describe("createContainer", () => {
 
     const graph = compileModuleGraph(modules);
     const container = createContainer(graph, { mode: "turbo", strategy: "demand" });
-    const c = container as any;
+    const c = container as Record<string, string>;
 
     expect(c["/a"]).toBe("A");
     expect(c["/b"]).toBe("B depends on A");
@@ -33,13 +34,21 @@ describe("createContainer", () => {
     const modules: { key: string; module: IOCModule }[] = [
       {
         key: "/a",
-        module: { main: () => { initializedA = true; return "A"; } },
+        module: {
+          main: () => {
+            initializedA = true;
+            return "A";
+          },
+        },
       },
       {
         key: "/b",
         module: {
           dependencies: ["/a"],
-          main: () => { initializedB = true; return "B"; },
+          main: () => {
+            initializedB = true;
+            return "B";
+          },
         },
       },
     ];
@@ -47,10 +56,10 @@ describe("createContainer", () => {
     const graph = compileModuleGraph(modules);
     // eager 策略下，在容器创建时即完成全量预热
     const container = createContainer(graph, { mode: "turbo", strategy: "eager" });
-    
+
     expect(initializedA).toBe(true);
     expect(initializedB).toBe(true);
-    const c = container as any;
+    const c = container as Record<string, string>;
     expect(c["/a"]).toBe("A");
     expect(c["/b"]).toBe("B");
   });
@@ -71,15 +80,15 @@ describe("createContainer", () => {
     const container = createContainer(graph, { mode: "async", strategy: "eager" });
     expect(container.$ready).toBeInstanceOf(Promise);
     expect(Object.keys(container)).not.toContain("$ready");
-    await (container as any).$ready;
-    const c = container as any;
+    await (container as Record<string, unknown>).$ready;
+    const c = container as Record<string, string>;
     expect(c["/asyncMod"]).toBe("AsyncData");
   });
 
   it("should throw error when invalid container options are provided", () => {
     const graph = compileModuleGraph([]);
     expect(() =>
-      createContainer(graph, { mode: "invalid" as any, strategy: "eager" })
+      createContainer(graph, { mode: "invalid" as unknown as "turbo", strategy: "eager" }),
     ).toThrow(/Invalid container options/);
   });
 
@@ -104,7 +113,7 @@ describe("createContainer", () => {
 
     const graph = compileModuleGraph(modules);
     const container = createContainer(graph, { mode: "turbo", strategy: "demand" });
-    const c = container as any;
+    const c = container as Record<string, string[]>;
 
     // 访问 allpages，动态触达 /page/C 并返回结果数组
     expect(c["/allpages"]).toEqual(["PageC"]);

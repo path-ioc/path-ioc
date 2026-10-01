@@ -23,6 +23,7 @@ pnpm add -D @path-ioc/unplugin
 根据你的工程构建工具，在对应配置文件中注入插件（开箱即用，零配置即可启动）：
 
 ### Vite (`vite.config.ts`)
+
 ```typescript
 import { defineConfig } from "vite";
 import pathIoc from "@path-ioc/unplugin";
@@ -33,6 +34,7 @@ export default defineConfig({
 ```
 
 ### Rolldown (`rolldown.config.ts`)
+
 ```typescript
 import { defineConfig } from "rolldown";
 import pathIoc from "@path-ioc/unplugin";
@@ -43,6 +45,7 @@ export default defineConfig({
 ```
 
 ### Webpack (`webpack.config.js`)
+
 ```javascript
 const { webpackPlugin } = require("@path-ioc/unplugin");
 
@@ -52,6 +55,7 @@ module.exports = {
 ```
 
 ### Rspack (`rspack.config.js`)
+
 ```javascript
 const { rspackPlugin } = require("@path-ioc/unplugin");
 
@@ -62,12 +66,14 @@ module.exports = {
 
 ::: tip 💡 零配置与可选定制参数
 插件默认自动扫描 `src/modules` 物理目录，并在 `types/` 目录下生成 `ignore.modular.d.ts` 类型声明文件。若需按需定制目录，可传入可选参数：
+
 ```typescript
 pathIoc.vite({
   modulesPath: "src/custom-modules", // 自定义模块目录 (默认: 'src/modules')
-  typeFileOutput: "custom-types",    // 自定义类型输出目录 (默认: 'types')
-})
+  typeFileOutput: "custom-types", // 自定义类型输出目录 (默认: 'types')
+});
 ```
+
 :::
 
 ---
@@ -101,7 +107,7 @@ export const main = (container: ModularContainer) => {
   return {
     createOrder(id: string, amount: number) {
       logger.info(`Creating order ${id} for $${amount}`);
-      return { id, amount, status: 'CREATED' };
+      return { id, amount, status: "CREATED" };
     },
   };
 };

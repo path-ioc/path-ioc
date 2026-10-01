@@ -34,11 +34,13 @@
 ## 二、客户端应用：纯粹的全局单例容器
 
 在客户端应用中，整个 JavaScript 运行时完全由当前**单个用户**独占：
+
 - 不需要担心多用户并发带来的状态交叉污染；
 - 容器只需要在应用初始化时创建一次；
 - 所有的 UI 组件、页面路由、状态管理直接共享同一个全局容器实例。
 
 ### 客户端标准模式
+
 在客户端工程中，依托 `@path-ioc/unplugin` 对 `src/modules` 目录的自动扫描，入口处只需调用一次虚拟模块进行全局容器点火，无需手动收集或维护任何模块导入清单：
 
 ```typescript
@@ -54,6 +56,7 @@ await createModularContainer(container);
 > 在前端工程中，许多模块内部或组件可能会直接访问全局 `modularContainer` 变量。如果采用 `globalThis.modularContainer = await createModularContainer();`，在整个异步拓扑初始化完成前该全局变量始终为 `undefined`。一旦模块在启动时序中有同步调用或注册钩子，便会抛出 `Cannot read properties of undefined`。因此，最佳实践是先完成引用绑定 `const container = (globalThis.modularContainer = {})`，再传入 `createModularContainer(container)` 由拓扑引擎逐层填充。
 
 在组件或业务逻辑中直接解构使用：
+
 ```tsx
 // 在 React / Vue 组件函数体内直接解构使用
 export function UserProfile() {
@@ -61,6 +64,7 @@ export function UserProfile() {
   return <div>Welcome, {userState.name}</div>;
 }
 ```
+
 简单、直接、零认知负担。
 
 ---
@@ -70,25 +74,31 @@ export function UserProfile() {
 然而，服务端应用面临着截然不同的物理世界：**Node.js / V8 是单线程事件循环机制。**
 
 当 1,000 个 HTTP 请求并发打进来时：
-* 如果服务端像客户端一样共用一个全局单例容器；
-* 某个模块内部若保存了当前请求的用户身份（`currentUserId`）、事务上下文或 TraceID：
+
+- 如果服务端像客户端一样共用一个全局单例容器；
+- 某个模块内部若保存了当前请求的用户身份（`currentUserId`）、事务上下文或 TraceID：
   ```typescript
   // 危险的反模式：在服务端全局单例中保存请求上下文
   export const main = () => {
     let currentUser: User | null = null; // 致命的内存共享！
     return {
-      setCurrentUser(user: User) { currentUser = user; },
-      getUser() { return currentUser; }
+      setCurrentUser(user: User) {
+        currentUser = user;
+      },
+      getUser() {
+        return currentUser;
+      },
     };
   };
   ```
-* 请求 A 刚刚设置了用户为 Alice，在执行异步 `await db.query()` 时发生了 Event Loop 切题；
-* 请求 B 并发进来，将用户覆盖设置为了 Bob；
-* 请求 A 恢复执行，读取到的却是 Bob 的数据——**灾难性的跨请求状态污染与安全越权漏洞就此产生！**
+- 请求 A 刚刚设置了用户为 Alice，在执行异步 `await db.query()` 时发生了 Event Loop 切题；
+- 请求 B 并发进来，将用户覆盖设置为了 Bob；
+- 请求 A 恢复执行，读取到的却是 Bob 的数据——**灾难性的跨请求状态污染与安全越权漏洞就此产生！**
 
 ### 传统框架的沉重妥协
-* **Java Spring**：借助多物理线程与 `ThreadLocal` 勉强隔离请求上下文；
-* **NestJS**：推出了 `Scope.REQUEST` 请求作用域。但根据 NestJS 官方文档明确警告：**使用请求作用域会导致巨大的性能劣势与内存膨胀**——因为 NestJS 必须为每一个 HTTP 请求从头扫描反射元数据、动态创建一整棵庞大的依赖注入子树，给 V8 GC 带来巨大垃圾回收压力。
+
+- **Java Spring**：借助多物理线程与 `ThreadLocal` 勉强隔离请求上下文；
+- **NestJS**：推出了 `Scope.REQUEST` 请求作用域。但根据 NestJS 官方文档明确警告：**使用请求作用域会导致巨大的性能劣势与内存膨胀**——因为 NestJS 必须为每一个 HTTP 请求从头扫描反射元数据、动态创建一整棵庞大的依赖注入子树，给 V8 GC 带来巨大垃圾回收压力。
 
 ---
 
@@ -112,20 +122,14 @@ Path-IoC 拒绝在框架核心引入繁琐的 Scope 概念，而是将跨请求�
 
 export const memoizeModule = <
   Result,
-  T extends (
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => Result
+  T extends (modularContainer: ModularContainer, moduleDeclarationNames: string[]) => Result,
 >(
-  main: T
+  main: T,
 ): T => {
   let result: Result;
   let initialized = false;
 
-  return ((
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => {
+  return ((modularContainer: ModularContainer, moduleDeclarationNames: string[]) => {
     if (!initialized) {
       const val = main(modularContainer, moduleDeclarationNames);
       // 🛡️ 异常清除保护：异步 Promise 失败时清除标记，确保后续请求能自愈重试
@@ -157,12 +161,13 @@ import type { Context } from "hono";
 // 1. 标记 skip: true，运行时容器跳过 dummy main 执行，由外部种子对象提供真实实例；
 // 2. unplugin 自动提取 main 返回类型，为容器全局生成 100% 强类型智能补全。
 export const skip = true;
-export const main = (): Context => ({} as Context);
+export const main = (): Context => ({}) as Context;
 ```
 
 ---
 
 ### 3. 重型模块：一次初始化，进程常驻
+
 ```typescript
 // src/modules/infrastructure/database/index.ts
 import { memoizeModule } from "../../../utils/memoizeModule";
@@ -174,7 +179,7 @@ export const main = memoizeModule(async () => {
   console.log("⚡ [Process Lifecycle] 数据库连接池正在建立（仅执行一次）...");
   const pool = await createPool(process.env.DATABASE_URL!);
   return {
-    query: (sql: string, params: any[]) => pool.execute(sql, params)
+    query: (sql: string, params: any[]) => pool.execute(sql, params),
   };
 });
 ```
@@ -182,6 +187,7 @@ export const main = memoizeModule(async () => {
 ---
 
 ### 4. 轻型业务模块：请求级纯净隔离
+
 ```typescript
 // src/modules/services/orderService/index.ts
 export const dependencies = ["database"];
@@ -195,11 +201,12 @@ export const main = (container: ModularContainer) => {
   return {
     async createOrder(item: string) {
       // 绝对安全的请求隔离，零跨请求污染风险
-      return database.query(
-        "INSERT INTO orders (item, user_id, request_id) VALUES (?, ?, ?)",
-        [item, currentUser.id, requestId]
-      );
-    }
+      return database.query("INSERT INTO orders (item, user_id, request_id) VALUES (?, ?, ?)", [
+        item,
+        currentUser.id,
+        requestId,
+      ]);
+    },
   };
 };
 ```
@@ -241,6 +248,7 @@ export default app;
 ```
 
 ### 性能与安全兼得的运行表现
+
 1. **冷启动与重型资源**：
    - 无论打进来多少万次请求，数据库连接池和 Redis 哨兵只会在初次请求时建立一次，并在单线程闭包中稳定复用，连接数严格受控；
 2. **零跨请求污染**：
@@ -252,11 +260,11 @@ export default app;
 
 ## 六、总结
 
-| 对比维度 | 传统全栈做法 (NestJS Scope.REQUEST) | Path-IoC 生产模式 (多例容器 + 闭包缓存) |
-| :--- | :--- | :--- |
-| **请求隔离机制** | 框架元数据反射 + 动态遍历注入子树 | 原生 `requestContext` + 轻量级请求容器 |
-| **重型资源管理** | 繁琐的 `@Injectable({ scope: DEFAULT })` 概念侵入 | 纯函数高阶闭包 `memoizeModule` |
-| **单请求开销** | 毫秒级反射解析与 GC 停顿 | **微秒级纯函数调用，极低内存驻留** |
-| **适用环境** | 仅限特定 Node.js 框架 | **Node.js, Bun, Cloudflare Workers 全平台通用** |
+| 对比维度         | 传统全栈做法 (NestJS Scope.REQUEST)               | Path-IoC 生产模式 (多例容器 + 闭包缓存)         |
+| :--------------- | :------------------------------------------------ | :---------------------------------------------- |
+| **请求隔离机制** | 框架元数据反射 + 动态遍历注入子树                 | 原生 `requestContext` + 轻量级请求容器          |
+| **重型资源管理** | 繁琐的 `@Injectable({ scope: DEFAULT })` 概念侵入 | 纯函数高阶闭包 `memoizeModule`                  |
+| **单请求开销**   | 毫秒级反射解析与 GC 停顿                          | **微秒级纯函数调用，极低内存驻留**              |
+| **适用环境**     | 仅限特定 Node.js 框架                             | **Node.js, Bun, Cloudflare Workers 全平台通用** |
 
 区分客户端单例与服务端请求隔离，是构建健壮全栈系统的核心基石。通过将运行时隔离交给轻量多例容器，将重量级基础设施交给闭包单例，现代 TypeScript 开发者无需妥协于任何繁琐的概念补丁，即可收获极致的安全与速度。

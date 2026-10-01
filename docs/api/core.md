@@ -12,9 +12,7 @@ Compiles a declared module list into an immutable, validated Directed Acyclic Gr
 
 - **Type Signature**:
   ```typescript
-  function compileModuleGraph(
-    modules: { key: string; module: IOCModule }[]
-  ): CompiledModuleGraph;
+  function compileModuleGraph(modules: { key: string; module: IOCModule }[]): CompiledModuleGraph;
   ```
 - **Parameters**:
   - `modules`: Array of module descriptor objects. Typically provided automatically by `virtual:modular-container`, or constructed manually in unit tests and scripts.
@@ -34,7 +32,7 @@ Instantiates modules in topological order by invoking their `main` factories and
   ```typescript
   function instantiateModuleContainer(
     compiledGraph: CompiledModuleGraph,
-    container: Record<string, unknown>
+    container: Record<string, unknown>,
   ): Promise<void>;
   ```
 - **Parameters**:
@@ -53,7 +51,7 @@ A convenience utility that executes `compileModuleGraph` followed immediately by
   ```typescript
   function initialize(
     modules: { key: string; module: IOCModule }[],
-    container: Record<string, unknown>
+    container: Record<string, unknown>,
   ): Promise<void>;
   ```
 
@@ -65,9 +63,9 @@ A convenience utility that executes `compileModuleGraph` followed immediately by
 
 Every module located at `src/modules/**/index.ts` may export up to four standard identifiers:
 
-| Identifier | Type Signature | Default | Description |
-| :--- | :--- | :--- | :--- |
-| **`main`** *(Required)* | `(container: ModularContainer, moduleNames: string[]) => any \| Promise<any>` | - | Factory function invoked according to topological sort order. Supports `async`. |
-| **`dependencies`** *(Optional)* | `string[] \| ((moduleNames: string[]) => string[])` | `[]` | Explicit topological dependencies. Supports string arrays or dynamic filter functions. |
-| **`order`** *(Optional)* | `number` | `99999` | Priority weight when no explicit topological dependencies constrain ordering. Smaller numbers execute earlier (ascending numerical order, default `99999`). |
-| **`skip`** *(Optional)* | `boolean` | `false` | Skips runtime execution of `main`. Used for externally injected modules (e.g. injecting `requestContext` in backend request isolation). **Note**: Even with `skip: true`, a dummy `main` function (e.g., `export const main = (): MyType => ({} as any)`) must still be exported to satisfy runtime graph validation and type generation. |
+| Identifier                      | Type Signature                                                                | Default | Description                                                                                                                                                                                                                                                                                                                               |
+| :------------------------------ | :---------------------------------------------------------------------------- | :------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`main`** _(Required)_         | `(container: ModularContainer, moduleNames: string[]) => any \| Promise<any>` | -       | Factory function invoked according to topological sort order. Supports `async`.                                                                                                                                                                                                                                                           |
+| **`dependencies`** _(Optional)_ | `string[] \| ((moduleNames: string[]) => string[])`                           | `[]`    | Explicit topological dependencies. Supports string arrays or dynamic filter functions.                                                                                                                                                                                                                                                    |
+| **`order`** _(Optional)_        | `number`                                                                      | `99999` | Priority weight when no explicit topological dependencies constrain ordering. Smaller numbers execute earlier (ascending numerical order, default `99999`).                                                                                                                                                                               |
+| **`skip`** _(Optional)_         | `boolean`                                                                     | `false` | Skips runtime execution of `main`. Used for externally injected modules (e.g. injecting `requestContext` in backend request isolation). **Note**: Even with `skip: true`, a dummy `main` function (e.g., `export const main = (): MyType => ({} as any)`) must still be exported to satisfy runtime graph validation and type generation. |

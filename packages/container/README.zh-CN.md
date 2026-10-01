@@ -41,6 +41,7 @@
   - 如果允许不写 `dependencies` 靠运行期动态感知，那么在 `async` 模式下一旦访问未就绪的异步节点，就必然会导致返回 `Promise` 未决遗留或微任务死锁。
 
 Path-IoC 通过物理分治实现优雅解法：
+
 - **`async` 模式（支持异步，必须声明 `dependencies`）**：显式声明 `dependencies` 编排静态 DAG 拓扑图，获得 **100% 原生反应式拓扑并发**（通过 `Promise.all` 级联异步唤醒）；
 - **`turbo` 模式（纯同步直通，支持免写 `dependencies`）**：**严禁任何异步 `main` 工厂**（若返回 Promise 直接抛出 `[Turbo Mode] Async module is not supported` 异常）。由于纯同步调用栈无需挂起等待，**完全支持免写 `dependencies`**，依托 Proxy Dynamic Getter 在访问属性时同步深搜并求值装配；若仅在运行期方法中相互引用，可自然避免死锁；但若在 `main` 初始化期发生同步强依赖闭环，会触发调用栈溢出或由静态 DFS Fail-Fast 报错拦截。
 
@@ -63,24 +64,24 @@ Path-IoC 通过物理分治实现优雅解法：
 └───────────────────┴─────────────────────────┴─────────────────────────┘
 ```
 
-| 组合范式 (`strategy` $\times$ `mode`) | 物理触发机制 | 关键物理特性 | 适用场景说明 |
-| :--- | :--- | :--- | :--- |
-| **`eager` + `async`** | 容器创建时立刻触发 | 全量 DAG 拓扑并发预热，容器挂载非可枚举 `container.$ready` 追踪句柄 | 异步全量预热评测 |
-| **`eager` + `turbo`** | 容器创建时立刻触发 | 启动时按拓扑顺序纯同步完成求值预热；若遇异步模块直接抛错 | 纯同步工具库测试 |
-| **`demand` + `async`** | 外部按需触达触发 (`container.UserPage`) | 触达点提取子图，属性访问返回 Promise。**警告**：存在串行互斥保护，必须串行 `await`，严禁使用 `Promise.all` 并发访问多个未就绪属性 | 按需异步切片实验 |
-| **`demand` + `turbo`** | 外部按需触达触发 (`container.foo`) | 无需 `await` 属性访问，自动算子图纯同步求值；遇环同样 Fail-Fast 报错 | 极速 CLI 命令行工具、纯同步测试 |
+| 组合范式 (`strategy` $\times$ `mode`) | 物理触发机制                            | 关键物理特性                                                                                                                      | 适用场景说明                    |
+| :------------------------------------ | :-------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------- | :------------------------------ |
+| **`eager` + `async`**                 | 容器创建时立刻触发                      | 全量 DAG 拓扑并发预热，容器挂载非可枚举 `container.$ready` 追踪句柄                                                               | 异步全量预热评测                |
+| **`eager` + `turbo`**                 | 容器创建时立刻触发                      | 启动时按拓扑顺序纯同步完成求值预热；若遇异步模块直接抛错                                                                          | 纯同步工具库测试                |
+| **`demand` + `async`**                | 外部按需触达触发 (`container.UserPage`) | 触达点提取子图，属性访问返回 Promise。**警告**：存在串行互斥保护，必须串行 `await`，严禁使用 `Promise.all` 并发访问多个未就绪属性 | 按需异步切片实验                |
+| **`demand` + `turbo`**                | 外部按需触达触发 (`container.foo`)      | 无需 `await` 属性访问，自动算子图纯同步求值；遇环同样 Fail-Fast 报错                                                              | 极速 CLI 命令行工具、纯同步测试 |
 
 ---
 
 ## 主流 IoC 框架选型对比矩阵 (Selection Matrix)
 
-| 对比维度 | **NestJS** | **InversifyJS** | **Awilix** | **@path-ioc/core** *(生产推荐)* | **@path-ioc/container** *(实验包)* |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **底层依赖契约** | `@Injectable()` + TS 装饰器 | `@injectable()` + TS 装饰器 | 正则匹配形参 + Proxy | **物理路径契约 + 纯闭包工厂 + 静态图** | **物理路径契约 + 高阶代理** |
-| **代码侵入性** | 强侵入 (框架装饰器与基类) | 强侵入 (`@inject` 装饰器) | 低侵入 (按形参匹配) | **零侵入** (纯函数导出) | **零侵入** (纯函数导出) |
-| **按需/懒加载范式** | `LazyModuleLoader` | `@lazyInject` | Proxy 模式按需实例化 (同步) | 启动期静态 DAG 预热 | **正向极简子图按需切片** (`extractSubModules`) |
-| **循环依赖处理** | `forwardRef()` (遇 async 易死锁) | `@lazyInject()` 延迟解析 | Dynamic Proxy Getter (同步) | **DFS Fail-Fast 严格拦截** | **DFS Fail-Fast 严格拦截** |
-| **生产推荐状态** | 推荐 | 推荐 | 推荐 | **生产标准推荐** | ⚠️ **历史实验包 / 非生产推荐** |
+| 对比维度            | **NestJS**                       | **InversifyJS**             | **Awilix**                  | **@path-ioc/core** _(生产推荐)_        | **@path-ioc/container** _(实验包)_             |
+| :------------------ | :------------------------------- | :-------------------------- | :-------------------------- | :------------------------------------- | :--------------------------------------------- |
+| **底层依赖契约**    | `@Injectable()` + TS 装饰器      | `@injectable()` + TS 装饰器 | 正则匹配形参 + Proxy        | **物理路径契约 + 纯闭包工厂 + 静态图** | **物理路径契约 + 高阶代理**                    |
+| **代码侵入性**      | 强侵入 (框架装饰器与基类)        | 强侵入 (`@inject` 装饰器)   | 低侵入 (按形参匹配)         | **零侵入** (纯函数导出)                | **零侵入** (纯函数导出)                        |
+| **按需/懒加载范式** | `LazyModuleLoader`               | `@lazyInject`               | Proxy 模式按需实例化 (同步) | 启动期静态 DAG 预热                    | **正向极简子图按需切片** (`extractSubModules`) |
+| **循环依赖处理**    | `forwardRef()` (遇 async 易死锁) | `@lazyInject()` 延迟解析    | Dynamic Proxy Getter (同步) | **DFS Fail-Fast 严格拦截**             | **DFS Fail-Fast 严格拦截**                     |
+| **生产推荐状态**    | 推荐                             | 推荐                        | 推荐                        | **生产标准推荐**                       | ⚠️ **历史实验包 / 非生产推荐**                 |
 
 ---
 
@@ -102,7 +103,7 @@ Path-IoC 通过物理分治实现优雅解法：
                             └── 2. 编译极简局部子图并即刻装配
 ```
 
-*(注：`extractSubModules` 属于包内部私有算法函数，不对外导出，由 `demand` 模式 Proxy Getter 在访问属性时自动调度)*。
+_(注：`extractSubModules` 属于包内部私有算法函数，不对外导出，由 `demand` 模式 Proxy Getter 在访问属性时自动调度)_。
 
 ---
 
@@ -131,11 +132,11 @@ export interface CreateContainerOptions {
 
 export const createContainer: (
   graph: CompiledModuleGraph,
-  options: CreateContainerOptions
+  options: CreateContainerOptions,
 ) => Record<string, unknown>;
 ```
 
-*(注：在 `eager + async` 模式下返回的对象挂载了不可枚举的 `$ready: Promise<void>`)*。
+_(注：在 `eager + async` 模式下返回的对象挂载了不可枚举的 `$ready: Promise<void>`)_。
 
 ---
 

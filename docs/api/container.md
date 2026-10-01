@@ -20,12 +20,12 @@ In the JavaScript single-threaded execution model, **"Asynchronous Initializatio
 
 Combining `strategy` (`eager` | `demand`) and `mode` (`async` | `turbo`) yields four scheduling models:
 
-| Paradigm (`strategy` + `mode`) | Trigger Mechanism | Physical Characteristics | Intended Scenario |
-| :--- | :--- | :--- | :--- |
-| **`eager` + `async`** | Container creation | Full DAG topological pre-warming with non-enumerable `$ready: Promise<void>` attached | Asynchronous pre-warming experiments |
-| **`eager` + `turbo`** | Container creation | Pure synchronous pre-warming on creation; forbids async `main` factories (throws on Promise); supports omitting `dependencies` | Synchronous utility test suites |
-| **`demand` + `async`** | Property access | Forward subgraph slicing; property access returns a Promise. **Note**: Must be awaited sequentially; concurrent accesses throw a mutex conflict error | Demand-driven async slicing tests |
-| **`demand` + `turbo`** | Property access | Evaluates subgraph synchronously upon property access with zero Promise latency; **fully supports omitting `dependencies`**; strictly forbids async `main`; throws Fail-Fast on dependency cycles | Synchronous batch pipelines |
+| Paradigm (`strategy` + `mode`) | Trigger Mechanism  | Physical Characteristics                                                                                                                                                                          | Intended Scenario                    |
+| :----------------------------- | :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------- |
+| **`eager` + `async`**          | Container creation | Full DAG topological pre-warming with non-enumerable `$ready: Promise<void>` attached                                                                                                             | Asynchronous pre-warming experiments |
+| **`eager` + `turbo`**          | Container creation | Pure synchronous pre-warming on creation; forbids async `main` factories (throws on Promise); supports omitting `dependencies`                                                                    | Synchronous utility test suites      |
+| **`demand` + `async`**         | Property access    | Forward subgraph slicing; property access returns a Promise. **Note**: Must be awaited sequentially; concurrent accesses throw a mutex conflict error                                             | Demand-driven async slicing tests    |
+| **`demand` + `turbo`**         | Property access    | Evaluates subgraph synchronously upon property access with zero Promise latency; **fully supports omitting `dependencies`**; strictly forbids async `main`; throws Fail-Fast on dependency cycles | Synchronous batch pipelines          |
 
 ---
 
@@ -39,13 +39,13 @@ Instantiates a container proxy governed by the specified strategy and mode.
   ```typescript
   function createContainer(
     graph: CompiledModuleGraph,
-    options: CreateContainerOptions
+    options: CreateContainerOptions,
   ): Record<string, unknown>;
   ```
 - **Options (`CreateContainerOptions`)**:
   - `strategy`: `'eager'` | `'demand'` (Required)
   - `mode`: `'async'` | `'turbo'` (Required)
-  - *(Note: In `eager + async` mode, a non-enumerable `$ready: Promise<void>` is attached to the returned object)*
+  - _(Note: In `eager + async` mode, a non-enumerable `$ready: Promise<void>` is attached to the returned object)_
 
 - **Usage Example**:
   ```typescript
@@ -74,4 +74,4 @@ In `demand` mode, when a caller accesses an uninitialized property (such as `con
 2. **Purification**: Strictly filters out unrelated modules, leaving only the target module and its direct/indirect prerequisites;
 3. **Local Re-compilation & Hydration**: Passes the minimal raw module subset to `compileModuleGraph(subModules)` for immediate on-demand hydration.
 
-*(Note: `extractSubModules` is an internal implementation algorithm within `@path-ioc/container`, not exposed as a public API export. It is invoked automatically by the Proxy Getter).*
+_(Note: `extractSubModules` is an internal implementation algorithm within `@path-ioc/container`, not exposed as a public API export. It is invoked automatically by the Proxy Getter)._

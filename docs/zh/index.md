@@ -87,22 +87,22 @@ public class AppConfig {
 @Module({
   providers: [
     {
-      provide: 'REMOTE_CONFIG',
+      provide: "REMOTE_CONFIG",
       useFactory: async () => {
         const config = await fetchRemoteConfig(process.env.SECRET_KEY);
         return { isEnabled: (feature: string) => config[feature] ?? false };
-      }
+      },
     },
     {
-      provide: 'ORDER_SERVICE',
+      provide: "ORDER_SERVICE",
       useFactory: (config: RemoteConfig) => {
         // 模块 B 必须手写工厂胶水代码，并手动在 inject 数组中维持脆弱的字符串映射
-        const enableDiscount = config.isEnabled('vip_discount');
+        const enableDiscount = config.isEnabled("vip_discount");
         return new OrderService(enableDiscount);
       },
-      inject: ['REMOTE_CONFIG']
-    }
-  ]
+      inject: ["REMOTE_CONFIG"],
+    },
+  ],
 })
 export class AppModule {}
 ```
@@ -120,7 +120,9 @@ export class AppModule {}
 export const main = async () => {
   const config = await fetchRemoteConfig(process.env.SECRET_KEY);
   return {
-    isEnabled(feature: string) { return config[feature] ?? false; } // 内部数据已就绪，纯同步！
+    isEnabled(feature: string) {
+      return config[feature] ?? false;
+    }, // 内部数据已就绪，纯同步！
   };
 };
 
@@ -135,7 +137,7 @@ export const main = (container: ModularContainer) => {
   return {
     createOrder(item: string) {
       return { item, price: enableDiscount ? 80 : 100 };
-    }
+    },
   };
 };
 ```

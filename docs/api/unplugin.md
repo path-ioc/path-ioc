@@ -35,10 +35,10 @@ import {
 
 ## Configuration Options (`PathIocPluginOptions`)
 
-| Option | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| **`modulesPath`** | `string` | `'src/modules'` | Root directory to scan for modules containing `index.ts` or `index.tsx`. |
-| **`typeFileOutput`** | `string` | `'types'` | Destination directory for auto-generated `ignore.modular.d.ts`. Add to `.gitignore`. |
+| Option               | Type     | Default         | Description                                                                          |
+| :------------------- | :------- | :-------------- | :----------------------------------------------------------------------------------- |
+| **`modulesPath`**    | `string` | `'src/modules'` | Root directory to scan for modules containing `index.ts` or `index.tsx`.             |
+| **`typeFileOutput`** | `string` | `'types'`       | Destination directory for auto-generated `ignore.modular.d.ts`. Add to `.gitignore`. |
 
 ---
 
@@ -48,8 +48,8 @@ The plugin injects the virtual module `virtual:modular-container` into your appl
 
 ```typescript
 import {
-  modules,                 // Complete module descriptor array: { key: string, module: IOCModule }[]
-  createModularContainer,  // High-performance container bootstrapper: (targetContainer?: Record<string, any>) => Promise<ModularContainer>
+  modules, // Complete module descriptor array: { key: string, module: IOCModule }[]
+  createModularContainer, // High-performance container bootstrapper: (targetContainer?: Record<string, any>) => Promise<ModularContainer>
 } from "virtual:modular-container";
 ```
 

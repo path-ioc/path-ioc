@@ -63,13 +63,13 @@ export default defineConfig({
   plugins: [
     pathIoc({
       modulesPath: "src/modules", // Directory scanned for modules (default: 'src/modules')
-      typeFileOutput: "types",    // Output directory for auto-generated TypeScript definitions
+      typeFileOutput: "types", // Output directory for auto-generated TypeScript definitions
     }),
   ],
 });
 ```
 
-*Note: For Webpack 5 use `webpackPlugin`, Rspack use `rspackPlugin`, Rollup use `rollupPlugin`, and Esbuild use `esbuildPlugin`.*
+_Note: For Webpack 5 use `webpackPlugin`, Rspack use `rspackPlugin`, Rollup use `rollupPlugin`, and Esbuild use `esbuildPlugin`._
 
 ### 3. Create Business Modules (Short-Name Mesh ID Standard Practice)
 
@@ -85,7 +85,7 @@ export const main = () => {
 
 // src/modules/biz/user/index.ts
 // ✅ Standard Practice: Clean short names as Mesh IDs
-export const dependencies = ["db"]; 
+export const dependencies = ["db"];
 
 export const main = ({ db }: ModularContainer) => {
   // Direct destructuring with 100% type inference, guaranteed resolved by topological scheduler
@@ -127,6 +127,7 @@ The plugin automatically generates `ignore.modular.d.ts` in the background, prov
 When writing isolated unit tests (e.g. with Vitest / Jest) or running in headless CLI scripts without a bundler, you can directly invoke the pure function runtime of `@path-ioc/core`:
 
 #### Scenario A: Unit Testing (Vitest / Jest)
+
 In test suites, the test case acts as an external inspector asserting container assembly and evaluated outputs:
 
 ```typescript
@@ -152,11 +153,14 @@ it("should compile and instantiate in topological order", async () => {
   await instantiateModuleContainer(compiledGraph, container);
 
   // Unit test assertion: external probe validates assembly correctness
-  expect((container.userService as any).getUser("1001")).toBe("DB: SELECT * FROM users WHERE id = 1001");
+  expect((container.userService as any).getUser("1001")).toBe(
+    "DB: SELECT * FROM users WHERE id = 1001",
+  );
 });
 ```
 
 #### Scenario B: Headless Script Ignition (Business Logic Enclosed in Mesh)
+
 Even in minimal scripts without build tools, the "Ignition Transition" rule holds: **all business logic remains encapsulated inside modules, while the outer script only compiles and ignites**:
 
 ```typescript
@@ -197,11 +201,13 @@ await instantiateModuleContainer(compiledGraph, {});
 Path-IoC pays deep homage to **Java Spring's classic Inversion-of-Control (IoC) principles**, while advancing its decoupled vision natively for JavaScript/TypeScript's single-threaded, asynchronous, and functional execution model:
 
 ### 1. Counterpart to Native ESM: Application-Level Self-Organizing Mesh
+
 - **Native ESM's Inevitable Bottleneck**: Explicit relative `import` statements (`../../../../utils`) become rigid compile-time hardlinks. In large codebases, they create refactoring paralysis and circular dependency deadlocks;
 - **Path-IoC as an Autonomous Mesh**: Counterparts native ESM at the business layer. Host applications (Hono, Express, Koa, Cloudflare Workers, CLI) execute one-line ignition (`createModularContainer()`), while all business lifecycles, dynamic module matching, and cross-cutting concerns circulate autonomously within the mesh;
 - **Completely Free from Monolithic Framework Dogma**: Developers often conflate IoC with heavyweight backend frameworks (such as NestJS). That is a fundamental category error. Monolithic backend frameworks invade business code with class decorators, controllers, and proprietary pipes. Path-IoC is never a backend framework, but a **minimal, lightweight, non-invasive self-contained mesh** dedicated solely to module composition and topological resolution across browser SPAs, edge workers, and servers alike.
 
 ### 2. The Dynamic Language Paradigm: Native DAG Topological Concurrency
+
 Path-IoC performed no miracle; it simply obeyed the physical realities of JavaScript's single-threaded non-blocking Event Loop. In conventional industry perceptions, topological concurrent scheduling during container boot is often hailed as a "miracle." This perception stems from contrasting it against the four irreconcilable contradictions in legacy IoC architectures:
 
 - **Contrasting Java Spring's Serial Initialization Bottleneck**: Despite OS-level multi-threading, Java Spring must restrict container initialization to a **strictly single-threaded serial pipeline (accumulative latency $\sum t_i$)** to prevent shared-memory race conditions, memory visibility hazards, and three-level-cache raw-pointer escape risks governed by the Java Memory Model (JMM);
@@ -212,19 +218,23 @@ Path-IoC performed no miracle; it simply obeyed the physical realities of JavaSc
 **Path-IoC's Breakthrough**: Decouple "initialization dependencies (DAG topology)" orthogonally from "invocation-time dependencies (DL lookup)", reducing cyclic dependency probabilities mathematically to zero. By leveraging JavaScript's single-threaded immunity to shared-memory data races, peer modules without inter-dependencies ignite concurrently via `Promise.all` memoized reactive streams (reducing boot latency from $\sum t_i$ to the bottleneck node's $\max t_i$), enabling genuinely non-invasive Aspect-Oriented Programming through pure functional closures and pattern-matched dependency lookup.
 
 ### 3. Physical Path as Feature (Label) vs. Short-Name as Mesh ID
+
 - **Short Name is the Mesh ID**: In everyday business development, developers consume short names (`dependencies = ["logger", "db"]`, `const { logger, db } = container;`), enjoying zero ceremony and 100% IDE type inference;
 - **Physical Path is a Feature Tag**: Physical directory prefixes (e.g. `/infra/`, `/biz/`, `/aspect/`) are **feature labels** (analogous to metadata tags);
 - **Design Tenet**: Hardcoding full physical paths for static dependencies is an anti-pattern and bad practice (it introduces strong path coupling and violates the Dependency Inversion Principle). Full paths are designed exclusively for dynamic feature matching and AOP aspect filtering, while everyday business code must always embrace clean short-name Mesh IDs.
 
 ### 4. Aspect-Oriented Programming (AOP) via Pure Closures
+
 - **Zero Framework Primitives**: Path-IoC avoids heavy specialized abstractions (`Guards`, `Interceptors`, `Pipes`, `Filters`). In dynamic languages, higher-order functions and proxy wrappers represent the purest form of AOP;
 - **Natural Aspect Meshes**: An aspect module declares a dependency filter function matching target module path prefixes (`allModuleNames.filter(p => p.startsWith("/biz/"))`). The topological scheduler guarantees target instances are instantiated first; the aspect module then wraps target methods via higher-order proxies without intrusive annotations.
 
 ### 5. Physical Law of Cycles & DFS Fail-Fast
+
 - **The Physical Impossibility of Dynamic Async Cycle Unwinding**: JavaScript Proxy Getters (`container.xxx`) are purely synchronous operations; microtasks cannot suspend synchronous execution to await asynchronous operations. Dynamic cycle-breaking under async execution is physically impossible in single-threaded JS;
 - **Strict Fail-Fast by Design**: `@path-ioc/core` remains mathematically rigorous—DFS static cycle analysis enforces **Fail-Fast** error reporting with full cycle chain traces upon boot, forcing clean, orthogonal architecture.
 
 ### 6. Two-Stage Execution & Edge Serverless Readiness
+
 By completely eliminating `reflect-metadata`, Path-IoC cleanly separates **Static Graph Compilation (`compileModuleGraph`)** from **Dynamic Container Instantiation (`instantiateModuleContainer`)**. In Cloudflare Workers or serverless Node.js endpoints, the module graph is compiled once on worker cold-start (1.72ms for 500 nodes) and permanently cached; subsequent requests instantiate lightweight containers directly in **21.2 µs**, reducing framework CPU overhead by over 80%.
 
 ---
@@ -233,27 +243,27 @@ By completely eliminating `reflect-metadata`, Path-IoC cleanly separates **Stati
 
 Tested on Apple Silicon under Node.js v24 (`pnpm bench`):
 
-| Target Function | Complexity | Mean Duration | Evaluation |
-| :--- | :--- | :--- | :--- |
-| **`instantiateModuleContainer`** | **50 Nodes** | **`21.2 µs`** | Microsecond direct resolution; zero request-time latency |
-| **`compileModuleGraph`** | **50 Nodes** | **`90.8 µs`** | Sub-millisecond cycle validation |
-| **`instantiateModuleContainer`** | **500 Nodes** | **`227 µs`** | Ultra-large module graphs resolve with negligible cost |
-| **`compileModuleGraph`** | **500 Nodes** | **`1.72 ms`** | Executed once on process cold boot, cached permanently |
-| **`compileModuleGraph`** | **2,000 Nodes** | **`15.5 ms`** | Industrial-grade deep topology limit |
+| Target Function                  | Complexity      | Mean Duration | Evaluation                                               |
+| :------------------------------- | :-------------- | :------------ | :------------------------------------------------------- |
+| **`instantiateModuleContainer`** | **50 Nodes**    | **`21.2 µs`** | Microsecond direct resolution; zero request-time latency |
+| **`compileModuleGraph`**         | **50 Nodes**    | **`90.8 µs`** | Sub-millisecond cycle validation                         |
+| **`instantiateModuleContainer`** | **500 Nodes**   | **`227 µs`**  | Ultra-large module graphs resolve with negligible cost   |
+| **`compileModuleGraph`**         | **500 Nodes**   | **`1.72 ms`** | Executed once on process cold boot, cached permanently   |
+| **`compileModuleGraph`**         | **2,000 Nodes** | **`15.5 ms`** | Industrial-grade deep topology limit                     |
 
 ---
 
 ## Selection Matrix
 
-| Comparison Dimension | **TS Decorator Stack**<br>(NestJS / Inversify / TSyringe) | **Regex Proxy Stack**<br>(Awilix) | **JVM Reflection Stack**<br>(Java Spring) | **@path-ioc/core** |
-| :--- | :--- | :--- | :--- | :--- |
-| **Core Contract** | `reflect-metadata` + TS Decorators | Function `.toString()` parsing + Proxy | Reflection + Bytecode + Caching (Enterprise benchmark) | **Physical Path Contract + Pure Closures + DAG Compilation** |
-| **Bundler Compatibility** | Poor (breaks on pure AST type-erasure bundlers) | Good | Native JVM support | **Universal** (Pure ES Modules & closures; zero reflection) |
-| **Initialization & Concurrency** | Serial pipeline; async providers block sequentially | Synchronous only | Strict single-thread serial assembly (JMM thread safety) | **Native DAG Topological Concurrency** (DFS post-order + Promise.all reactive stream) |
-| **AOP Mechanism** | Complex & restricted to HTTP controller layers | None built-in | Declarative bytecode proxy (AspectJ) | **Complete Native AOP** (Zero extra concepts; pure DL & higher-order wrappers) |
-| **Cycle Handling** | Deadlock hazard (`forwardRef` + async hangs) | Limited (Sync only) | Three-level cache unwinding | **DFS Fail-Fast Cycle Interception** (Strict compile-time detection with full trace) |
-| **Edge / Serverless Performance** | High CPU overhead due to dynamic metadata reflection | Proxy traversal overhead | Heavy memory footprint | **Ultra-lightweight** (Two-stage separation, 80%+ lower CPU cost) |
-| **Code Intrusion** | High (pervasive framework decorators) | Moderate (binds parameter names) | Low (supports JSR-330 standard) | **Zero** (Pure ES functions; runs completely independently) |
+| Comparison Dimension              | **TS Decorator Stack**<br>(NestJS / Inversify / TSyringe) | **Regex Proxy Stack**<br>(Awilix)      | **JVM Reflection Stack**<br>(Java Spring)                | **@path-ioc/core**                                                                    |
+| :-------------------------------- | :-------------------------------------------------------- | :------------------------------------- | :------------------------------------------------------- | :------------------------------------------------------------------------------------ |
+| **Core Contract**                 | `reflect-metadata` + TS Decorators                        | Function `.toString()` parsing + Proxy | Reflection + Bytecode + Caching (Enterprise benchmark)   | **Physical Path Contract + Pure Closures + DAG Compilation**                          |
+| **Bundler Compatibility**         | Poor (breaks on pure AST type-erasure bundlers)           | Good                                   | Native JVM support                                       | **Universal** (Pure ES Modules & closures; zero reflection)                           |
+| **Initialization & Concurrency**  | Serial pipeline; async providers block sequentially       | Synchronous only                       | Strict single-thread serial assembly (JMM thread safety) | **Native DAG Topological Concurrency** (DFS post-order + Promise.all reactive stream) |
+| **AOP Mechanism**                 | Complex & restricted to HTTP controller layers            | None built-in                          | Declarative bytecode proxy (AspectJ)                     | **Complete Native AOP** (Zero extra concepts; pure DL & higher-order wrappers)        |
+| **Cycle Handling**                | Deadlock hazard (`forwardRef` + async hangs)              | Limited (Sync only)                    | Three-level cache unwinding                              | **DFS Fail-Fast Cycle Interception** (Strict compile-time detection with full trace)  |
+| **Edge / Serverless Performance** | High CPU overhead due to dynamic metadata reflection      | Proxy traversal overhead               | Heavy memory footprint                                   | **Ultra-lightweight** (Two-stage separation, 80%+ lower CPU cost)                     |
+| **Code Intrusion**                | High (pervasive framework decorators)                     | Moderate (binds parameter names)       | Low (supports JSR-330 standard)                          | **Zero** (Pure ES functions; runs completely independently)                           |
 
 ---
 
@@ -265,7 +275,7 @@ Tested on Apple Silicon under Node.js v24 (`pnpm bench`):
 export interface IOCModule {
   main: (
     modularContainer: Record<string, unknown> & { $logs?: string[] },
-    moduleDeclarationNames: string[]
+    moduleDeclarationNames: string[],
   ) => Promise<unknown> | unknown;
   dependencies?: string[] | ((moduleDeclarationNames: string[]) => string[]);
   order?: number;
@@ -277,7 +287,7 @@ export interface ModuleDeclaration {
   fullName: string; // Full physical path name, globally unique
   main: (
     modularContainer: Record<string, unknown> & { $logs?: string[] },
-    moduleDeclarationNames: string[]
+    moduleDeclarationNames: string[],
   ) => Promise<unknown> | unknown;
   dependencies: string[];
   order: number;
@@ -294,7 +304,7 @@ export interface CompiledModuleGraph {
 }
 
 export function compileModuleGraph(
-  modules: { key: string; module: IOCModule }[]
+  modules: { key: string; module: IOCModule }[],
 ): CompiledModuleGraph;
 ```
 
@@ -308,7 +318,7 @@ export function compileModuleGraph(
 ```typescript
 export function instantiateModuleContainer(
   compiledGraph: CompiledModuleGraph,
-  container: Record<string, unknown>
+  container: Record<string, unknown>,
 ): Promise<void>;
 ```
 
@@ -324,7 +334,7 @@ export function instantiateModuleContainer(
 ```typescript
 export function initialize(
   modules: { key: string; module: IOCModule }[],
-  container: Record<string, unknown>
+  container: Record<string, unknown>,
 ): Promise<void>;
 ```
 
@@ -336,12 +346,12 @@ Convenience utility combining `compileModuleGraph` and `instantiateModuleContain
 
 Every module located at `src/modules/**/index.ts` may export up to four standard identifiers:
 
-| Identifier | Type Signature | Default | Description |
-| :--- | :--- | :--- | :--- |
-| **`main`** *(Required)* | `(container: ModularContainer, allModuleNames: string[]) => any \| Promise<any>` | - | Factory function invoked according to topological sort order. The second argument `allModuleNames` provides the full list of all declared physical module keys across the entire system; when performing dynamic module matching or AOP wrapping, you must explicitly filter it (e.g. `allModuleNames.filter(p => p.startsWith("/biz/"))`). |
-| **`dependencies`** *(Optional)* | `string[] \| ((allModuleNames: string[]) => string[])` | `[]` | Explicit topological prerequisites. Use clean short names for static dependencies (e.g. `["logger", "db"]`). Supports dynamic filter functions for topological ordering. |
-| **`order`** *(Optional)* | `number` | `99999` | Priority weight when no explicit topological dependencies constrain ordering. **Strictly ascending numerical order**: smaller numbers execute earlier (e.g., `order: 1` executes before `order: 10`, default `99999`). |
-| **`skip`** *(Optional)* | `boolean` | `false` | Skips runtime execution of `main`. Used for externally injected modules (e.g. injecting `requestContext` in backend request isolation). **Note**: Even with `skip: true`, a dummy `main` function (e.g., `export const main = (): MyType => ({} as any)`) must still be exported to satisfy runtime graph validation and type generation. |
+| Identifier                      | Type Signature                                                                   | Default | Description                                                                                                                                                                                                                                                                                                                                 |
+| :------------------------------ | :------------------------------------------------------------------------------- | :------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`main`** _(Required)_         | `(container: ModularContainer, allModuleNames: string[]) => any \| Promise<any>` | -       | Factory function invoked according to topological sort order. The second argument `allModuleNames` provides the full list of all declared physical module keys across the entire system; when performing dynamic module matching or AOP wrapping, you must explicitly filter it (e.g. `allModuleNames.filter(p => p.startsWith("/biz/"))`). |
+| **`dependencies`** _(Optional)_ | `string[] \| ((allModuleNames: string[]) => string[])`                           | `[]`    | Explicit topological prerequisites. Use clean short names for static dependencies (e.g. `["logger", "db"]`). Supports dynamic filter functions for topological ordering.                                                                                                                                                                    |
+| **`order`** _(Optional)_        | `number`                                                                         | `99999` | Priority weight when no explicit topological dependencies constrain ordering. **Strictly ascending numerical order**: smaller numbers execute earlier (e.g., `order: 1` executes before `order: 10`, default `99999`).                                                                                                                      |
+| **`skip`** _(Optional)_         | `boolean`                                                                        | `false` | Skips runtime execution of `main`. Used for externally injected modules (e.g. injecting `requestContext` in backend request isolation). **Note**: Even with `skip: true`, a dummy `main` function (e.g., `export const main = (): MyType => ({} as any)`) must still be exported to satisfy runtime graph validation and type generation.   |
 
 ---
 

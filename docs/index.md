@@ -87,22 +87,22 @@ public class AppConfig {
 @Module({
   providers: [
     {
-      provide: 'REMOTE_CONFIG',
+      provide: "REMOTE_CONFIG",
       useFactory: async () => {
         const config = await fetchRemoteConfig(process.env.SECRET_KEY);
         return { isEnabled: (feature: string) => config[feature] ?? false };
-      }
+      },
     },
     {
-      provide: 'ORDER_SERVICE',
+      provide: "ORDER_SERVICE",
       useFactory: (config: RemoteConfig) => {
         // Module B must write glue code and manually manage string tokens in the fragile inject array
-        const enableDiscount = config.isEnabled('vip_discount');
+        const enableDiscount = config.isEnabled("vip_discount");
         return new OrderService(enableDiscount);
       },
-      inject: ['REMOTE_CONFIG']
-    }
-  ]
+      inject: ["REMOTE_CONFIG"],
+    },
+  ],
 })
 export class AppModule {}
 ```
@@ -120,7 +120,9 @@ export class AppModule {}
 export const main = async () => {
   const config = await fetchRemoteConfig(process.env.SECRET_KEY);
   return {
-    isEnabled(feature: string) { return config[feature] ?? false; } // Data ready in closure, pure sync!
+    isEnabled(feature: string) {
+      return config[feature] ?? false;
+    }, // Data ready in closure, pure sync!
   };
 };
 
@@ -135,7 +137,7 @@ export const main = (container: ModularContainer) => {
   return {
     createOrder(item: string) {
       return { item, price: enableDiscount ? 80 : 100 };
-    }
+    },
   };
 };
 ```

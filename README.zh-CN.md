@@ -66,13 +66,13 @@ Path-IoC 带来全新的 **“物理路径即逻辑契约”** 架构设计：
 
 基于 Apple M5 芯片、Node.js v24 原生实测（运行 `pnpm bench`）：
 
-| 压测指标 (Benchmark Item) | 复杂度规模 | 平均耗时 (Avg Time) | 性能表现说明 |
-| :--- | :--- | :--- | :--- |
-| **`instantiateModuleContainer`** | **50 节点** 容器实例化 | **`21.2 µs`** | 微秒级直通，Serverless HTTP 请求期 0 延迟 |
-| **`compileModuleGraph`** | **50 节点** 静态图编译 | **`90.8 µs`** | 亚毫秒级完成全拓扑环路校验 |
-| **`instantiateModuleContainer`** | **500 节点** 容器实例化 | **`227 µs`** | 超大型项目依然近乎零开销 |
-| **`compileModuleGraph`** | **500 节点** 复杂交叉依赖 | **`1.72 ms`** | 进程冷启动仅需 1 次，随后全量缓存复用 |
-| **`compileModuleGraph`** | **2,000 节点** 超大规模拓扑 | **`15.5 ms`** | 工业级深层拓扑解析极限 |
+| 压测指标 (Benchmark Item)        | 复杂度规模                  | 平均耗时 (Avg Time) | 性能表现说明                              |
+| :------------------------------- | :-------------------------- | :------------------ | :---------------------------------------- |
+| **`instantiateModuleContainer`** | **50 节点** 容器实例化      | **`21.2 µs`**       | 微秒级直通，Serverless HTTP 请求期 0 延迟 |
+| **`compileModuleGraph`**         | **50 节点** 静态图编译      | **`90.8 µs`**       | 亚毫秒级完成全拓扑环路校验                |
+| **`instantiateModuleContainer`** | **500 节点** 容器实例化     | **`227 µs`**        | 超大型项目依然近乎零开销                  |
+| **`compileModuleGraph`**         | **500 节点** 复杂交叉依赖   | **`1.72 ms`**       | 进程冷启动仅需 1 次，随后全量缓存复用     |
+| **`compileModuleGraph`**         | **2,000 节点** 超大规模拓扑 | **`15.5 ms`**       | 工业级深层拓扑解析极限                    |
 
 ---
 
@@ -85,7 +85,7 @@ flowchart TD
         B["@path-ioc/unplugin<br>(Vite / Webpack / Rspack)"]
         C["全局强类型声明<br><code>types/ignore.modular.d.ts</code>"]
         D["虚拟容器注册表<br><code>virtual:modular-container</code>"]
-        
+
         A -->|目录扫描 & HMR 监听| B
         B -->|动态生成| C
         B -->|内存虚拟注入| D
@@ -95,7 +95,7 @@ flowchart TD
         E["@path-ioc/core<br>(Pure DAG Engine)"]
         F["DFS 拓扑排序与 Promise 反应式并发流"]
         G["无锁级联容器装配<br><code>ModularContainer</code>"]
-        
+
         D -->|依赖收集| E
         E -->|同步/异步调度| F
         F -->|实例化注入| G
@@ -115,25 +115,27 @@ flowchart TD
 
 本项目采用 **pnpm Monorepo** 多包架构：
 
-| 子包 (Package) | 职责定位 (Responsibility) | NPM 状态 | 文档指南 |
-| :--- | :--- | :--- | :--- |
-| [**`@path-ioc/core`**](./packages/core) | **核心引擎**：纯净、极速的拓扑依赖解析与图调度（浏览器/Node/Worker 通用） | [![npm](https://img.shields.io/npm/v/@path-ioc/core.svg)](https://www.npmjs.com/package/@path-ioc/core) | [查看核心文档](./packages/core/README.md) |
-| [**`@path-ioc/unplugin`**](./packages/unplugin) | **编译器-运行时协同插件**：跨构建器插件（Vite/Rolldown/Webpack/Rspack），单图编译缓存与微秒级类型生成 | [![npm](https://img.shields.io/npm/v/@path-ioc/unplugin.svg)](https://www.npmjs.com/package/@path-ioc/unplugin) | [查看插件文档](./packages/unplugin/README.md) |
-| [**`@path-ioc/container`**](./packages/container) | **高阶实验容器**：Demand Proxy 懒加载与子图切片（历史概念对比与评测包，非生产推荐包） | [![npm](https://img.shields.io/npm/v/@path-ioc/container.svg)](https://www.npmjs.com/package/@path-ioc/container) | [查看容器扩展](./packages/container/README.md) |
-| [**`@path-ioc/pack`**](./packages/pack) | **分发打包**：专用于 Mesh 网格独立依赖打包分发的发布构建插件 | [![npm](https://img.shields.io/npm/v/@path-ioc/pack.svg)](https://www.npmjs.com/package/@path-ioc/pack) | [查看打包文档](./packages/pack/README.md) |
-| [**`@path-ioc/benchmarks`**](./packages/benchmarks) | **性能压测**：基于 Mitata 的高精度多场景性能测试套件 | 私有包 | [查看压测文档](./packages/benchmarks/README.md) |
+| 子包 (Package)                                      | 职责定位 (Responsibility)                                                                             | NPM 状态                                                                                                          | 文档指南                                        |
+| :-------------------------------------------------- | :---------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------- | :---------------------------------------------- |
+| [**`@path-ioc/core`**](./packages/core)             | **核心引擎**：纯净、极速的拓扑依赖解析与图调度（浏览器/Node/Worker 通用）                             | [![npm](https://img.shields.io/npm/v/@path-ioc/core.svg)](https://www.npmjs.com/package/@path-ioc/core)           | [查看核心文档](./packages/core/README.md)       |
+| [**`@path-ioc/unplugin`**](./packages/unplugin)     | **编译器-运行时协同插件**：跨构建器插件（Vite/Rolldown/Webpack/Rspack），单图编译缓存与微秒级类型生成 | [![npm](https://img.shields.io/npm/v/@path-ioc/unplugin.svg)](https://www.npmjs.com/package/@path-ioc/unplugin)   | [查看插件文档](./packages/unplugin/README.md)   |
+| [**`@path-ioc/container`**](./packages/container)   | **高阶实验容器**：Demand Proxy 懒加载与子图切片（历史概念对比与评测包，非生产推荐包）                 | [![npm](https://img.shields.io/npm/v/@path-ioc/container.svg)](https://www.npmjs.com/package/@path-ioc/container) | [查看容器扩展](./packages/container/README.md)  |
+| [**`@path-ioc/pack`**](./packages/pack)             | **分发打包**：专用于 Mesh 网格独立依赖打包分发的发布构建插件                                          | [![npm](https://img.shields.io/npm/v/@path-ioc/pack.svg)](https://www.npmjs.com/package/@path-ioc/pack)           | [查看打包文档](./packages/pack/README.md)       |
+| [**`@path-ioc/benchmarks`**](./packages/benchmarks) | **性能压测**：基于 Mitata 的高精度多场景性能测试套件                                                  | 私有包                                                                                                            | [查看压测文档](./packages/benchmarks/README.md) |
 
 ---
 
 ## 3 分钟快速上手 (以 Vite 为例)
 
 ### 1. 安装核心依赖
+
 ```bash
 pnpm add @path-ioc/core
 pnpm add -D @path-ioc/unplugin
 ```
 
 ### 2. 配置构建插件 (`vite.config.ts`)
+
 ```typescript
 import { defineConfig } from "vite";
 import pathIoc from "@path-ioc/unplugin";
@@ -141,14 +143,15 @@ import pathIoc from "@path-ioc/unplugin";
 export default defineConfig({
   plugins: [
     pathIoc.vite({
-      modulesPath: "src/modules",   // 模块存放目录 (默认 src/modules)
-      typeFileOutput: "types",     // 生成的 .d.ts 存放目录
+      modulesPath: "src/modules", // 模块存放目录 (默认 src/modules)
+      typeFileOutput: "types", // 生成的 .d.ts 存放目录
     }),
   ],
 });
 ```
 
 ### 3. 编写业务模块 (`src/modules/order-service/index.ts`)
+
 ```typescript
 // 纯函数闭包工厂，零装饰器，直接使用短名称 Mesh ID 依赖查找 (IoC-DL)
 export const dependencies = ["dbConnection", "userService"];
@@ -164,6 +167,7 @@ export const main = ({ dbConnection, userService }: ModularContainer) => {
 ```
 
 ### 4. 编写启动业务模块 (`src/modules/start-app/index.ts`)
+
 ```typescript
 // 一切业务皆模块：初始调用收敛在 IoC 模块内，天然保障 AOP 切面与依赖拓扑就绪
 export const dependencies = ["orderService"];
@@ -174,6 +178,7 @@ export const main = ({ orderService }: ModularContainer) => {
 ```
 
 ### 5. 宿主应用入口点火唤醒 (`src/main.ts`)
+
 ```typescript
 import { createModularContainer } from "virtual:modular-container";
 
@@ -205,6 +210,7 @@ Path-IoC 是一套由个人与开源社区独立维护的 MIT 协议开源工程
 ### 社区致谢与赞助者名单 (Backers)
 
 #### Open Collective 赞助者
+
 <p align="center">
   <a href="https://opencollective.com/path-ioc">
     <img src="https://opencollective.com/path-ioc/individuals.svg?width=890" alt="Open Collective Backers" />
@@ -212,6 +218,7 @@ Path-IoC 是一套由个人与开源社区独立维护的 MIT 协议开源工程
 </p>
 
 #### 爱发电 (Afdian) 赞助者
+
 <p align="center">
   <a href="https://afdian.com/a/path-ioc">
     <img src="https://service.path-ioc.dev/api/sponsors/afdian.svg?lang=zh" alt="Afdian Backers" />

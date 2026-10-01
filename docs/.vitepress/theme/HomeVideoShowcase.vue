@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from "vue";
 import { useData } from "vitepress";
+import { computed } from "vue";
 
 const { lang } = useData();
 
@@ -29,7 +29,11 @@ const videoSrc = computed(() => {
 
           <div class="window-title">
             <span class="window-icon">⚡</span>
-            <span>{{ isZh ? "path-ioc-demo · 实机编码与极速点火演示录屏" : "path-ioc-demo · Live Architecture & Ignition Demo" }}</span>
+            <span>{{
+              isZh
+                ? "path-ioc-demo · 实机编码与极速点火演示录屏"
+                : "path-ioc-demo · Live Architecture & Ignition Demo"
+            }}</span>
           </div>
 
           <div class="window-badge">
@@ -77,19 +81,27 @@ const videoSrc = computed(() => {
   border-radius: 14px;
   background-color: #0d1117;
   border: 1px solid var(--vp-c-border);
-  box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.75), 0 0 35px rgba(252, 100, 1, 0.12);
+  box-shadow:
+    0 25px 70px -15px rgba(0, 0, 0, 0.75),
+    0 0 35px rgba(252, 100, 1, 0.12);
   overflow: hidden;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .dark .video-window-frame {
   border: 1px solid rgba(252, 100, 1, 0.25);
-  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.95), 0 0 45px rgba(252, 100, 1, 0.18);
+  box-shadow:
+    0 30px 80px -20px rgba(0, 0, 0, 0.95),
+    0 0 45px rgba(252, 100, 1, 0.18);
 }
 
 .video-window-frame:hover {
   border-color: rgba(252, 100, 1, 0.5);
-  box-shadow: 0 30px 90px -15px rgba(0, 0, 0, 0.85), 0 0 60px rgba(252, 100, 1, 0.28);
+  box-shadow:
+    0 30px 90px -15px rgba(0, 0, 0, 0.85),
+    0 0 60px rgba(252, 100, 1, 0.28);
 }
 
 .video-window-header {
@@ -182,7 +194,8 @@ const videoSrc = computed(() => {
 }
 
 @keyframes pulse-dot {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }

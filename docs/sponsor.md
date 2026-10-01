@@ -8,6 +8,7 @@ description: Support the ongoing development, maintenance, and edge-native ecosy
 Path-IoC is an MIT-licensed, pure topological dependency lookup (IoC-DL) engine and universal modular utility for modern TypeScript—delivering lock-free, zero-reflection assembly with the foundational purity of utility libraries like Lodash.
 
 By sponsoring Path-IoC, you directly fund:
+
 - **Core Engine Performance & Research**: Continuous benchmarking, lock-free DAG optimization, and microsecond dependency resolution;
 - **Tooling & Bundler Ecosystem**: Maintaining first-class unplugin adapters for Vite, Rolldown, Webpack 5, Rspack, and Rollup;
 - **Documentation & Educational Deep Dives**: In-depth architectural essays, performance guides, and open bilingual resources;
@@ -51,11 +52,11 @@ You can support Path-IoC across several global and regional funding platforms:
 
 ## Sponsorship Tiers & Benefits
 
-| Tier | Commitment | Recognition & Benefits |
-| :--- | :--- | :--- |
-| **Individual Backer** | $5 / month | Name listed on GitHub README Backers section and official website. |
-| **Bronze Sponsor** | $50 / month | Small badge / avatar logo on the official documentation Sponsors Wall. |
-| **Silver Sponsor** | $100 / month | Medium logo displayed across README.md and documentation. Priority issue triage. |
+| Tier                  | Commitment    | Recognition & Benefits                                                                                                                         |
+| :-------------------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Individual Backer** | $5 / month    | Name listed on GitHub README Backers section and official website.                                                                             |
+| **Bronze Sponsor**    | $50 / month   | Small badge / avatar logo on the official documentation Sponsors Wall.                                                                         |
+| **Silver Sponsor**    | $100 / month  | Medium logo displayed across README.md and documentation. Priority issue triage.                                                               |
 | **Gold / Enterprise** | $250+ / month | Prominent large logo on the official website hero footer. Direct consulting channel and 1x complimentary license for Path-IoC Pro Boilerplate. |
 
 ---

@@ -9,9 +9,10 @@
 ## The Trap: Dogmatic "Purely Synchronous" Initialization
 
 In microservices, edge computing (e.g. Cloudflare Workers), and Serverless architectures, engineers aggressively optimize cold-start metrics by advocating that **"all modules must be initialized synchronously"**:
-* Database connections? Deferred to driver connection pools;
-* Redis clients? Awaited upon method invocation;
-* All module factories (`main`) remain pure synchronous functions, achieving container startups in tens of microseconds.
+
+- Database connections? Deferred to driver connection pools;
+- Redis clients? Awaited upon method invocation;
+- All module factories (`main`) remain pure synchronous functions, achieving container startups in tens of microseconds.
 
 This pattern works brilliantly for conventional I/O proxy services. **However, engineering realities contain a critical architectural boundary:**
 
@@ -66,12 +67,13 @@ export const main = async (container: ModularContainer) => {
     },
     has(key: string): boolean {
       return key in dictionary;
-    }
+    },
   };
 };
 ```
 
 In business components or services, developer consumption ergonomics are pure, synchronous, and immediate:
+
 ```tsx
 // Synchronous React / Vue Component Render:
 export function WelcomeBanner() {
@@ -128,18 +130,19 @@ This brings us to an undeniable realization:
 **It is precisely because Archetype B modules (async preheat required for invocation-time sync clarity) are an engineering necessity that asynchronous container initialization exists!**
 
 ### 1. Archetype B Under Different Container Schedulers
+
 To be clear: **Functionally, traditional frameworks (such as NestJS) support Archetype B completely via asynchronous providers (`useFactory`)**. Downstream components can inject and synchronously invoke methods without functional defects.
 
 The authentic architectural distinction lies in **cold-start scheduling efficiency during multi-module preheating**:
-* **Serial Queue Accumulation in Traditional Frameworks**:
+
+- **Serial Queue Accumulation in Traditional Frameworks**:
   When an application contains three independent Archetype B modules (e.g. Schema fetch 800ms, offline rules 500ms, IP dataset 600ms), frameworks like NestJS lack built-in tier-wise DAG schedulers. The kernel `InstanceLoader` executes a serial `await` loop over all providers. Cold-start latency accumulates linearly: `Sum(t) = 800 + 500 + 600 = 1900ms`;
-* **Path-IoC's Native Topological Concurrency**:
+- **Path-IoC's Native Topological Concurrency**:
   In Path-IoC, modules declare explicit dependencies via `dependencies: [...]`, constructing a clean DAG. The engine calculates in microseconds that these three modules belong to the identical independent tier and dispatches them via `Promise.all`. Cold-start latency drops to the single bottleneck duration: `Max(800, 500, 600) = 800ms`.
 
 > **Separation of Concerns: Patterns Belong to Userland, Scheduling Belongs to the Engine**:
 > Higher-order closure singletons (`memoizeModule`) and deferred-promise lazy connections are **general design patterns implemented by developers using native JavaScript language features, not proprietary framework features**.
 > Path-IoC's value lies in remaining strictly minimal without concept bloat, while providing a microsecond DAG concurrency engine that optimizes Archetype B preheating to its physical minimum.
-
 
 ---
 
@@ -170,6 +173,7 @@ When defining any new module, use this decision tree to determine whether to cho
 ## 6. Summary
 
 Seasoned architects reject binary dogmas:
+
 - Asserting that "all modules must be initialized asynchronously" surrenders cold-start performance.
 - Asserting that "all modules must be initialized synchronously" turns a blind eye to the Function Color Problem and developer ergonomics.
 

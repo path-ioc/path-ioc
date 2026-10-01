@@ -2,18 +2,14 @@ import { defineConfig } from "vitepress";
 
 export default defineConfig({
   title: "Path-IoC",
-  description:
-    "Pure Topological IoC Engine & Universal Modular DevTools for Modern TypeScript",
+  description: "Pure Topological IoC Engine & Universal Modular DevTools for Modern TypeScript",
   sitemap: {
     hostname: "https://path-ioc.dev",
   },
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/logo.svg" }],
     ["meta", { name: "theme-color", content: "#FC6401" }],
-    [
-      "meta",
-      { property: "og:image", content: "https://path-ioc.dev/og-image.png" },
-    ],
+    ["meta", { property: "og:image", content: "https://path-ioc.dev/og-image.png" }],
     [
       "script",
       { type: "application/ld+json" },
@@ -120,8 +116,7 @@ gtag('config', 'G-ZK9F76DH0Z');`,
       label: "English",
       lang: "en",
       title: "Path-IoC",
-      description:
-        "Pure Topological IoC Engine & Universal Modular DevTools for Modern TypeScript",
+      description: "Pure Topological IoC Engine & Universal Modular DevTools for Modern TypeScript",
       themeConfig: {
         siteTitle: "Path-IoC",
         logo: "/logo.svg",
@@ -429,9 +424,7 @@ gtag('config', 'G-ZK9F76DH0Z');`,
   },
 
   themeConfig: {
-    socialLinks: [
-      { icon: "github", link: "https://github.com/path-ioc/path-ioc" },
-    ],
+    socialLinks: [{ icon: "github", link: "https://github.com/path-ioc/path-ioc" }],
     footer: {
       message: "Released under the MIT License.",
       copyright: "Copyright © 2026-present Path-IoC Organization & Lian HanLin",

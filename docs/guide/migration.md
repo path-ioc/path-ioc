@@ -8,12 +8,12 @@ This guide describes how to upgrade projects using the legacy `lianhanlin-modula
 
 `lianhanlin-modular` was the initial monolithic prototype. To achieve microsecond throughput, minimize bundle size, and decouple bundler compiler dependencies, the architecture was refactored into dedicated `@path-ioc/*` scoped packages:
 
-| Legacy Feature | Modern Scoped Package | Description |
-| :--- | :--- | :--- |
-| Dependency lookup & topological runtime | **`@path-ioc/core`** | **Runtime Required**. Microsecond lock-free engine |
-| Vite / Webpack / Rollup compiler plugins | **`@path-ioc/unplugin`** | **Dev Dependency**. Universal bundler adapter |
-| Synchronous getter lazy loading POC | **`@path-ioc/container`** | **Experimental**. Not recommended for production, used for benchmark comparison |
-| Mesh module standalone npm packaging | **`@path-ioc/pack`** | **Optional**. Packages module directories into distributable npm packages |
+| Legacy Feature                           | Modern Scoped Package     | Description                                                                     |
+| :--------------------------------------- | :------------------------ | :------------------------------------------------------------------------------ |
+| Dependency lookup & topological runtime  | **`@path-ioc/core`**      | **Runtime Required**. Microsecond lock-free engine                              |
+| Vite / Webpack / Rollup compiler plugins | **`@path-ioc/unplugin`**  | **Dev Dependency**. Universal bundler adapter                                   |
+| Synchronous getter lazy loading POC      | **`@path-ioc/container`** | **Experimental**. Not recommended for production, used for benchmark comparison |
+| Mesh module standalone npm packaging     | **`@path-ioc/pack`**      | **Optional**. Packages module directories into distributable npm packages       |
 
 ---
 
@@ -30,7 +30,7 @@ pnpm add @path-ioc/core
 pnpm add -D @path-ioc/unplugin
 ```
 
-*(If you are using npm or yarn, simply substitute with your package manager).*
+_(If you are using npm or yarn, simply substitute with your package manager)._
 
 ---
 
@@ -113,6 +113,7 @@ Legacy helper utilities like `getModuleNameByPrefix` or `getModuleDeclarations` 
 If your project utilizes **Mesh Registry Bundling (`Modular Pack`)**—generating a physical entry file by scanning all Mesh modules (common in micro-frontend sub-app distribution, cross-monorepo component libraries, static pre-compilation, or AST obfuscation workflows)—this capability is now provided by the dedicated official plugin **`@path-ioc/pack`**.
 
 ### 1. Install Pack Plugin
+
 ```bash
 pnpm add -D @path-ioc/pack
 ```
@@ -123,6 +124,7 @@ pnpm add -D @path-ioc/pack
 > Because `@path-ioc/pack` overrides the build pipeline (enforces `build.lib`, sets `outDir` to `dist-plugin`, and triggers `npm pack` on `closeBundle`), **do not attach it unconditionally to your standard application `vite.config.ts`**. Projects should control activation based on their build pipeline needs.
 
 **Recommended Pattern: Create a dedicated `vite.config.pack.ts`**:
+
 ```typescript
 // vite.config.pack.ts
 import { defineConfig } from "vite";
@@ -139,6 +141,7 @@ export default defineConfig({
 ```
 
 Configure a dedicated script in `package.json`:
+
 ```json
 {
   "scripts": {
@@ -147,9 +150,11 @@ Configure a dedicated script in `package.json`:
   }
 }
 ```
-*(Alternatively, conditionally load it in `vite.config.ts` using custom environment variables, e.g., `process.env.BUILD_TARGET === 'pack'`)*
+
+_(Alternatively, conditionally load it in `vite.config.ts` using custom environment variables, e.g., `process.env.BUILD_TARGET === 'pack'`)_
 
 ### 3. Generated Physical Entry & Declaration Specifications
+
 - Default physical entry path is `.modular-plugin-entry.ts` at the project root, automatically cleaned up upon build completion (recommended to add this pattern to `.gitignore` to prevent stray files if builds are forcefully terminated);
 - Built-in `dts` compilation automatically outputs declaration files for all exported modules under `dist-plugin/src/` and `dist-plugin/index.d.ts`, delivering full TypeScript definitions;
 - The entry file collates all discovered modules and exports a runtime registry array:
@@ -186,4 +191,3 @@ Existing business logic and patterns remain completely backward compatible:
 - [ ] Replace any legacy helper functions with native `.filter(...)` / `.startsWith(...)`;
 - [ ] (If using registry bundling) Install `@path-ioc/pack` and configure `modularPackPlugin`;
 - [ ] Start dev server and verify `ignore.modular.d.ts` generates cleanly.
-

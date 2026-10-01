@@ -41,6 +41,7 @@ In the JavaScript single-threaded execution model, **"Asynchronous Initializatio
   - If dynamic sensing without declared dependencies were permitted during `async` execution, accessing an unready node would inevitably yield unhandled dangling Promises or deadlock the event loop.
 
 Path-IoC resolves this via physical separation:
+
 - **`async` mode (Supports async, requires declared `dependencies`)**: Explicit `dependencies` -> Compiled static DAG -> **100% Native Reactive Topological Concurrency** (cascaded asynchronously via `Promise.all`);
 - **`turbo` mode (Pure synchronous pass-through, supports omitting `dependencies`)**: **Strictly forbids asynchronous `main` factories** (throws `[Turbo Mode] Async module is not supported` if a Promise is returned). Because the synchronous call stack never suspends, **modules can completely omit `dependencies`**, relying on Proxy Dynamic Getters to synchronously traverse and hydrate dependencies on demand; calling-phase mutual references avoid deadlocks naturally, while initialization-phase circular deadlocks trigger a call stack overflow or are caught by static DFS Fail-Fast interception.
 
@@ -63,24 +64,24 @@ Path-IoC resolves this via physical separation:
 └───────────────────┴─────────────────────────┴─────────────────────────┘
 ```
 
-| Paradigm (`strategy` $\times$ `mode`) | Trigger Mechanism | Key Characteristics | Intended Scenario |
-| :--- | :--- | :--- | :--- |
-| **`eager` + `async`** | Container creation | Full DAG topological concurrency preheat; non-enumerable `container.$ready` handle | Asynchronous pre-warming experiments |
-| **`eager` + `turbo`** | Container creation | Synchronously evaluates modules in topological order; throws if an async module is encountered | Synchronous utility test suites |
-| **`demand` + `async`** | Property access (`container.UserPage`) | Traverses forward dependency tree to extract minimum slice. **Warning**: Mutex-guarded; sequential `await` is required, and concurrent accesses (e.g. `Promise.all([container.a, container.b])`) will throw a mutex conflict error | Demand-driven async slicing tests |
-| **`demand` + `turbo`** | Property access (`container.foo`) | Instant synchronous evaluation without `await`; strictly intercepts dependency cycles via DFS Fail-Fast | Synchronous batch pipelines, unit test isolation |
+| Paradigm (`strategy` $\times$ `mode`) | Trigger Mechanism                      | Key Characteristics                                                                                                                                                                                                                | Intended Scenario                                |
+| :------------------------------------ | :------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- |
+| **`eager` + `async`**                 | Container creation                     | Full DAG topological concurrency preheat; non-enumerable `container.$ready` handle                                                                                                                                                 | Asynchronous pre-warming experiments             |
+| **`eager` + `turbo`**                 | Container creation                     | Synchronously evaluates modules in topological order; throws if an async module is encountered                                                                                                                                     | Synchronous utility test suites                  |
+| **`demand` + `async`**                | Property access (`container.UserPage`) | Traverses forward dependency tree to extract minimum slice. **Warning**: Mutex-guarded; sequential `await` is required, and concurrent accesses (e.g. `Promise.all([container.a, container.b])`) will throw a mutex conflict error | Demand-driven async slicing tests                |
+| **`demand` + `turbo`**                | Property access (`container.foo`)      | Instant synchronous evaluation without `await`; strictly intercepts dependency cycles via DFS Fail-Fast                                                                                                                            | Synchronous batch pipelines, unit test isolation |
 
 ---
 
 ## Selection Matrix
 
-| Dimension | **NestJS** | **InversifyJS** | **Awilix** | **@path-ioc/core** *(Standard)* | **@path-ioc/container** *(Experimental)* |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Core Contract** | `@Injectable()` + Decorators | `@injectable()` + Decorators | Regex `.toString()` + Proxy | **Physical Path Contract + Pure Closures + Static Graph** | **Physical Path Contract + High-Order Proxy** |
-| **Code Intrusion** | High | High | Low | **Zero** (Pure ES functions) | **Zero** (Pure ES functions) |
-| **On-Demand / Lazy** | `LazyModuleLoader` | `@lazyInject` | Proxy on-demand (sync only) | Static DAG Preheating | **Forward Subgraph Slicing** (`extractSubModules`) |
-| **Cycle Resolution** | `forwardRef()` (breaks on async) | `@lazyInject()` | Dynamic Proxy Getter (sync) | **DFS Fail-Fast Cycle Interception** | **DFS Fail-Fast** (No dynamic async cycle breaking) |
-| **Production Ready** | Yes | Yes | Yes | **Recommended for Production** | ⚠️ **Experimental / Not Recommended** |
+| Dimension            | **NestJS**                       | **InversifyJS**              | **Awilix**                  | **@path-ioc/core** _(Standard)_                           | **@path-ioc/container** _(Experimental)_            |
+| :------------------- | :------------------------------- | :--------------------------- | :-------------------------- | :-------------------------------------------------------- | :-------------------------------------------------- |
+| **Core Contract**    | `@Injectable()` + Decorators     | `@injectable()` + Decorators | Regex `.toString()` + Proxy | **Physical Path Contract + Pure Closures + Static Graph** | **Physical Path Contract + High-Order Proxy**       |
+| **Code Intrusion**   | High                             | High                         | Low                         | **Zero** (Pure ES functions)                              | **Zero** (Pure ES functions)                        |
+| **On-Demand / Lazy** | `LazyModuleLoader`               | `@lazyInject`                | Proxy on-demand (sync only) | Static DAG Preheating                                     | **Forward Subgraph Slicing** (`extractSubModules`)  |
+| **Cycle Resolution** | `forwardRef()` (breaks on async) | `@lazyInject()`              | Dynamic Proxy Getter (sync) | **DFS Fail-Fast Cycle Interception**                      | **DFS Fail-Fast** (No dynamic async cycle breaking) |
+| **Production Ready** | Yes                              | Yes                          | Yes                         | **Recommended for Production**                            | ⚠️ **Experimental / Not Recommended**               |
 
 ---
 
@@ -102,7 +103,7 @@ Access container.UserPage
                                       └── 2. Compile and instantiate local slice immediately
 ```
 
-*(Note: `extractSubModules` is an internal private algorithm function, not exported publicly; it is dispatched automatically by the Proxy Getter in `demand` mode).*
+_(Note: `extractSubModules` is an internal private algorithm function, not exported publicly; it is dispatched automatically by the Proxy Getter in `demand` mode)._
 
 ---
 
@@ -129,11 +130,11 @@ export interface CreateContainerOptions {
 
 export const createContainer: (
   graph: CompiledModuleGraph,
-  options: CreateContainerOptions
+  options: CreateContainerOptions,
 ) => Record<string, unknown>;
 ```
 
-*(Note: In `eager + async` mode, a non-enumerable `$ready: Promise<void>` is attached to the returned object).*
+_(Note: In `eager + async` mode, a non-enumerable `$ready: Promise<void>` is attached to the returned object)._
 
 ---
 

@@ -8,12 +8,12 @@
 
 `lianhanlin-modular` 为早期单体原型包。为了提供微秒级吞吐量、降低包体积并解耦构建工具依赖，官方将其重构拆分为独立的 `@path-ioc/*` 作用域套件：
 
-| 旧版能力 | 对应的新版官方包 | 说明 |
-| :--- | :--- | :--- |
-| 核心依赖查找与拓扑调度运行时 | **`@path-ioc/core`** | **运行时必需**。微秒级无锁依赖引擎 |
-| Vite / Webpack / Rollup 编译器插件 | **`@path-ioc/unplugin`** | **开发依赖**。跨打包工具统一插件 |
-| 同步 getter 懒加载机制实验包 | **`@path-ioc/container`** | **实验性/对比用**。非生产推荐，仅用于机制评测 |
-| 模块独立 npm 插件包打包 | **`@path-ioc/pack`** | **按需使用**。将模块目录打包为可发布的 npm 产物 |
+| 旧版能力                           | 对应的新版官方包          | 说明                                            |
+| :--------------------------------- | :------------------------ | :---------------------------------------------- |
+| 核心依赖查找与拓扑调度运行时       | **`@path-ioc/core`**      | **运行时必需**。微秒级无锁依赖引擎              |
+| Vite / Webpack / Rollup 编译器插件 | **`@path-ioc/unplugin`**  | **开发依赖**。跨打包工具统一插件                |
+| 同步 getter 懒加载机制实验包       | **`@path-ioc/container`** | **实验性/对比用**。非生产推荐，仅用于机制评测   |
+| 模块独立 npm 插件包打包            | **`@path-ioc/pack`**      | **按需使用**。将模块目录打包为可发布的 npm 产物 |
 
 ---
 
@@ -30,7 +30,7 @@ pnpm add @path-ioc/core
 pnpm add -D @path-ioc/unplugin
 ```
 
-*(若使用 npm 或 yarn，替换为对应的 `uninstall` / `install` 命令即可)*
+_(若使用 npm 或 yarn，替换为对应的 `uninstall` / `install` 命令即可)_
 
 ---
 
@@ -113,6 +113,7 @@ pnpm add -D @path-ioc/unplugin
 如果你的项目启用了**注册表物理打包（Modular Pack）**——即需要将所有 Mesh 模块扫描并生成物理入口文件（常用于微前端子模块发版、跨 Monorepo 组件库分发、静态预编译或配合代码混淆工具打包的场景），该能力在新版中已正式升级为独立的官方构建插件 **`@path-ioc/pack`**。
 
 ### 1. 安装独立打包插件
+
 ```bash
 pnpm add -D @path-ioc/pack
 ```
@@ -123,6 +124,7 @@ pnpm add -D @path-ioc/pack
 > 由于 `@path-ioc/pack` 会主动接管构建流水线（强制配置 `build.lib`、指定输出目录为 `dist-plugin` 并在完成时自动执行 `npm pack`），**请勿将其无条件挂载在主应用的日常 `vite.config.ts` 中**，外部应根据项目实际需求自行控制激活时机。
 
 **推荐方案：建立独立的打包配置文件 `vite.config.pack.ts`**：
+
 ```typescript
 // vite.config.pack.ts
 import { defineConfig } from "vite";
@@ -139,6 +141,7 @@ export default defineConfig({
 ```
 
 在 `package.json` 中配置专用脚本：
+
 ```json
 {
   "scripts": {
@@ -147,9 +150,11 @@ export default defineConfig({
   }
 }
 ```
-*(亦可在常规 `vite.config.ts` 中根据自定义环境变量按需决定是否挂载插件，如 `process.env.BUILD_TARGET === 'pack'`)*
+
+_(亦可在常规 `vite.config.ts` 中根据自定义环境变量按需决定是否挂载插件，如 `process.env.BUILD_TARGET === 'pack'`)_
 
 ### 3. 生成的物理入口与声明文件规范
+
 - 默认物理入口生成路径为项目根目录的 `.modular-plugin-entry.ts`，构建打包完成时插件会自动将其清理（建议将该文件名加入 `.gitignore` 防止意外中断时残留）；
 - 插件内置集成 `dts` 编译器，会自动在 `dist-plugin/src/` 与 `dist-plugin/index.d.ts` 输出全部导出模块的声明文件，交付完整的类型定义；
 - 该入口文件会自动汇集扫描到的所有模块并导出标准的物理注册表数组：
@@ -186,4 +191,3 @@ export default defineConfig({
 - [ ] 依赖过滤处替换为原生 `.filter(...)` / `.startsWith(...)`；
 - [ ] （若有注册表物理打包）已引入 `@path-ioc/pack` 并配置 `modularPackPlugin`；
 - [ ] 启动开发服务器，确认 `ignore.modular.d.ts` 正常自动生成。
-

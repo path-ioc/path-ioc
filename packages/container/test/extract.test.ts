@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { compileModuleGraph, type IOCModule } from "@path-ioc/core";
+import { describe, expect, it } from "vitest";
 import { extractSubModules } from "../src/extract";
 
 describe("extractSubModules", () => {
@@ -33,4 +33,3 @@ describe("extractSubModules", () => {
     expect(extractedKeysB).toEqual(["/core/Config", "/page/B"]);
   });
 });
-

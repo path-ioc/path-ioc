@@ -14,6 +14,7 @@ In traditional IoC ecosystems, Aspect-Oriented Programming (AOP) often entails h
 ## The Path-IoC Paradigm: Natural Weaving via Dependency Lookup (DL)
 
 In Path-IoC:
+
 - **Target Modules**: **Zero invasiveness, zero imports, zero framework decorators**. Business modules remain completely agnostic of cross-cutting aspects.
 - **Aspect Modules (Aspect Mesh)**: Declare target module path patterns in their `dependencies` hook (e.g. all paths matching `/api/` or `/service/`).
 
@@ -38,7 +39,9 @@ export const main = (container: ModularContainer, moduleNames: string[]) => {
             return async (...args: any[]) => {
               const start = Date.now();
               const result = await origMethod.apply(target, args);
-              console.log(`[AOP Timing] [${key}.${String(propKey)}] Elapsed: ${Date.now() - start}ms`);
+              console.log(
+                `[AOP Timing] [${key}.${String(propKey)}] Elapsed: ${Date.now() - start}ms`,
+              );
               return result;
             };
           }
@@ -56,6 +59,7 @@ export const dependencies = (moduleNames: string[]) => {
 ```
 
 ### Why This Paradigm is Exceptionally Powerful
+
 1. **Zero Learning Curve**: Uses standard JavaScript higher-order functions and `Proxy`. No framework-specific APIs to memorize.
 2. **Universal Cross-Cutting**: Intercept anything—from HTTP handlers and database repositories to background task queues and UI lifecycle hooks.
 3. **Topologically Guaranteed Order**: By expressing target patterns in `dependencies`, the DAG topological engine guarantees that target modules are initialized first, eliminating lifecycle race conditions.

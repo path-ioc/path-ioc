@@ -12,6 +12,7 @@ head:
 > **"The soul of Spring is Inversion of Control (IoC) and contract decoupling—not Java's `class` keyword or `@Autowired` annotation syntax. When porting IoC to TypeScript, we must obey the physical laws of the single-threaded Event Loop and compile-time type erasure, rather than blindly hauling JVM multithreaded reflection baggage into JavaScript."**
 
 If you are an experienced software engineer with a deep background in Java enterprise development—accustomed to Spring Boot, `ApplicationContext`, and declarative AOP—stepping into the TypeScript full-stack or microservices ecosystem can often feel like architectural disorientation:
+
 - Why does injecting by interface fail at runtime in TypeScript?
 - Why can't a class `constructor()` await asynchronous dependencies?
 - Why do frameworks mimicking Java annotations crash when compiled with modern bundlers like Vite or ESBuild?
@@ -35,8 +36,9 @@ Main Thread ──> Cannot block! Class constructor() cannot await ──> Async
 ```
 
 ### 1.1 Startup Blocking vs. Non-blocking Primitives
-* **In Java Spring**: Multithreading is a core language primitive. During application startup (the `refresh()` lifecycle), the main thread can comfortably block while fetching remote secrets or initializing connection pools (`hikariDataSource.getConnection()`).
-* **In JavaScript/TypeScript**: There is only one main event loop. **Class constructors cannot be `async` per the ECMAScript specification**. If you trigger asynchronous initialization inside an `@Injectable()` class constructor:
+
+- **In Java Spring**: Multithreading is a core language primitive. During application startup (the `refresh()` lifecycle), the main thread can comfortably block while fetching remote secrets or initializing connection pools (`hikariDataSource.getConnection()`).
+- **In JavaScript/TypeScript**: There is only one main event loop. **Class constructors cannot be `async` per the ECMAScript specification**. If you trigger asynchronous initialization inside an `@Injectable()` class constructor:
   ```typescript
   // A disastrous anti-pattern in traditional TS frameworks:
   @Injectable()
@@ -57,6 +59,7 @@ Main Thread ──> Cannot block! Class constructor() cannot await ──> Async
   ```
 
 ### 1.2 The Paradigm Solution: From Blocking Threads to DAG Ignition
+
 Java relies on blocking OS threads to ensure prerequisite readiness. In TypeScript, the native solution is **treating all asynchronous initializations as top-level Promises scheduled through a Directed Acyclic Graph (DAG)**.
 
 Path-IoC treats every module as a pure factory closure. During container bootstrap, DFS post-order topological compilation and reactive Promise memoization guarantee that asynchronous prerequisites (e.g., `remoteConfig`) resolve before downstream modules (e.g., `orderService`) are instantiated. **50 nodes assemble in 21.2 microseconds, leaving the runtime HTTP request path completely synchronous and free from race conditions**.
@@ -66,6 +69,7 @@ Path-IoC treats every module as a pure factory closure. During container bootstr
 ## 2. Compilation Rules: Type Erasure & The Illusion of "Fake Abstract Classes"
 
 In Java, reflection is supported natively by the JVM. A class token `Class<T>` is a tangible physical memory entity:
+
 ```java
 // Java: EntityManager.class exists as a physical memory object at runtime
 EntityManager em = applicationContext.getBean(EntityManager.class);
@@ -74,7 +78,9 @@ EntityManager em = applicationContext.getBean(EntityManager.class);
 In TypeScript, however, all `interface` declarations are **100% erased during compilation, leaving zero runtime presence**.
 
 ### 2.1 The Trap: Spurious Abstract Classes
+
 To recreate Java's "program to an interface" pattern in decorator-heavy frameworks (NestJS / Inversify), developers frequently create dummy `abstract class` placeholders:
+
 ```typescript
 // A painful compromise: A fake abstract class existing purely as a runtime reflection token
 export abstract class UserRepository {
@@ -82,10 +88,13 @@ export abstract class UserRepository {
   abstract save(user: User): Promise<void>;
 }
 ```
+
 This forfeits the primary benefit of TypeScript: you lose zero-overhead types while adding boilerplate code and bundle bloat just to appease a rigid reflection system.
 
 ### 2.2 The Solution: Physical Paths and Short Names as Contracts
+
 What is the most universal contract in computer science? **Unix file paths and URIs**.
+
 - In Spring, you identify a Bean using `@Component("userService")`;
 - In Path-IoC, the module's physical path `/services/user.ts` and short name `userService` serve as the **canonical abstract contract**!
 
@@ -94,21 +103,22 @@ What is the most universal contract in computer science? **Unix file paths and U
 Runtime (Execution) ──> Pure factory closures + Dependency Lookup (DL). Microsecond resolution, 0 reflection metadata.
 Development (Type DX) ──> Build-time unplugin AST scanner synthesizes 100% accurate IDE type definitions on file save.
 ```
+
 You no longer need dummy abstract classes; you get compile-time safety and IDE auto-completion without runtime deadweight.
 
 ---
 
 ## 3. Spring vs. Path-IoC Concept Mapping
 
-| Spring (Java) Concept | Path-IoC (TypeScript) Counterpart | Architectural Evolution |
-| :--- | :--- | :--- |
-| **Bean (Spring Bean)** | **Mesh Module** | Java wraps classes into managed Spring Beans; Path-IoC wraps ES Modules into topologically managed Mesh Modules. |
-| **`@Configuration + @Bean`** | **File-level Pure Factory** (`export const main`) | Java wraps factories in classes; Path-IoC uses native ES modules and first-class functions. |
-| **`ApplicationContext`** | **`ModularContainer`** | Spring involves synchronized multi-threaded locks; Path-IoC is a 21.2 µs lock-free DAG micro-engine. |
-| **`@Autowired` Constructor DI** | **Lexical Closure Dependency Lookup (DL)** | Eliminates constructor coupling between instantiation and invocation, preventing false cycle deadlocks. |
-| **Three-level Cache** | **DFS Topological Sorting Fail-Fast Interception** | Spring masks cycles with 3-tier caching; Path-IoC uses compile-time Fail-Fast detection to guarantee event loop safety. |
-| **`@Aspect` (AspectJ / CGLIB)** | **Functional Higher-Order Proxies** | Zero bytecode manipulation; leverages JavaScript closures for non-invasive cross-cutting concerns. |
-| **JNDI / Dynamic Discovery** | **Pattern-Searchable Dependency Lookup** | Supports regex and predicates: `dependencies: (all) => all.filter(...)`. |
+| Spring (Java) Concept           | Path-IoC (TypeScript) Counterpart                  | Architectural Evolution                                                                                                 |
+| :------------------------------ | :------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| **Bean (Spring Bean)**          | **Mesh Module**                                    | Java wraps classes into managed Spring Beans; Path-IoC wraps ES Modules into topologically managed Mesh Modules.        |
+| **`@Configuration + @Bean`**    | **File-level Pure Factory** (`export const main`)  | Java wraps factories in classes; Path-IoC uses native ES modules and first-class functions.                             |
+| **`ApplicationContext`**        | **`ModularContainer`**                             | Spring involves synchronized multi-threaded locks; Path-IoC is a 21.2 µs lock-free DAG micro-engine.                    |
+| **`@Autowired` Constructor DI** | **Lexical Closure Dependency Lookup (DL)**         | Eliminates constructor coupling between instantiation and invocation, preventing false cycle deadlocks.                 |
+| **Three-level Cache**           | **DFS Topological Sorting Fail-Fast Interception** | Spring masks cycles with 3-tier caching; Path-IoC uses compile-time Fail-Fast detection to guarantee event loop safety. |
+| **`@Aspect` (AspectJ / CGLIB)** | **Functional Higher-Order Proxies**                | Zero bytecode manipulation; leverages JavaScript closures for non-invasive cross-cutting concerns.                      |
+| **JNDI / Dynamic Discovery**    | **Pattern-Searchable Dependency Lookup**           | Supports regex and predicates: `dependencies: (all) => all.filter(...)`.                                                |
 
 ---
 
@@ -117,6 +127,7 @@ You no longer need dummy abstract classes; you get compile-time safety and IDE a
 Consider a common scenario: **Module A (`remoteConfig`) must asynchronously fetch encrypted configuration from a remote server on boot and expose a pure synchronous function `isEnabled(feature)`. Module B (`orderService`) must synchronously check Module A's configuration during its own setup to enable or disable features.**
 
 ### 4.1 Classic Spring Implementation (JVM Thread Blocking)
+
 ```java
 @Configuration
 public class AppConfig {
@@ -136,6 +147,7 @@ public class AppConfig {
 ```
 
 ### 4.2 Traditional TS Decorator Framework Collapse
+
 In NestJS, class constructors cannot await. Using lifecycle hooks like `OnModuleInit` causes silent race conditions when dependent services initialize before the remote config arrives. To circumvent this, developers are forced to abandon `@Injectable()` classes and resort to verbose `useFactory` provider dictionaries.
 
 ### 4.3 The Path-IoC Solution (Pure Closures & Topological Concurrency)
@@ -151,7 +163,7 @@ export const main = async () => {
     // Exposes pure synchronous methods for downstream consumers
     isEnabled(feature: string): boolean {
       return Boolean(configData[feature]);
-    }
+    },
   };
 };
 ```
@@ -167,7 +179,7 @@ export const main = (container: ModularContainer) => {
     async createOrder(userId: string, amount: number) {
       const finalAmount = enableDiscount ? amount * 0.8 : amount;
       return { orderId: "ORD_" + Date.now(), finalAmount };
-    }
+    },
   };
 };
 
@@ -185,7 +197,7 @@ createModularContainer();
 
 ### Host Ignition Boundary: Why Does the Entry Point Only Call `createModularContainer()`?
 
-Developers new to Path-IoC often wonder: *"Why don't we assign the return value in `main.ts` and call business methods on the container?"*
+Developers new to Path-IoC often wonder: _"Why don't we assign the return value in `main.ts` and call business methods on the container?"_
 
 **Because Path-IoC is an application-level self-organizing module system (Mesh Module System), not an ordinary object factory.** Consider two classic host boundaries in software engineering:
 
@@ -214,6 +226,7 @@ Developers new to Path-IoC often wonder: *"Why don't we assign the return value 
    `createModularContainer()` in `src/main.ts` is the `SpringApplication.run()` and `<script type="module">` of the Mesh Module universe. It solely compiles the DAG topology and activates dependencies. Once ignited, **100% of business logic, lifecycle orchestration, route handling, and AOP aspects operate autonomously within Mesh Modules**. Extracting objects into `main.ts` to execute business logic is a category error that degrades a module system runtime into an ordinary dictionary.
 
 **Key Architectural Benefits**:
+
 1. **Zero Annotation Invasiveness**: No `@Injectable()`, `@Autowired()`, or proprietary metadata tokens.
 2. **Pure Testability**: Outside the container, `orderService` is just an ordinary JavaScript function. Unit testing requires only passing `{ remoteConfig: mockConfig }` without spinning up a heavy test container.
 3. **Ultra-Fast Boot**: Topological compiler automatically identifies Module A as Module B's prerequisite and arranges parallel preheating without locks.

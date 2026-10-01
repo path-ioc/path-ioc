@@ -1,17 +1,17 @@
-import { bench, run } from "mitata";
 import { compileModuleGraph, instantiateModuleContainer } from "@path-ioc/core";
+import { bench, run } from "mitata";
 
 // 生成模拟图谱的辅助函数
 const generateMockGraph = (size: number) => {
-  const modules: { key: string, module: import("@path-ioc/core").IOCModule }[] = [];
+  const modules: { key: string; module: import("@path-ioc/core").IOCModule }[] = [];
   for (let i = 0; i < size; i++) {
     const deps = i > 0 ? [`/module${Math.floor(Math.random() * i)}`] : [];
     modules.push({
       key: `/module${i}`,
       module: {
         main: () => `instance_${i}`,
-        dependencies: deps
-      }
+        dependencies: deps,
+      },
     });
   }
   return modules;

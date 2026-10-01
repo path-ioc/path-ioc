@@ -1,16 +1,17 @@
-import path from "node:path";
-import fs from "node:fs/promises";
-import fsSync from "node:fs";
 import { exec } from "node:child_process";
+import fsSync from "node:fs";
+import fs from "node:fs/promises";
+import path from "node:path";
 import { promisify } from "node:util";
-import { camelCase } from "lodash-es";
 import JavaScriptObfuscator from "javascript-obfuscator";
-import type { Plugin, PluginOption } from "vite";
+import { camelCase } from "lodash-es";
+import type { Plugin, UserConfig, ConfigEnv } from "vite";
 import dts, { type PluginOptions as DtsPluginOptions } from "vite-plugin-dts";
 
 const execAsync = promisify(exec);
 
 const getDtsPlugin = (): ((options?: DtsPluginOptions) => Plugin | Plugin[]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return typeof dts === "function" ? dts : (dts as any).default;
 };
 
@@ -28,10 +29,13 @@ export function extractBaseDir(pattern: string): string {
 
 export type ModularPackPluginItem = Pick<Plugin, "name" | "enforce"> & {
   apply?: "build" | "serve";
-  config?: (config: any, env: any) => any;
+  config?: (
+    config: UserConfig,
+    env: ConfigEnv,
+  ) => UserConfig | null | void | Promise<UserConfig | null | void>;
   closeBundle?: () => Promise<void> | void;
 };
-export type ModularPackPlugin = ModularPackPluginItem & ModularPackPluginItem[];
+export type ModularPackPlugin = ModularPackPluginItem[];
 
 export interface PackPluginOptions {
   /**
@@ -68,12 +72,6 @@ export interface PackPluginOptions {
    * Defaults to tsconfig.app.json (if exists) or tsconfig.json.
    */
   tsconfigPath?: string;
-
-  /**
-   * Whether to generate TypeScript declaration files.
-   * @default true
-   */
-  dts?: boolean;
 }
 
 export function modularPackPlugin({
@@ -83,7 +81,6 @@ export function modularPackPlugin({
   sharedMappings = [],
   sharedContainerMappings = [],
   tsconfigPath,
-  dts: enableDts = true,
 }: PackPluginOptions = {}): ModularPackPlugin {
   let projectRoot: string;
   let entryFilePath: string;
@@ -140,7 +137,9 @@ export function modularPackPlugin({
         }
 
         await fs.writeFile(dtsPath, dtsContent, "utf-8");
-        console.log(`\x1b[32m[ModularPack] Generated declarations: ${path.relative(projectRoot || process.cwd(), dtsPath)}\x1b[0m`);
+        console.log(
+          `\x1b[32m[ModularPack] Generated declarations: ${path.relative(projectRoot || process.cwd(), dtsPath)}\x1b[0m`,
+        );
       } catch (err) {
         console.warn("[ModularPack] Failed to generate index.d.ts:", err);
       }
@@ -151,8 +150,14 @@ export function modularPackPlugin({
           const jsFiles = await searchJsFiles(outputFullPath);
           for (const file of jsFiles) {
             let content = await fs.readFile(file, "utf-8");
-            content = content.replace(/process\.env\.NODE_ENV/g, "GLOBAL_VITE_PROCESS_ENV_NODE_ENV");
-            content = content.replace(/import\.meta\.env\.MODE/g, "GLOBAL_VITE_IMPORT_META_ENV_MODE");
+            content = content.replace(
+              /process\.env\.NODE_ENV/g,
+              "GLOBAL_VITE_PROCESS_ENV_NODE_ENV",
+            );
+            content = content.replace(
+              /import\.meta\.env\.MODE/g,
+              "GLOBAL_VITE_IMPORT_META_ENV_MODE",
+            );
 
             const obfuscationResult = JavaScriptObfuscator.obfuscate(content, {
               compact: true,
@@ -169,8 +174,14 @@ export function modularPackPlugin({
             });
 
             let obfuscatedCode = obfuscationResult.getObfuscatedCode();
-            obfuscatedCode = obfuscatedCode.replace(/GLOBAL_VITE_PROCESS_ENV_NODE_ENV/g, "process.env.NODE_ENV");
-            obfuscatedCode = obfuscatedCode.replace(/GLOBAL_VITE_IMPORT_META_ENV_MODE/g, "import.meta.env.MODE");
+            obfuscatedCode = obfuscatedCode.replace(
+              /GLOBAL_VITE_PROCESS_ENV_NODE_ENV/g,
+              "process.env.NODE_ENV",
+            );
+            obfuscatedCode = obfuscatedCode.replace(
+              /GLOBAL_VITE_IMPORT_META_ENV_MODE/g,
+              "import.meta.env.MODE",
+            );
 
             await fs.writeFile(file, obfuscatedCode, "utf-8");
           }
@@ -183,11 +194,14 @@ export function modularPackPlugin({
       }
 
       // 3. 生成交付专用 package.json
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let pkg: Record<string, any> = {};
       try {
         const pkgPath = path.resolve(projectRoot || process.cwd(), "package.json");
         pkg = JSON.parse(await fs.readFile(pkgPath, "utf-8"));
-      } catch {}
+      } catch {
+        // Ignore
+      }
 
       const mergedPeerDeps = {
         ...(pkg.dependencies || {}),
@@ -209,7 +223,7 @@ export function modularPackPlugin({
         await fs.writeFile(
           path.resolve(outputFullPath, "package.json"),
           JSON.stringify(deliveryPkg, null, 2),
-          "utf-8"
+          "utf-8",
         );
       } catch (err) {
         console.warn("[ModularPack] Failed to generate delivery package.json:", err);
@@ -218,7 +232,9 @@ export function modularPackPlugin({
       // 4. 执行 npm pack 打包交付物
       try {
         await execAsync("npm pack", { cwd: outputFullPath });
-        console.log(`\n\x1b[32m[ModularPack] Successfully built and packed vendor package! (Version: ${deliveryPkg.version})\x1b[0m\n`);
+        console.log(
+          `\n\x1b[32m[ModularPack] Successfully built and packed vendor package! (Version: ${deliveryPkg.version})\x1b[0m\n`,
+        );
       } catch (err) {
         console.warn(`[ModularPack] Failed to execute 'npm pack' in "${outDir}":`, err);
       }
@@ -228,7 +244,9 @@ export function modularPackPlugin({
         if (entryFilePath && fsSync.existsSync(entryFilePath)) {
           await fs.rm(entryFilePath, { force: true });
         }
-      } catch {}
+      } catch {
+        // Ignore
+      }
     }
   };
 
@@ -309,14 +327,18 @@ export function modularPackPlugin({
         if (!namePushedSet.has(moduleFullName)) {
           namePushedSet.add(moduleFullName);
           sharedMappings.push(`    "${moduleFullName}": typeof ${alias};`);
-          sharedContainerMappings.push(`    "${moduleFullName}": Awaited<ReturnType<typeof ${alias}["main"]>>;`);
+          sharedContainerMappings.push(
+            `    "${moduleFullName}": Awaited<ReturnType<typeof ${alias}["main"]>>;`,
+          );
         }
 
         const countList = shortNameCountMap.get(moduleName);
         if (countList && countList.length === 1 && !namePushedSet.has(moduleName)) {
           namePushedSet.add(moduleName);
           sharedMappings.push(`    "${moduleName}": typeof ${alias};`);
-          sharedContainerMappings.push(`    "${moduleName}": Awaited<ReturnType<typeof ${alias}["main"]>>;`);
+          sharedContainerMappings.push(
+            `    "${moduleName}": Awaited<ReturnType<typeof ${alias}["main"]>>;`,
+          );
         }
       });
 
@@ -347,11 +369,14 @@ export function modularPackPlugin({
       }
 
       // 读取 package.json，提取所有依赖作为 external
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let pkg: Record<string, any> = {};
       try {
         const pkgPath = path.resolve(projectRoot, "package.json");
         pkg = JSON.parse(fsSync.readFileSync(pkgPath, "utf-8"));
-      } catch {}
+      } catch {
+        // Ignore
+      }
 
       const externalDeps = [
         ...Object.keys(pkg.dependencies || {}),
@@ -367,8 +392,7 @@ export function modularPackPlugin({
         if (source.includes("?worker")) return false;
 
         const isExternalDep =
-          externalDeps.includes(source) ||
-          externalDeps.some((dep) => source.startsWith(`${dep}/`));
+          externalDeps.includes(source) || externalDeps.some((dep) => source.startsWith(`${dep}/`));
         if (isExternalDep) return true;
 
         if (existingExternal) {
@@ -387,6 +411,7 @@ export function modularPackPlugin({
         config.build.rollupOptions.output = {};
       }
       if (Array.isArray(config.build.rollupOptions.output)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         config.build.rollupOptions.output.forEach((out: any) => {
           out.entryFileNames = "index.js";
         });
@@ -400,55 +425,34 @@ export function modularPackPlugin({
     },
   };
 
-  let dtsPluginInstance: Plugin | Plugin[] | null = null;
-  if (enableDts) {
-    const dtsFn = getDtsPlugin();
-    const resolvedTsconfig = (() => {
-      if (tsconfigPath) return tsconfigPath;
-      const cwd = process.cwd();
-      const appTsconfig = path.resolve(cwd, "tsconfig.app.json");
-      if (fsSync.existsSync(appTsconfig)) return appTsconfig;
-      const rootTsconfig = path.resolve(cwd, "tsconfig.json");
-      if (fsSync.existsSync(rootTsconfig)) return rootTsconfig;
-      return undefined;
-    })();
+  const dtsFn = getDtsPlugin();
+  const resolvedTsconfig = (() => {
+    if (tsconfigPath) return tsconfigPath;
+    const cwd = process.cwd();
+    const appTsconfig = path.resolve(cwd, "tsconfig.app.json");
+    if (fsSync.existsSync(appTsconfig)) return appTsconfig;
+    const rootTsconfig = path.resolve(cwd, "tsconfig.json");
+    if (fsSync.existsSync(rootTsconfig)) return rootTsconfig;
+    return undefined;
+  })();
 
-    dtsPluginInstance = dtsFn({
-      ...(resolvedTsconfig ? { tsconfigPath: resolvedTsconfig } : {}),
-      include: [
-        entryFile,
-        `${modulesPath}/**/*`,
-        "src/**/*",
-      ],
-      entryRoot: ".",
-      outDirs: outDir,
-      strictOutput: false,
-      compilerOptions: {
-        composite: false,
-        incremental: false,
-      },
-      afterBuild: async () => {
-        await finalizeDelivery();
-      },
-    });
-  }
-
-  if (!dtsPluginInstance) {
-    const single = [mainPlugin] as unknown as ModularPackPlugin;
-    Object.assign(single, mainPlugin);
-    return single;
-  }
-
-  const dtsPlugins = Array.isArray(dtsPluginInstance) ? dtsPluginInstance : [dtsPluginInstance];
-  const pluginGroup = [mainPlugin, ...dtsPlugins] as unknown as ModularPackPlugin;
-  Object.assign(pluginGroup, {
-    name: mainPlugin.name,
-    enforce: mainPlugin.enforce,
-    config: mainPlugin.config,
-    closeBundle: mainPlugin.closeBundle,
+  const dtsPluginInstance = dtsFn({
+    ...(resolvedTsconfig ? { tsconfigPath: resolvedTsconfig } : {}),
+    include: [entryFile, `${modulesPath}/**/*`, "src/**/*"],
+    entryRoot: ".",
+    outDirs: outDir,
+    strictOutput: false,
+    compilerOptions: {
+      composite: false,
+      incremental: false,
+    },
+    afterBuild: async () => {
+      await finalizeDelivery();
+    },
   });
 
-  return pluginGroup;
+  const dtsPlugins = Array.isArray(dtsPluginInstance) ? dtsPluginInstance : [dtsPluginInstance];
+  return [mainPlugin, ...dtsPlugins] as ModularPackPlugin;
 }
 
 const searchIndexTsFiles = async (rootPaths: string | string[]): Promise<string[]> => {
@@ -481,7 +485,7 @@ const searchIndexTsFiles = async (rootPaths: string | string[]): Promise<string[
             result.push(fullPath);
           }
         }
-      } catch (e) {
+      } catch {
         // Ignore
       }
     }
@@ -502,6 +506,8 @@ const searchJsFiles = async (dirPath: string): Promise<string[]> => {
         result.push(fullPath);
       }
     }
-  } catch {}
+  } catch {
+    // Ignore
+  }
   return result;
 };

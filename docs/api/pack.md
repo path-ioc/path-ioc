@@ -7,7 +7,7 @@
 ---
 
 ## Core Capabilities
- 
+
 - **Physical Entrypoint Generation**: Scans `src/modules` and writes a clean physical aggregation entry file (default `.modular-plugin-entry.ts`, automatically cleaned up after build);
 - **Full TypeScript Declaration Bundling (`dts`)**: Integrated declaration compiler that emits real `.d.ts` files for all exported modules under `${outDir}/src` alongside `${outDir}/index.d.ts`, guaranteeing lossless type inference in downstream packages;
 - **Registry Export**: Exports standard `modules` registry arrays and TypeScript mappings for host applications to load or merge;
@@ -18,15 +18,15 @@
 
 ## Configuration Options (`PackPluginOptions`)
 
-| Option | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| **`modulesPath`** | `string` | `'src/modules'` | Root directory to scan for modules. |
-| **`entryFile`** | `string` | `'.modular-plugin-entry.ts'` | Destination for the temporary physical entrypoint (cleaned up after build; add to `.gitignore`). |
-| **`outDir`** | `string` | `'dist-plugin'` | Output directory for the packaged library bundle and npm tarball. |
-| **`dts`** | `boolean` | `true` | Whether to compile `.d.ts` declaration files for all exported modules. |
-| **`tsconfigPath`** | `string` | `undefined` *(Optional)* | Custom tsconfig path for declaration emit. Defaults to `tsconfig.app.json` or `tsconfig.json`. |
-| **`sharedMappings`** | `string[]` | `[]` *(Optional)* | Array reference populated with generated type mappings. |
-| **`sharedContainerMappings`** | `string[]` | `[]` *(Optional)* | Array reference populated with container type mappings. |
+| Option                        | Type       | Default                      | Description                                                                                      |
+| :---------------------------- | :--------- | :--------------------------- | :----------------------------------------------------------------------------------------------- |
+| **`modulesPath`**             | `string`   | `'src/modules'`              | Root directory to scan for modules.                                                              |
+| **`entryFile`**               | `string`   | `'.modular-plugin-entry.ts'` | Destination for the temporary physical entrypoint (cleaned up after build; add to `.gitignore`). |
+| **`outDir`**                  | `string`   | `'dist-plugin'`              | Output directory for the packaged library bundle and npm tarball.                                |
+| **`dts`**                     | `boolean`  | `true`                       | Whether to compile `.d.ts` declaration files for all exported modules.                           |
+| **`tsconfigPath`**            | `string`   | `undefined` _(Optional)_     | Custom tsconfig path for declaration emit. Defaults to `tsconfig.app.json` or `tsconfig.json`.   |
+| **`sharedMappings`**          | `string[]` | `[]` _(Optional)_            | Array reference populated with generated type mappings.                                          |
+| **`sharedContainerMappings`** | `string[]` | `[]` _(Optional)_            | Array reference populated with container type mappings.                                          |
 
 ---
 

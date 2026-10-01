@@ -23,6 +23,7 @@ pnpm add -D @path-ioc/unplugin
 Inject the unplugin adapter into your bundler configuration (works out of the box with zero configuration):
 
 ### Vite (`vite.config.ts`)
+
 ```typescript
 import { defineConfig } from "vite";
 import pathIoc from "@path-ioc/unplugin";
@@ -33,6 +34,7 @@ export default defineConfig({
 ```
 
 ### Rolldown (`rolldown.config.ts`)
+
 ```typescript
 import { defineConfig } from "rolldown";
 import pathIoc from "@path-ioc/unplugin";
@@ -43,6 +45,7 @@ export default defineConfig({
 ```
 
 ### Webpack (`webpack.config.js`)
+
 ```javascript
 const { webpackPlugin } = require("@path-ioc/unplugin");
 
@@ -52,6 +55,7 @@ module.exports = {
 ```
 
 ### Rspack (`rspack.config.js`)
+
 ```javascript
 const { rspackPlugin } = require("@path-ioc/unplugin");
 
@@ -62,12 +66,14 @@ module.exports = {
 
 ::: tip 💡 Zero Configuration & Optional Parameters
 By default, the plugin scans the physical directory `src/modules` and outputs TypeScript declarations to `types/ignore.modular.d.ts`. To customize paths:
+
 ```typescript
 pathIoc.vite({
   modulesPath: "src/custom-modules", // Custom modules folder (default: 'src/modules')
-  typeFileOutput: "custom-types",    // Custom declaration directory (default: 'types')
-})
+  typeFileOutput: "custom-types", // Custom declaration directory (default: 'types')
+});
 ```
+
 :::
 
 ---
@@ -101,7 +107,7 @@ export const main = (container: ModularContainer) => {
   return {
     createOrder(id: string, amount: number) {
       logger.info(`Creating order ${id} for $${amount}`);
-      return { id, amount, status: 'CREATED' };
+      return { id, amount, status: "CREATED" };
     },
   };
 };

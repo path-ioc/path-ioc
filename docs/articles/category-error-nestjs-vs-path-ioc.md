@@ -12,7 +12,8 @@ head:
 > **"In architectural deliberation, the greatest danger is not reaching the wrong answer, but posing the wrong question from the very beginning."**
 
 When software architects first encounter Path-IoC in the modern TypeScript full-stack ecosystem, their initial question is almost universal:
-> *"How does Path-IoC compare to NestJS? Is it a lightweight alternative to NestJS?"*
+
+> _"How does Path-IoC compare to NestJS? Is it a lightweight alternative to NestJS?"_
 
 While this question is intuitive on the surface, it reflects a **fundamental category error in software epistemology**.
 
@@ -24,7 +25,7 @@ This essay explores the physical limitations of native ES Modules, the historica
 
 ## 1. Epistemological Diagnosis: The Category Error
 
-In *The Concept of Mind* (1949), British philosopher Gilbert Ryle introduced the classic illustration of a "category error":
+In _The Concept of Mind_ (1949), British philosopher Gilbert Ryle introduced the classic illustration of a "category error":
 
 > A foreign visitor tours the colleges, libraries, playing fields, and laboratories of Oxford. At the conclusion of the tour, the visitor asks: **"I have seen all the colleges and libraries, but where is the University itself?"**
 
@@ -58,7 +59,7 @@ When engineers ask whether Path-IoC can replace NestJS's HTTP controllers, they 
 1. **NestJS belongs to the "Application Framework" category**:
    Emulating Java Spring Boot and Angular, it bundles HTTP routing, request pipelines, validation guards, and microservice transports. Its Dependency Injection (DI) mechanism is a **private internal implementation detail**, deeply tied to Node.js server runtimes and Express/Fastify.
 2. **Path-IoC belongs to the "Modular Architecture System" category**:
-   It adheres strictly to the UNIX philosophy: *"Do one thing and do it exceptionally well."* It **does not handle HTTP routing, nor does it create Controller syntax sugar**. It solves the foundational software engineering problems of **module lifecycles, asynchronous topological preheating, lock-free dependency lookup, and non-invasive AOP**.
+   It adheres strictly to the UNIX philosophy: _"Do one thing and do it exceptionally well."_ It **does not handle HTTP routing, nor does it create Controller syntax sugar**. It solves the foundational software engineering problems of **module lifecycles, asynchronous topological preheating, lock-free dependency lookup, and non-invasive AOP**.
 
 Comparing NestJS to Path-IoC is like comparing a fully assembled SUV to a high-efficiency electric turbine engine—**they exist at entirely different levels of abstraction.**
 
@@ -66,31 +67,39 @@ Comparing NestJS to Path-IoC is like comparing a fully assembled SUV to a high-e
 
 ## 2. Why We Need Another Module System: The Three Chronic Flaws of Native ESM
 
-If Path-IoC benchmarks against module systems, one might ask: *"TC39 standardized ES6 Modules (`import/export`) years ago. Does modern JavaScript really need another module system?"*
+If Path-IoC benchmarks against module systems, one might ask: _"TC39 standardized ES6 Modules (`import/export`) years ago. Does modern JavaScript really need another module system?"_
 
 **The reality is that native ES Modules (ESM) are merely a "static file loader". They are not an application-level module system capable of governing complex enterprise architectures.**
 
 In large-scale codebases, native ESM suffers from three fatal weaknesses:
 
 ### 2.1 Hardcoded Relative Paths Destroy Dependency Inversion (DIP)
+
 In native ESM, module imports are littered with brittle relative paths:
+
 ```typescript
 // Native ESM hard-coupling: The consumer must know the exact physical disk coordinates of the implementation
 import { UserService } from "../../../../modules/user/service";
 ```
+
 This hardcoded coupling produces severe consequences:
-* **Refactoring Avalanches**: Moving a folder breaks hundreds of relative import statements across the codebase.
-* **Violation of Dependency Inversion**: Consumers depend directly on concrete disk locations, making it impossible to dynamically substitute implementations, swap environments (Dev/Prod/Mock), or inject proxies without modifying source code.
+
+- **Refactoring Avalanches**: Moving a folder breaks hundreds of relative import statements across the codebase.
+- **Violation of Dependency Inversion**: Consumers depend directly on concrete disk locations, making it impossible to dynamically substitute implementations, swap environments (Dev/Prod/Mock), or inject proxies without modifying source code.
 
 ### 2.2 Absence of Lifecycle Management & The Asynchronous Deadlock
+
 Although native ESM supports top-level `await`, its evaluation follows a static, single-directional Depth-First Search (DFS) traversal of the module AST.
-* **The Real-World Dilemma**: Module A (`remoteConfig`) must asynchronously fetch remote credentials on startup while exposing a purely synchronous `isEnabled()` method. Module B (`orderService`) must synchronously invoke Module A's method during its own instantiation to configure feature switches.
-* **The ESM Breakdown**: Native ESM cannot decouple instantiation prerequisites from runtime invocation. Faced with circular dependencies or asynchronous bootstrap requirements, ESM either deadlocks, throws Temporal Dead Zone (TDZ) errors, or silently resolves to `undefined`.
+
+- **The Real-World Dilemma**: Module A (`remoteConfig`) must asynchronously fetch remote credentials on startup while exposing a purely synchronous `isEnabled()` method. Module B (`orderService`) must synchronously invoke Module A's method during its own instantiation to configure feature switches.
+- **The ESM Breakdown**: Native ESM cannot decouple instantiation prerequisites from runtime invocation. Faced with circular dependencies or asynchronous bootstrap requirements, ESM either deadlocks, throws Temporal Dead Zone (TDZ) errors, or silently resolves to `undefined`.
 
 ### 2.3 Complete Immunity to Cross-Cutting AOP
+
 Native ESM modules are immutable, statically linked singletons. There is no standard, non-invasive mechanism to intercept imports to apply authentication, tracing, telemetry, or dynamic caching without resort to fragile bundler hacks.
 
 **For this reason, Path-IoC establishes an uncompromising rule:**
+
 > **"Never use relative ES `import` statements between business modules! All business dependencies must be resolved dynamically via `modularContainer`."**
 
 When a toolchain prohibits raw `import` for internal dependencies and assumes total responsibility for module definition, declaration, assembly, and discovery—**it has become a second-generation application module system.**
@@ -120,14 +129,14 @@ Pain point: Code littered with relative imports (`../../..`). Import avalanches,
 "Stop using relative `import` between modules! All business units become pure closures managed by ModularContainer."
 ```
 
-* **Spring in Java's static world**: Broke the hardcoded coupling of `new` and established a control-inversion module system centered on **Beans**.
-* **Path-IoC in TypeScript's dynamic world**: Broke the hardcoded coupling of relative `import` statements and established a topological module system centered on **Mesh pure functions**.
+- **Spring in Java's static world**: Broke the hardcoded coupling of `new` and established a control-inversion module system centered on **Beans**.
+- **Path-IoC in TypeScript's dynamic world**: Broke the hardcoded coupling of relative `import` statements and established a topological module system centered on **Mesh pure functions**.
 
 Their conceptual souls are identical. Just as Java's enterprise standard was defined by Spring Beans rather than `module-info.java`, complex TypeScript systems require an application-level IoC mesh rather than naked file imports.
 
 ### The Host Ignition Boundary: The Physical Divide Between Host and Module System
 
-Once Path-IoC is recognized as an application-level self-organizing module system, common architectural confusions disappear—most notably, the question of *"why the entry point only contains a single call to `createModularContainer()`"*.
+Once Path-IoC is recognized as an application-level self-organizing module system, common architectural confusions disappear—most notably, the question of _"why the entry point only contains a single call to `createModularContainer()`"_.
 
 Consider how the boundary between the **Host Environment** and the **Module System** is designed across three major programming paradigms:
 
@@ -198,6 +207,7 @@ Escaping the "NestJS emulation trap" reveals the genuine full-stack architecture
 In production architectures:
 
 ### 5.1 The Gateway Entry (`src/index.ts`): Pure Ignition & Request Isolation
+
 The external web framework (such as Hono, Express, or Fastify) acts purely as an ignition harness and request-scoped isolation boundary. The entry file **strictly defines zero business routes**:
 
 ```typescript
@@ -235,9 +245,11 @@ app.all("*", async (c) => {
 
 export default app;
 ```
+
 > **Architectural Warning**: Writing `app.post('/orders', ...)` in the application entry of an IoC project is the modern equivalent of **writing raw Java Servlets after Spring MVC was invented**. It leaks business logic outside the container and circumvents all internal AOP interceptors.
 
 ### 5.2 Internal Dispatcher: Aggregator Pattern + Intuitive AOP
+
 The internal gateway module leverages dynamic functional dependencies to gather all endpoint modules without maintaining manual registration tables:
 
 ```typescript
@@ -275,6 +287,7 @@ export const main = (container: ModularContainer) => {
 ```
 
 ### 5.3 Business Endpoints: Physical Path is the URL Contract
+
 Adding a new endpoint requires only creating a file under `src/modules/api/`—**no routing files to edit, zero decorator annotations**:
 
 ```typescript
@@ -298,12 +311,12 @@ export const main = (container: ModularContainer) => {
 
 ## 6. The Architect's Verdict
 
-Returning to the original question: *"How does Path-IoC compare to NestJS?"*
+Returning to the original question: _"How does Path-IoC compare to NestJS?"_
 
 The definitive answer is now clear:
 
-* **If you require an all-in-one web framework**:  
+- **If you require an all-in-one web framework**:  
   If your team is staffed by Java engineers who prefer class-based annotations, expect the framework to dictate everything from HTTP routing to ORM integrations, and are indifferent to hundred-millisecond cold starts, **choose NestJS**.
-* **If you seek an orthogonal architectural foundation**:  
+- **If you seek an orthogonal architectural foundation**:  
   If you are constrained by the relative import spaghetti of native ES Modules, require instant microsecond cold starts for Cloudflare Workers, and need clean, decoupled domain governance across Vite frontend SPAs and backend microservices—  
   **you are not choosing an alternative to NestJS, but adopting a true second-generation application module system: Path-IoC.**

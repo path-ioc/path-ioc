@@ -11,8 +11,8 @@ Having engineered enterprise-grade distributed systems in Java for years, Spring
 
 However, when I shifted my focus to TypeScript full-stack applications and modern web runtimes, I was confronted with an astonishing void: **There was not a single pure, universal, and framework-agnostic IoC engine across the entire modern TypeScript ecosystem.**
 
-* **NestJS was tethered and heavy**: Deeply coupled to Node.js HTTP servers (Express/Fastify), it was far too heavyweight to run inside client-side single-page applications (SPAs), micro-frontend orchestrators, bundler plugins, or Cloudflare Workers edge runtimes.
-* **Legacy TS IoC frameworks were obsolete**: Libraries like InversifyJS and TSyringe lacked native support for single-threaded asynchronous DAG initialization and remained hopelessly shackled to `reflect-metadata`.
+- **NestJS was tethered and heavy**: Deeply coupled to Node.js HTTP servers (Express/Fastify), it was far too heavyweight to run inside client-side single-page applications (SPAs), micro-frontend orchestrators, bundler plugins, or Cloudflare Workers edge runtimes.
+- **Legacy TS IoC frameworks were obsolete**: Libraries like InversifyJS and TSyringe lacked native support for single-threaded asynchronous DAG initialization and remained hopelessly shackled to `reflect-metadata`.
 
 Faced with this vacuum, the most intuitive reaction for an enterprise architect was straightforward: **Build a "TypeScript edition of Spring."**
 
@@ -25,10 +25,12 @@ Yet that initial endeavor triggered months of ideological friction and cognitive
 On day one of attempting to reconstruct Spring in TypeScript, I collided directly with TypeScript's fundamental physical law: **Type Erasure**.
 
 In Java, everything is upheld by native JVM class loaders and runtime bytecode reflection:
+
 ```java
 // Java Spring: EntityManager.class is a concrete physical entity in JVM memory
 EntityManager em = context.getBean(EntityManager.class);
 ```
+
 In TypeScript, however, `interface EntityManager` **vanishes into thin air during compilation**. Without runtime class pointers, an IoC container becomes blind—it has no physical tokens to inspect or wire.
 
 Determined to preserve Java's "depend on abstractions, not concretions" mental model, I stumbled into the classic **Java Mental Inertia Trap**:
@@ -48,9 +50,10 @@ export abstract class EntityManager {
 To leave a runtime constructor token in compiled JavaScript memory, I was forced to manufacture hollow `abstract class` placeholders riddled with `throw new Error("not implemented")`.
 
 I even experimented with TypeScript's experimental decorators (`experimentalDecorators` and `emitDecoratorMetadata`), mirroring NestJS. But the cognitive and mechanical burden quickly became suffocating:
-* Constructors could not natively `await`, turning asynchronous resource initialization into a nightmare;
-* Code was cluttered with non-standard class annotations and reflection lookups;
-* Modern bundlers (Vite, esbuild, SWC) doing pure AST type-stripping immediately shattered runtime reflection.
+
+- Constructors could not natively `await`, turning asynchronous resource initialization into a nightmare;
+- Code was cluttered with non-standard class annotations and reflection lookups;
+- Modern bundlers (Vite, esbuild, SWC) doing pure AST type-stripping immediately shattered runtime reflection.
 
 **This supposedly "rigorous" object-oriented architecture was, in truth, an attempt to bury TypeScript's dynamic soul inside a rigid Java casket.**
 
@@ -67,10 +70,11 @@ Frustration breeds breakthrough. Pausing the keyboard, I retreated to the philos
 Across the history of computing, the Unix philosophy ("Everything is a file path") and the foundation of the Web (URIs and URLs) stand as the supreme examples of language-agnostic abstract contracts. If an interface is fundamentally a convention, then **strings and physical file paths are the most natural, expressive contracts available.**
 
 **Mechanism belongs to the framework; contracts belong to the engineering team**. In an enterprise full-stack system, the team architecture can establish clean domain boundaries:
-* **Team Convention**: The short name `"db"` represents the global database client;
-* **Team Convention**: Paths matching `"/entities/*"` represent persistence models;
-* **Team Convention**: Paths matching `"/pages/*"` represent page route components;
-* **Team Convention**: Paths matching `"/services/*"` represent business logic intercepted by transactional AOP.
+
+- **Team Convention**: The short name `"db"` represents the global database client;
+- **Team Convention**: Paths matching `"/entities/*"` represent persistence models;
+- **Team Convention**: Paths matching `"/pages/*"` represent page route components;
+- **Team Convention**: Paths matching `"/services/*"` represent business logic intercepted by transactional AOP.
 
 Path-IoC enforces zero rigid directory mandates, granting full expressive freedom of "path is contract" to the development team. Whether in Java's `interface UserService`, `Class.forName("com.xxx.UserService")`, or Path-IoC's short name `userService` and path `/services/user`, **their information-theoretic abstract contract is strictly equivalent.**
 
@@ -78,11 +82,12 @@ Path-IoC enforces zero rigid directory mandates, granting full expressive freedo
 
 ## 4. Bundler-Assisted Typing: Transcending Static Java Expressiveness
 
-Once paths and strings are recognized as contracts, traditionalists might object: *"Without compile-time static interfaces, how do we guarantee type safety and IDE auto-completion?"*
+Once paths and strings are recognized as contracts, traditionalists might object: _"Without compile-time static interfaces, how do we guarantee type safety and IDE auto-completion?"_
 
 This objection stems from another Java-centric blind spot:
-* In Java, the compiler is an inflexible monolith; developers must contort their architectures to satisfy the rigid type checker.
-* In modern TypeScript, we possess a capability Java never had: **Modern Bundler AST Plugins (Vite, Webpack, Rspack, Rollup)**!
+
+- In Java, the compiler is an inflexible monolith; developers must contort their architectures to satisfy the rigid type checker.
+- In modern TypeScript, we possess a capability Java never had: **Modern Bundler AST Plugins (Vite, Webpack, Rspack, Rollup)**!
 
 During development, build plugins can effortlessly scan physical directories and module signatures, **automatically generating 100% accurate global TypeScript type declarations (such as the virtual `ModularContainer` interface)**.
 
@@ -104,9 +109,9 @@ Many full-stack developers mistakenly view NestJS as the legitimate heir to Spri
 
 Architecturally, NestJS did not model Spring directly; **it copied Angular 2**:
 
-* In 2016, Angular 2 attempted to control single-page application chaos by embracing experimental decorators and rigid hierarchical `@NgModule({ imports, providers, exports })` structures;
-* In 2017, NestJS was conceived with the explicit slogan: **"An Angular-like framework for Node.js"**;
-* It blindly imported Angular's heaviest, most anti-dynamic OOP boilerplate into the backend.
+- In 2016, Angular 2 attempted to control single-page application chaos by embracing experimental decorators and rigid hierarchical `@NgModule({ imports, providers, exports })` structures;
+- In 2017, NestJS was conceived with the explicit slogan: **"An Angular-like framework for Node.js"**;
+- It blindly imported Angular's heaviest, most anti-dynamic OOP boilerplate into the backend.
 
 From a pure runtime execution standpoint, NestJS can ultimately achieve asynchronous assembly and dependency lookup using `useFactory`, `inject`, and `moduleRef.get()`; its theoretical runtime capabilities are essentially equivalent to Path-IoC.
 
@@ -128,8 +133,8 @@ From a pure runtime execution standpoint, NestJS can ultimately achieve asynchro
      ```ts
      // src/modules/aspects/profiler/index.ts —— A Higher-Order Module with zero AOP concepts
      // 1. Intuitively search target service paths (no need to understand Pointcut)
-     export const dependencies = (all: string[]) => 
-       all.filter(name => name.includes('/services/'));
+     export const dependencies = (all: string[]) =>
+       all.filter((name) => name.includes("/services/"));
 
      // 2. Intuitively wrap with enhancement and remount to container (typed via ModularContainer)
      export const main = async (container: ModularContainer, allModuleNames: string[]) => {
@@ -140,14 +145,16 @@ From a pure runtime execution standpoint, NestJS can ultimately achieve asynchro
          container[name as keyof ModularContainer] = new Proxy(target, {
            get(target, prop, receiver) {
              const orig = Reflect.get(target, prop, receiver);
-             if (typeof orig !== 'function') return orig;
-             return async function(...args: any[]) {
+             if (typeof orig !== "function") return orig;
+             return async function (...args: any[]) {
                const t0 = performance.now();
                const res = await orig.apply(this, args);
-               console.log(`[Profiler] ${name}.${String(prop)} took ${(performance.now() - t0).toFixed(2)}ms`);
+               console.log(
+                 `[Profiler] ${name}.${String(prop)} took ${(performance.now() - t0).toFixed(2)}ms`,
+               );
                return res;
              };
-           }
+           },
          }) as any;
        }
      };
@@ -166,9 +173,10 @@ From a pure runtime execution standpoint, NestJS can ultimately achieve asynchro
 Inversion of Control and Dependency Inversion are timeless decoupling philosophies. They do not belong to class syntax, nor should they be turned into ceremonial theater.
 
 The creation of Path-IoC is not a rejection of classic principles, but **a return to the foundational essence of Spring, harmonized with the physical laws of dynamic, functional environments**:
-* Discard pseudo-Java class metadata illusions;
-* Let physical paths define contracts, functional closures govern containers, and mathematical DAGs drive concurrency;
-* Strip away artificial ceremony, delivering true microsecond cold starts and effortless type safety.
+
+- Discard pseudo-Java class metadata illusions;
+- Let physical paths define contracts, functional closures govern containers, and mathematical DAGs drive concurrency;
+- Strip away artificial ceremony, delivering true microsecond cold starts and effortless type safety.
 
 > **Spring has Beans, Nest has Providers, Path-IoC has Mesh.**  
 > This is not merely a slogan; it is a hard-won paradigm breakthrough.

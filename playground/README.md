@@ -20,6 +20,7 @@ playground/
 ## Playground Projects
 
 ### 1. `full-test-app`
+
 - **Purpose**: Real-world application simulating complete IoC container lifecycle with database connection, Redis cache, ORM entities, AOP aspect interception, and React DOM mounting.
 - **Bundler Verification**: Validates production builds across three major modern bundlers:
   ```bash
@@ -31,6 +32,7 @@ playground/
   ```
 
 ### 2. `modules-merge-test-app`
+
 - **Purpose**: Tests dynamic topological merging of local and remote mesh modules, simulating micro-frontend architectures where independently bundled modules are composed into a unified DAG at runtime.
 - **Commands**:
   ```bash
@@ -40,6 +42,7 @@ playground/
   ```
 
 ### 3. `container-test-app`
+
 - **Purpose**: Pure Node.js runtime verifying container modes and fail-fast behaviors:
   - Demand Proxy lazy loading
   - Turbo synchronous mode vs. async mode boundaries

@@ -1,8 +1,8 @@
 import {
-  CompiledModuleGraph,
-  instantiateModuleContainer,
-  ModuleDeclaration,
+  type CompiledModuleGraph,
   compileModuleGraph,
+  instantiateModuleContainer,
+  type ModuleDeclaration,
 } from "@path-ioc/core";
 import { extractSubModules } from "./extract";
 
@@ -16,10 +16,10 @@ const bindModuleResult = (
   targetContainer: Record<string, unknown>,
   instantiated: Set<string>,
   mod: ModuleDeclaration,
-  result: unknown
+  result: unknown,
 ) => {
   targetContainer[mod.fullName] = result;
-  if (!targetContainer.hasOwnProperty(mod.name)) {
+  if (!Object.hasOwn(targetContainer, mod.name)) {
     targetContainer[mod.name] = result;
   }
   instantiated.add(mod.fullName);
@@ -29,14 +29,12 @@ const bindModuleResult = (
 // 统一辅助函数：按名称查找 ModuleDeclaration
 const findModuleDecl = (
   graph: CompiledModuleGraph,
-  prop: string
+  prop: string,
 ): ModuleDeclaration | undefined => {
   if (graph.fullNameToModuleMap.has(prop)) {
     return graph.fullNameToModuleMap.get(prop);
   }
-  const fullName = graph.moduleDeclarationNames.find(
-    (n) => n.endsWith("/" + prop) || n === prop
-  );
+  const fullName = graph.moduleDeclarationNames.find((n) => n.endsWith("/" + prop) || n === prop);
   return fullName ? graph.fullNameToModuleMap.get(fullName) : undefined;
 };
 
@@ -46,7 +44,7 @@ const resolveTurboSync = (
   targetContainer: Record<string, unknown>,
   instantiated: Set<string>,
   containerProxy: Record<string, unknown>,
-  prop: string
+  prop: string,
 ) => {
   const decl = findModuleDecl(graph, prop);
   if (!decl || decl.skip) return undefined;
@@ -65,7 +63,7 @@ const resolveTurboSync = (
       const result = m.main(containerProxy, graph.moduleDeclarationNames);
       if (result instanceof Promise) {
         throw new Error(
-          `[Turbo Mode] Async module '${m.fullName}' is not supported in turbo mode. Use async mode instead.`
+          `[Turbo Mode] Async module '${m.fullName}' is not supported in turbo mode. Use async mode instead.`,
         );
       }
       bindModuleResult(targetContainer, instantiated, m, result);
@@ -80,10 +78,8 @@ const resolveTurboSync = (
 // =========================================================================
 const createAsyncEagerContainer = (graph: CompiledModuleGraph) => {
   const targetContainer: Record<string, unknown> = { $logs: [] };
-  const readyPromise = instantiateModuleContainer(graph, targetContainer).then(
-    () => {}
-  );
-  
+  const readyPromise = instantiateModuleContainer(graph, targetContainer).then(() => {});
+
   Object.defineProperty(targetContainer, "$ready", {
     value: readyPromise,
     writable: false,
@@ -115,16 +111,14 @@ const createAsyncDemandContainer = (graph: CompiledModuleGraph) => {
       throw new Error(
         `[Path-IoC Error] Concurrent subgraph initialization detected! ` +
           `Cannot access '${prop}' while '${activeInitModuleName}' is still initializing. ` +
-          `Ensure 'await container.${activeInitModuleName}' completes before accessing another module in demand+async mode.`
+          `Ensure 'await container.${activeInitModuleName}' completes before accessing another module in demand+async mode.`,
       );
     }
 
     activeInitModuleName = prop;
     activeInitPromise = (async () => {
       const subModules = extractSubModules(graph, fullName);
-      const uninitSubModules = subModules.filter(
-        (m) => !instantiated.has(m.key)
-      );
+      const uninitSubModules = subModules.filter((m) => !instantiated.has(m.key));
 
       if (uninitSubModules.length > 0) {
         const subGraph = compileModuleGraph(subModules);
@@ -147,7 +141,7 @@ const createAsyncDemandContainer = (graph: CompiledModuleGraph) => {
   return new Proxy(targetContainer, {
     get(targetObj, prop) {
       if (typeof prop !== "string") return Reflect.get(targetObj, prop);
-      if (targetObj.hasOwnProperty(prop)) return Reflect.get(targetObj, prop);
+      if (Object.hasOwn(targetObj, prop)) return Reflect.get(targetObj, prop);
       const loadPromise = loadSubgraph(prop);
       return loadPromise.then(() => Reflect.get(targetObj, prop));
     },
@@ -163,14 +157,8 @@ const createTurboEagerContainer = (graph: CompiledModuleGraph) => {
 
   const containerProxy: Record<string, unknown> = new Proxy(targetContainer, {
     get(targetObj, prop) {
-      if (typeof prop === "string" && !targetObj.hasOwnProperty(prop)) {
-        return resolveTurboSync(
-          graph,
-          targetContainer,
-          instantiated,
-          containerProxy,
-          prop
-        );
+      if (typeof prop === "string" && !Object.hasOwn(targetObj, prop)) {
+        return resolveTurboSync(graph, targetContainer, instantiated, containerProxy, prop);
       }
       return Reflect.get(targetObj, prop);
     },
@@ -182,7 +170,7 @@ const createTurboEagerContainer = (graph: CompiledModuleGraph) => {
       const result = m.main(containerProxy, graph.moduleDeclarationNames);
       if (result instanceof Promise) {
         throw new Error(
-          `[Turbo Mode] Async module '${m.fullName}' is not supported in turbo mode. Use async mode instead.`
+          `[Turbo Mode] Async module '${m.fullName}' is not supported in turbo mode. Use async mode instead.`,
         );
       }
       bindModuleResult(targetContainer, instantiated, m, result);
@@ -201,14 +189,8 @@ const createTurboDemandContainer = (graph: CompiledModuleGraph) => {
 
   const containerProxy: Record<string, unknown> = new Proxy(targetContainer, {
     get(targetObj, prop) {
-      if (typeof prop === "string" && !targetObj.hasOwnProperty(prop)) {
-        return resolveTurboSync(
-          graph,
-          targetContainer,
-          instantiated,
-          containerProxy,
-          prop
-        );
+      if (typeof prop === "string" && !Object.hasOwn(targetObj, prop)) {
+        return resolveTurboSync(graph, targetContainer, instantiated, containerProxy, prop);
       }
       return Reflect.get(targetObj, prop);
     },
@@ -220,10 +202,7 @@ const createTurboDemandContainer = (graph: CompiledModuleGraph) => {
 // =========================================================================
 // 统一分发器 (Dispatcher) - 100% 同步返回 Container 句柄！
 // =========================================================================
-export const createContainer = (
-  graph: CompiledModuleGraph,
-  options: CreateContainerOptions
-) => {
+export const createContainer = (graph: CompiledModuleGraph, options: CreateContainerOptions) => {
   const { strategy, mode } = options;
 
   if (strategy === "eager" && mode === "async") {
@@ -240,7 +219,6 @@ export const createContainer = (
   }
 
   throw new Error(
-    `[Path-IoC Container Error] Invalid container options: strategy='${strategy}', mode='${mode}'.`
+    `[Path-IoC Container Error] Invalid container options: strategy='${strategy}', mode='${mode}'.`,
   );
 };
-

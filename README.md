@@ -66,13 +66,13 @@ Path-IoC introduces **"Physical Path as Logical Contract"**—a dynamic language
 
 Tested on Apple M5 (arm64-darwin) under Node.js v24 (`pnpm bench`):
 
-| Target Function | Complexity | Mean Duration | Evaluation |
-| :--- | :--- | :--- | :--- |
-| **`instantiateModuleContainer`** | **50 Nodes** | **`21.2 µs`** | Microsecond direct resolution; zero request-time latency |
-| **`compileModuleGraph`** | **50 Nodes** | **`90.8 µs`** | Sub-millisecond cycle validation |
-| **`instantiateModuleContainer`** | **500 Nodes** | **`227 µs`** | Ultra-large module graphs resolve with negligible cost |
-| **`compileModuleGraph`** | **500 Nodes** | **`1.72 ms`** | Executed once on process cold boot, cached permanently |
-| **`compileModuleGraph`** | **2,000 Nodes** | **`15.5 ms`** | Industrial-grade deep topology limit |
+| Target Function                  | Complexity      | Mean Duration | Evaluation                                               |
+| :------------------------------- | :-------------- | :------------ | :------------------------------------------------------- |
+| **`instantiateModuleContainer`** | **50 Nodes**    | **`21.2 µs`** | Microsecond direct resolution; zero request-time latency |
+| **`compileModuleGraph`**         | **50 Nodes**    | **`90.8 µs`** | Sub-millisecond cycle validation                         |
+| **`instantiateModuleContainer`** | **500 Nodes**   | **`227 µs`**  | Ultra-large module graphs resolve with negligible cost   |
+| **`compileModuleGraph`**         | **500 Nodes**   | **`1.72 ms`** | Executed once on process cold boot, cached permanently   |
+| **`compileModuleGraph`**         | **2,000 Nodes** | **`15.5 ms`** | Industrial-grade deep topology limit                     |
 
 ---
 
@@ -85,7 +85,7 @@ flowchart TD
         B["@path-ioc/unplugin<br>(Vite / Webpack / Rspack)"]
         C["Global Type Declarations<br><code>types/ignore.modular.d.ts</code>"]
         D["Virtual Container Registry<br><code>virtual:modular-container</code>"]
-        
+
         A -->|AST Scanning & HMR| B
         B -->|Auto-Generated| C
         B -->|Memory Injection| D
@@ -95,7 +95,7 @@ flowchart TD
         E["@path-ioc/core<br>(Pure DAG Engine)"]
         F["DFS Topological Sorting & Reactive Promise Stream"]
         G["Lock-Free Container Assembly<br><code>ModularContainer</code>"]
-        
+
         D -->|Module Descriptors| E
         E -->|Synchronous / Async Scheduling| F
         F -->|Cascade Instantiation| G
@@ -113,25 +113,27 @@ flowchart TD
 
 ## Workspace Packages Matrix
 
-| Package | Role | NPM Version | Documentation |
-| :--- | :--- | :--- | :--- |
-| [**`@path-ioc/core`**](./packages/core) | Core DAG topological sorting and dependency lookup engine | [![npm](https://img.shields.io/npm/v/@path-ioc/core.svg)](https://www.npmjs.com/package/@path-ioc/core) | [Core Docs](./packages/core/README.md) |
-| [**`@path-ioc/unplugin`**](./packages/unplugin) | Compiler-Runtime Co-design build plugin (Vite / Rolldown / Webpack / Rspack) for virtual modules, single-graph compile cache, and automated types | [![npm](https://img.shields.io/npm/v/@path-ioc/unplugin.svg)](https://www.npmjs.com/package/@path-ioc/unplugin) | [Plugin Docs](./packages/unplugin/README.md) |
-| [**`@path-ioc/container`**](./packages/container) | Experimental container with demand proxy slicing (historical concept evaluation package; not recommended for production) | [![npm](https://img.shields.io/npm/v/@path-ioc/container.svg)](https://www.npmjs.com/package/@path-ioc/container) | [Container Docs](./packages/container/README.md) |
-| [**`@path-ioc/pack`**](./packages/pack) | Dedicated npm packaging and distribution bundler for Mesh registries | [![npm](https://img.shields.io/npm/v/@path-ioc/pack.svg)](https://www.npmjs.com/package/@path-ioc/pack) | [Pack Docs](./packages/pack/README.md) |
-| [**`@path-ioc/benchmarks`**](./packages/benchmarks) | High-precision Mitata performance test suites | Private | [Benchmarks Docs](./packages/benchmarks/README.md) |
+| Package                                             | Role                                                                                                                                              | NPM Version                                                                                                       | Documentation                                      |
+| :-------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------- | :------------------------------------------------- |
+| [**`@path-ioc/core`**](./packages/core)             | Core DAG topological sorting and dependency lookup engine                                                                                         | [![npm](https://img.shields.io/npm/v/@path-ioc/core.svg)](https://www.npmjs.com/package/@path-ioc/core)           | [Core Docs](./packages/core/README.md)             |
+| [**`@path-ioc/unplugin`**](./packages/unplugin)     | Compiler-Runtime Co-design build plugin (Vite / Rolldown / Webpack / Rspack) for virtual modules, single-graph compile cache, and automated types | [![npm](https://img.shields.io/npm/v/@path-ioc/unplugin.svg)](https://www.npmjs.com/package/@path-ioc/unplugin)   | [Plugin Docs](./packages/unplugin/README.md)       |
+| [**`@path-ioc/container`**](./packages/container)   | Experimental container with demand proxy slicing (historical concept evaluation package; not recommended for production)                          | [![npm](https://img.shields.io/npm/v/@path-ioc/container.svg)](https://www.npmjs.com/package/@path-ioc/container) | [Container Docs](./packages/container/README.md)   |
+| [**`@path-ioc/pack`**](./packages/pack)             | Dedicated npm packaging and distribution bundler for Mesh registries                                                                              | [![npm](https://img.shields.io/npm/v/@path-ioc/pack.svg)](https://www.npmjs.com/package/@path-ioc/pack)           | [Pack Docs](./packages/pack/README.md)             |
+| [**`@path-ioc/benchmarks`**](./packages/benchmarks) | High-precision Mitata performance test suites                                                                                                     | Private                                                                                                           | [Benchmarks Docs](./packages/benchmarks/README.md) |
 
 ---
 
 ## 3-Minute Quick Start (Vite Example)
 
 ### 1. Install Dependencies
+
 ```bash
 pnpm add @path-ioc/core
 pnpm add -D @path-ioc/unplugin
 ```
 
 ### 2. Configure Bundler (`vite.config.ts`)
+
 ```typescript
 import { defineConfig } from "vite";
 import pathIoc from "@path-ioc/unplugin";
@@ -147,6 +149,7 @@ export default defineConfig({
 ```
 
 ### 3. Author a Business Module (`src/modules/order-service/index.ts`)
+
 ```typescript
 // Pure closure factory, 0 decorators, lookup dependencies via short-name Mesh IDs
 export const dependencies = ["dbConnection", "userService"];
@@ -162,6 +165,7 @@ export const main = ({ dbConnection, userService }: ModularContainer) => {
 ```
 
 ### 4. Author a Startup Module (`src/modules/start-app/index.ts`)
+
 ```typescript
 // All business logic stays inside IoC modules to guarantee AOP aspects and topological readiness
 export const dependencies = ["orderService"];
@@ -172,6 +176,7 @@ export const main = ({ orderService }: ModularContainer) => {
 ```
 
 ### 5. Host Application Ignition (`src/main.ts`)
+
 ```typescript
 import { createModularContainer } from "virtual:modular-container";
 
@@ -203,6 +208,7 @@ Path-IoC is an independently maintained, MIT-licensed open-source project. Susta
 ### Backers & Community Contributors
 
 #### Open Collective
+
 <p align="center">
   <a href="https://opencollective.com/path-ioc">
     <img src="https://opencollective.com/path-ioc/individuals.svg?width=890" alt="Open Collective Backers" />
@@ -210,6 +216,7 @@ Path-IoC is an independently maintained, MIT-licensed open-source project. Susta
 </p>
 
 #### 爱发电 (Afdian)
+
 <p align="center">
   <a href="https://afdian.com/a/path-ioc">
     <img src="https://service.path-ioc.dev/api/sponsors/afdian.svg?lang=en" alt="Afdian Backers" />

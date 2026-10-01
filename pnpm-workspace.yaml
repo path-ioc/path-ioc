@@ -1,11 +1,11 @@
 packages:
-  - 'packages/*'
-  - 'playground/*'
-  - 'docs'
+  - "packages/*"
+  - "playground/*"
+  - "docs"
 
 minimumReleaseAge: 0
 
 allowBuilds:
-  '@swc/core': true
+  "@swc/core": true
   esbuild: true
   workerd: true

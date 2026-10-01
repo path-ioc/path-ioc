@@ -15,10 +15,12 @@ By participating in this project, you agree to abide by our code of conduct: be 
 ## Local Development Setup
 
 ### Prerequisites
+
 - **Node.js**: `>= 24.0.0` (Active LTS version recommended)
 - **pnpm**: `>= 9.0.0` (This project uses pnpm workspaces)
 
 ### Initial Setup
+
 1. Fork and clone the repository:
    ```bash
    git clone https://github.com/<your-username>/path-ioc.git
@@ -37,22 +39,23 @@ By participating in this project, you agree to abide by our code of conduct: be 
 
 ## Common Development Commands
 
-| Command | Description | Purpose |
-| :--- | :--- | :--- |
-| `pnpm build` | Compiles all packages in topological order | Verifies production bundle outputs |
-| `pnpm dev` | Starts `tsup --watch` across all packages | Live local cross-package development |
-| `pnpm test` | Runs core unit test suites | Fast feedback during coding (~500ms) |
-| `pnpm test:all` | Runs all unit tests + Playground builds (Vite, Webpack, Rspack) | Mandatory check before PR submission |
-| `pnpm bench` | Runs DAG compilation and container instantiation benchmarks | Evaluates graph algorithm optimizations |
-| `pnpm docs:dev` | Starts local VitePress documentation server | Preview documentation changes locally |
-| `pnpm docs:build` | Builds production documentation assets | Ensures documentation builds cleanly |
-| `pnpm changeset` | Prompts for package change type and description | Required for any package versioning change |
+| Command           | Description                                                     | Purpose                                    |
+| :---------------- | :-------------------------------------------------------------- | :----------------------------------------- |
+| `pnpm build`      | Compiles all packages in topological order                      | Verifies production bundle outputs         |
+| `pnpm dev`        | Starts `tsup --watch` across all packages                       | Live local cross-package development       |
+| `pnpm test`       | Runs core unit test suites                                      | Fast feedback during coding (~500ms)       |
+| `pnpm test:all`   | Runs all unit tests + Playground builds (Vite, Webpack, Rspack) | Mandatory check before PR submission       |
+| `pnpm bench`      | Runs DAG compilation and container instantiation benchmarks     | Evaluates graph algorithm optimizations    |
+| `pnpm docs:dev`   | Starts local VitePress documentation server                     | Preview documentation changes locally      |
+| `pnpm docs:build` | Builds production documentation assets                          | Ensures documentation builds cleanly       |
+| `pnpm changeset`  | Prompts for package change type and description                 | Required for any package versioning change |
 
 ---
 
 ## Testing & Quality Assurance
 
 Path-IoC enforces a two-tier testing strategy:
+
 1. **Core Unit Tests (`pnpm test`)**:
    - Covers `@path-ioc/core`, `@path-ioc/container`, `@path-ioc/unplugin`, and `@path-ioc/pack`.
    - Validates Kahn's topological sort, circular dependency fail-fast detection, demand proxy slicing, and aspect interception.

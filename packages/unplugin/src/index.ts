@@ -1,11 +1,9 @@
-import path from "node:path";
 import fsSync from "node:fs";
+import path from "node:path";
 import { createUnplugin } from "unplugin";
 import type { Plugin as VitePlugin } from "vite";
 import { generateTypeDefinitions } from "./generator";
 import { extractBaseDir } from "./utils";
-// @ts-ignore
-import VirtualModulesPlugin from "webpack-virtual-modules/lib/index.js";
 
 export interface PathIocPluginOptions {
   /**
@@ -26,49 +24,59 @@ export interface PathIocPluginOptions {
 const VIRTUAL_MODULE_ID = "virtual:modular-container";
 const RESOLVED_VIRTUAL_MODULE_ID = "\0" + VIRTUAL_MODULE_ID;
 
-export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>((options = {}, meta) => {
-  const { typeFileOutput = "types", modulesPath = "src/modules" } = options;
-  let projectRoot: string = process.cwd();
-  const isWebpackLike = meta.framework === "webpack" || meta.framework === "rspack";
+export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>(
+  (options = {}, meta) => {
+    const { typeFileOutput = "types", modulesPath = "src/modules" } = options;
+    let projectRoot: string = process.cwd();
+    const isWebpackLike = meta.framework === "webpack" || meta.framework === "rspack";
 
-  const baseDir = extractBaseDir(modulesPath);
-  const cleanBaseDir = baseDir.replace(/^(\.\/|\/)+/, "").replace(/\/+$/, "");
-  const subPattern = modulesPath.slice(baseDir.length).replace(/^\/+/, "");
-  const globSub = subPattern ? `${subPattern}/**/index.{ts,tsx}` : `**/index.{ts,tsx}`;
-  const webpackRegexStr = subPattern
-    ? (subPattern.startsWith("{") && subPattern.endsWith("}")
-        ? `^\\./(${subPattern.slice(1, -1).split(",").map((s) => s.trim()).join("|")})/.*\\/index\\.[jt]sx?$`
-        : `^\\./${subPattern}/.*\\/index\\.[jt]sx?$`)
-    : "/\\/index\\.[jt]sx?$/";
+    const baseDir = extractBaseDir(modulesPath);
+    const cleanBaseDir = baseDir.replace(/^(\.\/|\/)+/, "").replace(/\/+$/, "");
+    const subPattern = modulesPath.slice(baseDir.length).replace(/^\/+/, "");
+    const globSub = subPattern ? `${subPattern}/**/index.{ts,tsx}` : `**/index.{ts,tsx}`;
+    const webpackRegexStr = subPattern
+      ? subPattern.startsWith("{") && subPattern.endsWith("}")
+        ? `^\\./(${subPattern
+            .slice(1, -1)
+            .split(",")
+            .map((s) => s.trim())
+            .join("|")})/.*\\/index\\.[jt]sx?$`
+        : `^\\./${subPattern}/.*\\/index\\.[jt]sx?$`
+      : "/\\/index\\.[jt]sx?$/";
 
-  return {
-    name: "unplugin-path-ioc",
-    enforce: "pre",
-    
-    // Webpack / Vite 钩子获取根目录
-    vite: {
-      configResolved(config: unknown) {
-        if (config && typeof config === "object" && "root" in config && typeof config.root === "string") {
-          projectRoot = path.resolve(config.root);
-        }
-      },
-      async handleHotUpdate(ctx: unknown) {
-        if (ctx && typeof ctx === "object" && "file" in ctx && typeof ctx.file === "string") {
-          const file = ctx.file;
-          if (file.endsWith(".d.ts") || file.includes("ignore.")) return;
-          const relativeModulesPath = path.normalize(baseDir);
-          if (file.includes(path.join(projectRoot, relativeModulesPath))) {
-            await generateTypeDefinitions(projectRoot, typeFileOutput, modulesPath);
+    return {
+      name: "unplugin-path-ioc",
+      enforce: "pre",
+
+      // Webpack / Vite 钩子获取根目录
+      vite: {
+        configResolved(config: unknown) {
+          if (
+            config &&
+            typeof config === "object" &&
+            "root" in config &&
+            typeof config.root === "string"
+          ) {
+            projectRoot = path.resolve(config.root);
           }
-        }
-      }
-    },
-    webpack(compiler) {
-      projectRoot = compiler.context;
-      const virtualPath = path.resolve(projectRoot, "node_modules/.virtual-modular-container.js");
-      const absModulesPath = path.resolve(projectRoot, cleanBaseDir).replace(/\\/g, "/");
+        },
+        async handleHotUpdate(ctx: unknown) {
+          if (ctx && typeof ctx === "object" && "file" in ctx && typeof ctx.file === "string") {
+            const file = ctx.file;
+            if (file.endsWith(".d.ts") || file.includes("ignore.")) return;
+            const relativeModulesPath = path.normalize(baseDir);
+            if (file.includes(path.join(projectRoot, relativeModulesPath))) {
+              await generateTypeDefinitions(projectRoot, typeFileOutput, modulesPath);
+            }
+          }
+        },
+      },
+      webpack(compiler) {
+        projectRoot = compiler.context;
+        const virtualPath = path.resolve(projectRoot, "node_modules/.virtual-modular-container.js");
+        const absModulesPath = path.resolve(projectRoot, cleanBaseDir).replace(/\\/g, "/");
 
-      const virtualCode = `
+        const virtualCode = `
         import { compileModuleGraph, instantiateModuleContainer } from '@path-ioc/core';
 
         const reqContext = require.context('${absModulesPath}', true, ${subPattern ? `new RegExp('${webpackRegexStr}')` : `/\\/index\\.[jt]sx?$/`});
@@ -88,39 +96,52 @@ export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>((o
         }
       `;
 
-      try {
-        fsSync.mkdirSync(path.dirname(virtualPath), { recursive: true });
-        fsSync.writeFileSync(virtualPath, virtualCode, "utf-8");
-      } catch (e) {}
-
-      if (compiler.webpack && compiler.webpack.NormalModuleReplacementPlugin) {
-        new compiler.webpack.NormalModuleReplacementPlugin(
-          /^virtual:modular-container$/,
-          virtualPath
-        ).apply(compiler);
-      }
-    },
-
-    resolveId(id) {
-      if (id === VIRTUAL_MODULE_ID || id.includes("virtual:modular-container")) {
-        if (isWebpackLike && projectRoot) {
-          return path.resolve(projectRoot, "node_modules/.virtual-modular-container.js");
+        try {
+          fsSync.mkdirSync(path.dirname(virtualPath), { recursive: true });
+          fsSync.writeFileSync(virtualPath, virtualCode, "utf-8");
+        } catch {
+          // Ignore
         }
-        return RESOLVED_VIRTUAL_MODULE_ID;
-      }
-    },
 
-    loadInclude(id) {
-      const virtualPath = path.resolve(projectRoot, "node_modules/.virtual-modular-container.js");
-      return id === RESOLVED_VIRTUAL_MODULE_ID || id === virtualPath || id.endsWith(".virtual-modular-container.js") || id.includes("virtual:modular-container");
-    },
+        if (compiler.webpack && compiler.webpack.NormalModuleReplacementPlugin) {
+          new compiler.webpack.NormalModuleReplacementPlugin(
+            /^virtual:modular-container$/,
+            virtualPath,
+          ).apply(compiler);
+        }
+      },
 
-    load(id) {
-      const virtualPath = path.resolve(projectRoot, "node_modules/.virtual-modular-container.js");
-      if (id === RESOLVED_VIRTUAL_MODULE_ID || id === virtualPath || id.endsWith(".virtual-modular-container.js") || id.includes("virtual:modular-container")) {
-        if (isWebpackLike) {
-          const absModulesPath = path.resolve(projectRoot, cleanBaseDir).replace(/\\/g, "/");
-          return `
+      resolveId(id) {
+        if (id === VIRTUAL_MODULE_ID || id.includes("virtual:modular-container")) {
+          if (isWebpackLike && projectRoot) {
+            return path.resolve(projectRoot, "node_modules/.virtual-modular-container.js");
+          }
+          return RESOLVED_VIRTUAL_MODULE_ID;
+        }
+        return undefined;
+      },
+
+      loadInclude(id) {
+        const virtualPath = path.resolve(projectRoot, "node_modules/.virtual-modular-container.js");
+        return (
+          id === RESOLVED_VIRTUAL_MODULE_ID ||
+          id === virtualPath ||
+          id.endsWith(".virtual-modular-container.js") ||
+          id.includes("virtual:modular-container")
+        );
+      },
+
+      load(id) {
+        const virtualPath = path.resolve(projectRoot, "node_modules/.virtual-modular-container.js");
+        if (
+          id === RESOLVED_VIRTUAL_MODULE_ID ||
+          id === virtualPath ||
+          id.endsWith(".virtual-modular-container.js") ||
+          id.includes("virtual:modular-container")
+        ) {
+          if (isWebpackLike) {
+            const absModulesPath = path.resolve(projectRoot, cleanBaseDir).replace(/\\/g, "/");
+            return `
             import { compileModuleGraph, instantiateModuleContainer } from '@path-ioc/core';
 
             const reqContext = require.context('${absModulesPath}', true, ${subPattern ? `new RegExp('${webpackRegexStr}')` : `/\\/index\\.[jt]sx?$/`});
@@ -139,9 +160,9 @@ export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>((o
               return modularContainer;
             }
           `;
-        }
+          }
 
-        return `
+          return `
           import { compileModuleGraph, instantiateModuleContainer } from '@path-ioc/core';
 
           const viteModules = import.meta.glob(['/${cleanBaseDir}/${globSub}', './${cleanBaseDir}/${globSub}'], { eager: true });
@@ -160,14 +181,16 @@ export const PathIocPlugin = createUnplugin<PathIocPluginOptions | undefined>((o
             return modularContainer;
           }
         `;
-      }
-    },
+        }
+        return undefined;
+      },
 
-    async buildStart() {
-      await generateTypeDefinitions(projectRoot, typeFileOutput, modulesPath);
-    }
-  };
-});
+      async buildStart() {
+        await generateTypeDefinitions(projectRoot, typeFileOutput, modulesPath);
+      },
+    };
+  },
+);
 
 // 基础元信息 100% 复用官方 VitePlugin，仅对存在 this 上下文逆变冲突的钩子做精准补丁
 export type PathIocVitePlugin = Pick<VitePlugin, "name" | "enforce"> & {
@@ -175,23 +198,41 @@ export type PathIocVitePlugin = Pick<VitePlugin, "name" | "enforce"> & {
   resolveId?: (
     source: string,
     importer?: string,
-    options?: any
-  ) => Promise<string | null | undefined | false | { id: string }> | string | null | undefined | false | { id: string };
+    options?: unknown,
+  ) =>
+    | Promise<string | null | undefined | false | { id: string }>
+    | string
+    | null
+    | undefined
+    | false
+    | { id: string };
   load?: (
     id: string,
-    options?: any
-  ) => Promise<string | null | undefined | { code: string }> | string | null | undefined | { code: string };
+    options?: unknown,
+  ) =>
+    | Promise<string | null | undefined | { code: string }>
+    | string
+    | null
+    | undefined
+    | { code: string };
   transform?: (
     code: string,
-    id: string
-  ) => Promise<string | null | undefined | { code: string }> | string | null | undefined | { code: string };
+    id: string,
+  ) =>
+    | Promise<string | null | undefined | { code: string }>
+    | string
+    | null
+    | undefined
+    | { code: string };
 };
 
 export type PathIocPluginType = Omit<typeof PathIocPlugin, "vite"> & {
   vite: (options?: PathIocPluginOptions) => PathIocVitePlugin;
 };
 
-export const vitePlugin = PathIocPlugin.vite as (options?: PathIocPluginOptions) => PathIocVitePlugin;
+export const vitePlugin = PathIocPlugin.vite as (
+  options?: PathIocPluginOptions,
+) => PathIocVitePlugin;
 export const webpackPlugin = PathIocPlugin.webpack;
 export const rollupPlugin = PathIocPlugin.rollup;
 export const rspackPlugin = PathIocPlugin.rspack;
@@ -200,4 +241,3 @@ export const rolldownPlugin = PathIocPlugin.rolldown;
 
 const pathIoc: PathIocPluginType = PathIocPlugin as PathIocPluginType;
 export default pathIoc;
-

@@ -29,23 +29,23 @@ playground/
 
 ## 📊 15 大全量功能测点与代码物理映射表
 
-| 序号 | 核心功能测点 | 源码物理位置 | 对应测试工程 / 验证命令 | 预期结果 |
-| :--- | :--- | :--- | :--- | :--- |
-| **1** | **DAG 拓扑排序与依赖解析** | [`packages/core/src/graph.ts#L224-L235`](../packages/core/src/graph.ts#L224-L235) | `pnpm test` | **PASS** |
-| **2** | **循环依赖 Fail-Fast 捕获** | [`packages/core/src/graph.ts#L200-L222`](../packages/core/src/graph.ts#L200-L222) | `pnpm --filter container-test-app run test` | **PASS** (捕捉 `[Circular Dependency]`) |
-| **3** | **非法模块 / 缺失 `main` 校验** | [`packages/core/src/graph.ts#L116-L123`](../packages/core/src/graph.ts#L116-L123) | `pnpm --filter container-test-app run test` | **PASS** (捕捉 `['/badModule'] 'main' is not a function`) |
-| **4** | **`skip` 忽略与 `order` 权重** | [`packages/core/src/graph.ts#L109-L115`](../packages/core/src/graph.ts#L109-L115) | `pnpm test` | **PASS** |
-| **5** | **Demand Proxy 按需懒加载** | [`packages/container/src/index.ts#L98-L153`](../packages/container/src/index.ts#L98-L153) | `pnpm --filter container-test-app run test` | **PASS** (Getter 触达触发异步装配) |
-| **6** | **Turbo 纯同步与异步强拦截** | [`packages/container/src/index.ts#L64-L67`](../packages/container/src/index.ts#L64-L67) | `pnpm --filter container-test-app run test` | **PASS** (捕捉 `[Turbo Mode] Async module...`) |
-| **7** | **Vite 构建工具支持与真实逻辑断言** | [`packages/unplugin/src/index.ts#L236-L255`](../packages/unplugin/src/index.ts#L236-L255) | `pnpm --filter full-test-app run test` | **PASS** (100% JS 真实逻辑与 DOM 渲染断言) |
-| **8** | **Webpack 5 构建工具支持 (`require.context`)** | [`packages/unplugin/src/index.ts#L155-L198`](../packages/unplugin/src/index.ts#L155-L198) | `pnpm --filter full-test-app run build:webpack` | **PASS** (compiled in ~250ms) |
-| **9** | **Rspack 构建工具支持 (`require.context`)** | [`packages/unplugin/src/index.ts#L215-L233`](../packages/unplugin/src/index.ts#L215-L233) | `pnpm --filter full-test-app run build:rspack` | **PASS** (compiled in ~60ms) |
-| **10**| **`@path-ioc/pack` 物理注册表导出** | [`packages/pack/src/index.ts`](../packages/pack/src/index.ts) | `pnpm --filter full-test-app run build:vite` | **PASS** (物理文件成功导出) |
-| **11**| **跨工程 / 微前端拓扑 Merge 真实逻辑断言** | [`packages/core/src/graph.ts#L150-L244`](../packages/core/src/graph.ts#L150-L244) | `pnpm --filter modules-merge-test-app run test` | **PASS** (跨包 DB/Order/Payment 调用与 DOM 断言) |
-| **12**| **AOP 零配置切面与 ORM 动态搜集** | `playground/full-test-app/src/modules/` | `pnpm --filter full-test-app run test` | **PASS** (成功拦截 createOrder 与收集 2 个 Schema) |
-| **13**| **短名称歧义冲突 (Ambiguous Short Names) 抛错** | [`packages/core/src/graph.ts#L174-L180`](../packages/core/src/graph.ts#L174-L180) | `pnpm test` | **PASS** (精准抛出 `has an ambiguous dependency`) |
-| **14**| **歧义模块属性安全过滤 (仅挂载全路径)** | [`packages/core/src/graph.ts#L323,L364`](../packages/core/src/graph.ts#L323) | `pnpm test` | **PASS** (歧义短名称不会误覆盖属性) |
-| **15**| **编译图复用与多请求上下文隔离** | [`packages/core/src/graph.ts#L287`](../packages/core/src/graph.ts#L287) | `pnpm test` | **PASS** (多请求依赖图 zero-recompile) |
+| 序号   | 核心功能测点                                    | 源码物理位置                                                                              | 对应测试工程 / 验证命令                         | 预期结果                                                  |
+| :----- | :---------------------------------------------- | :---------------------------------------------------------------------------------------- | :---------------------------------------------- | :-------------------------------------------------------- |
+| **1**  | **DAG 拓扑排序与依赖解析**                      | [`packages/core/src/graph.ts#L224-L235`](../packages/core/src/graph.ts#L224-L235)         | `pnpm test`                                     | **PASS**                                                  |
+| **2**  | **循环依赖 Fail-Fast 捕获**                     | [`packages/core/src/graph.ts#L200-L222`](../packages/core/src/graph.ts#L200-L222)         | `pnpm --filter container-test-app run test`     | **PASS** (捕捉 `[Circular Dependency]`)                   |
+| **3**  | **非法模块 / 缺失 `main` 校验**                 | [`packages/core/src/graph.ts#L116-L123`](../packages/core/src/graph.ts#L116-L123)         | `pnpm --filter container-test-app run test`     | **PASS** (捕捉 `['/badModule'] 'main' is not a function`) |
+| **4**  | **`skip` 忽略与 `order` 权重**                  | [`packages/core/src/graph.ts#L109-L115`](../packages/core/src/graph.ts#L109-L115)         | `pnpm test`                                     | **PASS**                                                  |
+| **5**  | **Demand Proxy 按需懒加载**                     | [`packages/container/src/index.ts#L98-L153`](../packages/container/src/index.ts#L98-L153) | `pnpm --filter container-test-app run test`     | **PASS** (Getter 触达触发异步装配)                        |
+| **6**  | **Turbo 纯同步与异步强拦截**                    | [`packages/container/src/index.ts#L64-L67`](../packages/container/src/index.ts#L64-L67)   | `pnpm --filter container-test-app run test`     | **PASS** (捕捉 `[Turbo Mode] Async module...`)            |
+| **7**  | **Vite 构建工具支持与真实逻辑断言**             | [`packages/unplugin/src/index.ts#L236-L255`](../packages/unplugin/src/index.ts#L236-L255) | `pnpm --filter full-test-app run test`          | **PASS** (100% JS 真实逻辑与 DOM 渲染断言)                |
+| **8**  | **Webpack 5 构建工具支持 (`require.context`)**  | [`packages/unplugin/src/index.ts#L155-L198`](../packages/unplugin/src/index.ts#L155-L198) | `pnpm --filter full-test-app run build:webpack` | **PASS** (compiled in ~250ms)                             |
+| **9**  | **Rspack 构建工具支持 (`require.context`)**     | [`packages/unplugin/src/index.ts#L215-L233`](../packages/unplugin/src/index.ts#L215-L233) | `pnpm --filter full-test-app run build:rspack`  | **PASS** (compiled in ~60ms)                              |
+| **10** | **`@path-ioc/pack` 物理注册表导出**             | [`packages/pack/src/index.ts`](../packages/pack/src/index.ts)                             | `pnpm --filter full-test-app run build:vite`    | **PASS** (物理文件成功导出)                               |
+| **11** | **跨工程 / 微前端拓扑 Merge 真实逻辑断言**      | [`packages/core/src/graph.ts#L150-L244`](../packages/core/src/graph.ts#L150-L244)         | `pnpm --filter modules-merge-test-app run test` | **PASS** (跨包 DB/Order/Payment 调用与 DOM 断言)          |
+| **12** | **AOP 零配置切面与 ORM 动态搜集**               | `playground/full-test-app/src/modules/`                                                   | `pnpm --filter full-test-app run test`          | **PASS** (成功拦截 createOrder 与收集 2 个 Schema)        |
+| **13** | **短名称歧义冲突 (Ambiguous Short Names) 抛错** | [`packages/core/src/graph.ts#L174-L180`](../packages/core/src/graph.ts#L174-L180)         | `pnpm test`                                     | **PASS** (精准抛出 `has an ambiguous dependency`)         |
+| **14** | **歧义模块属性安全过滤 (仅挂载全路径)**         | [`packages/core/src/graph.ts#L323,L364`](../packages/core/src/graph.ts#L323)              | `pnpm test`                                     | **PASS** (歧义短名称不会误覆盖属性)                       |
+| **15** | **编译图复用与多请求上下文隔离**                | [`packages/core/src/graph.ts#L287`](../packages/core/src/graph.ts#L287)                   | `pnpm test`                                     | **PASS** (多请求依赖图 zero-recompile)                    |
 
 ---
 
@@ -58,7 +58,9 @@ playground/
 ```bash
 pnpm test
 ```
+
 **预期输出**：
+
 ```text
  ✓  unit  packages/core/test/graph.test.ts (6 tests)
  ✓  unit  packages/pack/test/pack.test.ts (1 test)
@@ -77,7 +79,9 @@ pnpm test
 ```bash
 pnpm --filter full-test-app run test
 ```
+
 **预期控制台输出（真实执行 AOP 拦截、DB 连接、ORM 实体搜集与 DOM 渲染断言）**：
+
 ```text
 👉 [full-test-app] Executing real JS runtime test...
 [ORM] Synced Schemas for 2 entities: [ 'orders', 'users' ]
@@ -100,7 +104,9 @@ Order Result: { orderId: 'ORD_1786647712168', item: 'MacBook Pro M4', amount: 19
 ```bash
 pnpm --filter modules-merge-test-app run test
 ```
+
 **预期控制台输出（真实执行跨包远程 DB、远程 orderService 与本地 payment 逻辑及 DOM 断言）**：
+
 ```text
 👉 [modules-merge-test-app] Executing real JS runtime merge test...
 [ORM] Synced Schemas for 2 entities: [ 'orders', 'users' ]
@@ -129,7 +135,9 @@ Local Payment Result: { paymentId: 'PAY_...', status: 'PAID' }
 ```bash
 pnpm --filter container-test-app run test
 ```
+
 **预期控制台输出**：
+
 ```text
 ==================================================
 🚀 [playground/container-test-app] Extension Modes & Edge Case Fail-Fast Test

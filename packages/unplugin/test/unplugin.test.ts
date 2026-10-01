@@ -1,19 +1,22 @@
-import { describe, it, expect } from "vitest";
-import { rollupPlugin, rolldownPlugin } from "../src/index";
+import { describe, expect, it } from "vitest";
+import { rolldownPlugin, rollupPlugin } from "../src/index";
 
 describe("unplugin", () => {
   it("should export rolldownPlugin function and have proper plugin name", () => {
     expect(typeof rolldownPlugin).toBe("function");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const plugin = rolldownPlugin() as any;
     expect(plugin.name).toBe("unplugin-path-ioc");
   });
 
   it("should generate proper plugin name", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const plugin = rollupPlugin() as any;
     expect(plugin.name).toBe("unplugin-path-ioc");
   });
 
   it("should generate correct load output with createModularContainer", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const plugin = rollupPlugin() as any;
     const output = plugin.load("\0virtual:modular-container");
     expect(output).toContain("export async function createModularContainer");
@@ -21,6 +24,7 @@ describe("unplugin", () => {
   });
 
   it("should handle resolveId for virtual module", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const plugin = rollupPlugin() as any;
     expect(plugin.resolveId("virtual:modular-container")).toBe("\0virtual:modular-container");
     expect(plugin.resolveId("something-else")).toBeUndefined();
@@ -28,10 +32,7 @@ describe("unplugin", () => {
 
   it("should omit ambiguous short names in generated type definitions", async () => {
     const { generateModuleMapContent } = await import("../src/generator");
-    const folders = [
-      "src/modules/user/service",
-      "src/modules/admin/service",
-    ];
+    const folders = ["src/modules/user/service", "src/modules/admin/service"];
 
     const content = generateModuleMapContent(folders, "/root", "types", "src/modules");
 
@@ -73,12 +74,7 @@ describe("unplugin", () => {
     expect(results[3]).toBe("result:Call_4");
 
     // 验证实际执行序列：仅执行了 Call_1 和 Call_4，中间态 2 和 3 完全没有浪费执行！
-    expect(executionLog).toEqual([
-      "start:Call_1",
-      "end:Call_1",
-      "start:Call_4",
-      "end:Call_4",
-    ]);
+    expect(executionLog).toEqual(["start:Call_1", "end:Call_1", "start:Call_4", "end:Call_4"]);
 
     // 等待全部清空后，发起第 5 次调用，应作为全新空闲调用正常执行
     const p5 = await runner("Call_5");
@@ -108,11 +104,14 @@ describe("unplugin", () => {
     it("should generate Vite import.meta.glob with brace pattern and strip baseDir cleanly", () => {
       const plugin = rollupPlugin({
         modulesPath: "src/modules/{common,component}",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any;
 
       const output = plugin.load("\0virtual:modular-container");
       // 1. import.meta.glob 包含大括号子模式
-      expect(output).toContain("import.meta.glob(['/src/modules/{common,component}/**/index.{ts,tsx}', './src/modules/{common,component}/**/index.{ts,tsx}']");
+      expect(output).toContain(
+        "import.meta.glob(['/src/modules/{common,component}/**/index.{ts,tsx}', './src/modules/{common,component}/**/index.{ts,tsx}']",
+      );
       // 2. 剥离的是物理根目录 'src/modules'，而不是未展开的大括号字符串
       expect(output).toContain(".replace('src/modules', '')");
       expect(output).not.toContain(".replace('src/modules/{common,component}', '')");
@@ -120,16 +119,13 @@ describe("unplugin", () => {
 
     it("should correctly compute module full names relative to baseDir when using brace patterns in type generation", async () => {
       const { generateModuleMapContent } = await import("../src/generator");
-      const folders = [
-        "src/modules/common/service",
-        "src/modules/component/button",
-      ];
+      const folders = ["src/modules/common/service", "src/modules/component/button"];
 
       const content = generateModuleMapContent(
         folders,
         "/root",
         "types",
-        "src/modules/{common,component}"
+        "src/modules/{common,component}",
       );
 
       // Full names must be cleanly rooted at baseDir ('src/modules')

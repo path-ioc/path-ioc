@@ -12,9 +12,7 @@
 
 - **类型签名**：
   ```typescript
-  function compileModuleGraph(
-    modules: { key: string; module: IOCModule }[]
-  ): CompiledModuleGraph;
+  function compileModuleGraph(modules: { key: string; module: IOCModule }[]): CompiledModuleGraph;
   ```
 - **参数说明**：
   - `modules`: 模块描述数组。通常由 `virtual:modular-container` 自动注入，也可在纯 Node.js 或单元测试中手动构造。
@@ -34,7 +32,7 @@
   ```typescript
   function instantiateModuleContainer(
     compiledGraph: CompiledModuleGraph,
-    container: Record<string, unknown>
+    container: Record<string, unknown>,
   ): Promise<void>;
   ```
 - **参数说明**：
@@ -53,7 +51,7 @@
   ```typescript
   function initialize(
     modules: { key: string; module: IOCModule }[],
-    container: Record<string, unknown>
+    container: Record<string, unknown>,
   ): Promise<void>;
   ```
 
@@ -65,9 +63,9 @@
 
 在 `src/modules/**/index.ts` 中，允许导出以下 4 个标准变量：
 
-| 导出变量名 | 类型 | 默认值 | 作用说明 |
-| :--- | :--- | :--- | :--- |
-| **`main`** *(必须)* | `(container: ModularContainer, moduleNames: string[]) => any \| Promise<any>` | - | 模块工厂函数。接收容器与全量模块 Key，支持 `async`。 |
-| **`dependencies`** *(可选)* | `string[] \| ((moduleNames: string[]) => string[])` | `[]` | 拓扑依赖声明。支持静态数组或动态函数过滤。 |
-| **`order`** *(可选)* | `number` | `99999` | 执行时序权重。数值越小越先执行（数值升序排序，默认值 `99999`），在无拓扑依赖约束时生效。 |
-| **`skip`** *(可选)* | `boolean` | `false` | 跳过执行标记。用于外部预先注入的模块（如后端请求隔离时注入 `requestContext`），仅让 unplugin 生成类型提示而不执行 `main`。**注意**：即便标记了 `skip: true`，也必须导出一个 dummy `main` 函数（如 `export const main = (): MyType => ({} as any)`）以满足 core 运行时的合法性校验与类型生成。 |
+| 导出变量名                  | 类型                                                                          | 默认值  | 作用说明                                                                                                                                                                                                                                                                                      |
+| :-------------------------- | :---------------------------------------------------------------------------- | :------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`main`** _(必须)_         | `(container: ModularContainer, moduleNames: string[]) => any \| Promise<any>` | -       | 模块工厂函数。接收容器与全量模块 Key，支持 `async`。                                                                                                                                                                                                                                          |
+| **`dependencies`** _(可选)_ | `string[] \| ((moduleNames: string[]) => string[])`                           | `[]`    | 拓扑依赖声明。支持静态数组或动态函数过滤。                                                                                                                                                                                                                                                    |
+| **`order`** _(可选)_        | `number`                                                                      | `99999` | 执行时序权重。数值越小越先执行（数值升序排序，默认值 `99999`），在无拓扑依赖约束时生效。                                                                                                                                                                                                      |
+| **`skip`** _(可选)_         | `boolean`                                                                     | `false` | 跳过执行标记。用于外部预先注入的模块（如后端请求隔离时注入 `requestContext`），仅让 unplugin 生成类型提示而不执行 `main`。**注意**：即便标记了 `skip: true`，也必须导出一个 dummy `main` 函数（如 `export const main = (): MyType => ({} as any)`）以满足 core 运行时的合法性校验与类型生成。 |

@@ -35,11 +35,13 @@ In reality, **the fundamental architectural boundary is dictated by the runtime 
 ## 2. Client Applications: The Pure Global Singleton
 
 In client-side applications, the entire JavaScript runtime is exclusively owned by **a single user**:
+
 - Cross-user concurrency and state bleed do not exist;
 - The container is initialized once during application bootstrap;
 - All UI components, page routers, and state managers share the identical container instance.
 
 ### Standard Client Pattern
+
 In client applications, unplugin automatically scans the `src/modules` directory. The application entry simply invokes the virtual module once during bootstrap without manually collecting or maintaining import lists:
 
 ```typescript
@@ -55,6 +57,7 @@ await createModularContainer(container);
 > In frontend codebases, module initialization or early lifecycle hooks often directly access `globalThis.modularContainer`. If one writes `globalThis.modularContainer = await createModularContainer();`, the global reference remains `undefined` throughout the entire asynchronous bootstrap sequence. Pre-binding `const container = (globalThis.modularContainer = {})` and passing it to `createModularContainer(container)` ensures that the container object reference is synchronously accessible from tick zero while the engine fills module instances.
 
 Inside components or views:
+
 ```tsx
 // Directly destructure and consume inside React / Vue components
 export function UserProfile() {
@@ -62,6 +65,7 @@ export function UserProfile() {
   return <div>Welcome, {userState.name}</div>;
 }
 ```
+
 Direct, predictable, and zero cognitive overhead.
 
 ---
@@ -71,25 +75,31 @@ Direct, predictable, and zero cognitive overhead.
 Server applications inhabit a radically different physical world: **Node.js and V8 operate on a single-threaded Event Loop.**
 
 When 1,000 HTTP requests arrive concurrently:
-* If the server utilizes a single global singleton container;
-* And any service retains request-scoped state (e.g., `currentUserId`, tenant context, or trace IDs):
+
+- If the server utilizes a single global singleton container;
+- And any service retains request-scoped state (e.g., `currentUserId`, tenant context, or trace IDs):
   ```typescript
   // Dangerous Anti-Pattern: Retaining request state in a global singleton
   export const main = () => {
     let currentUser: User | null = null; // Catastrophic memory sharing!
     return {
-      setCurrentUser(user: User) { currentUser = user; },
-      getUser() { return currentUser; }
+      setCurrentUser(user: User) {
+        currentUser = user;
+      },
+      getUser() {
+        return currentUser;
+      },
     };
   };
   ```
-* Request A sets the user to Alice and initiates an async `await db.query()`;
-* The Event Loop yields execution to Request B, which overwrites the user as Bob;
-* Request A resumes execution, now reading Bob's data—**a critical cross-request data corruption and security vulnerability.**
+- Request A sets the user to Alice and initiates an async `await db.query()`;
+- The Event Loop yields execution to Request B, which overwrites the user as Bob;
+- Request A resumes execution, now reading Bob's data—**a critical cross-request data corruption and security vulnerability.**
 
 ### The Heavy Compromises of Legacy Frameworks
-* **Java Spring**: Relies on OS-level physical threads combined with `ThreadLocal` storage to segregate request scopes;
-* **NestJS**: Introduced `Scope.REQUEST`. However, the official NestJS documentation explicitly warns that **request-scoped providers cause severe performance degradation and memory bloat**—because NestJS must dynamically recreate and re-evaluate an entire dependency tree for every incoming HTTP request.
+
+- **Java Spring**: Relies on OS-level physical threads combined with `ThreadLocal` storage to segregate request scopes;
+- **NestJS**: Introduced `Scope.REQUEST`. However, the official NestJS documentation explicitly warns that **request-scoped providers cause severe performance degradation and memory bloat**—because NestJS must dynamically recreate and re-evaluate an entire dependency tree for every incoming HTTP request.
 
 ---
 
@@ -113,20 +123,14 @@ In application codebases, maintain this pure utility under `utils/memoizeModule.
 
 export const memoizeModule = <
   Result,
-  T extends (
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => Result
+  T extends (modularContainer: ModularContainer, moduleDeclarationNames: string[]) => Result,
 >(
-  main: T
+  main: T,
 ): T => {
   let result: Result;
   let initialized = false;
 
-  return ((
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => {
+  return ((modularContainer: ModularContainer, moduleDeclarationNames: string[]) => {
     if (!initialized) {
       const val = main(modularContainer, moduleDeclarationNames);
       // 🛡️ Anti-Poisoning Protection: Evict cache on rejection to permit self-healing retries
@@ -158,12 +162,13 @@ import type { Context } from "hono";
 // 1. Marked with skip: true: the runtime container skips dummy main; seed object supplies the instance.
 // 2. unplugin extracts the return type automatically, ambiently generating 100% type-safe completion.
 export const skip = true;
-export const main = (): Context => ({} as Context);
+export const main = (): Context => ({}) as Context;
 ```
 
 ---
 
 ### 3. Heavy Modules: Process-Wide Singletons via Closure
+
 ```typescript
 // src/modules/infrastructure/database/index.ts
 import { memoizeModule } from "../../../utils/memoizeModule";
@@ -175,7 +180,7 @@ export const main = memoizeModule(async () => {
   console.log("⚡ [Process Lifecycle] Initializing DB Connection Pool (once)...");
   const pool = await createPool(process.env.DATABASE_URL!);
   return {
-    query: (sql: string, params: any[]) => pool.execute(sql, params)
+    query: (sql: string, params: any[]) => pool.execute(sql, params),
   };
 });
 ```
@@ -183,6 +188,7 @@ export const main = memoizeModule(async () => {
 ---
 
 ### 4. Lightweight Business Services: Pure Request Isolation
+
 ```typescript
 // src/modules/services/orderService/index.ts
 export const dependencies = ["database"];
@@ -196,11 +202,12 @@ export const main = (container: ModularContainer) => {
   return {
     async createOrder(item: string) {
       // 100% request-isolated, zero risk of cross-request pollution
-      return database.query(
-        "INSERT INTO orders (item, user_id, request_id) VALUES (?, ?, ?)",
-        [item, currentUser.id, requestId]
-      );
-    }
+      return database.query("INSERT INTO orders (item, user_id, request_id) VALUES (?, ?, ?)", [
+        item,
+        currentUser.id,
+        requestId,
+      ]);
+    },
   };
 };
 ```
@@ -243,6 +250,7 @@ export default app;
 ```
 
 ### Performance & Safety Benchmarks
+
 1. **Connection Pool Stability**: Database and Redis pools are initialized once upon the first request and safely shared across the single thread without connection exhaustion;
 2. **Zero Request Bleed**: Every request possesses its own `orderService` and `requestContext`; authorization tokens and trace headers can never leak across concurrent requests;
 3. **Microsecond Startup**: Instantiating lightweight business services in Path-IoC requires only tens of microseconds—two orders of magnitude faster than NestJS's `Scope.REQUEST`.
@@ -251,11 +259,11 @@ export default app;
 
 ## 6. Architectural Summary
 
-| Dimension | Traditional Full-Stack (NestJS Scope.REQUEST) | Path-IoC Production Pattern (Per-Request + Memoization) |
-| :--- | :--- | :--- |
-| **Request Isolation** | Reflection metadata scanning per request | Native `requestContext` + lightweight container |
-| **Heavy Singletons** | Complex `@Injectable({ scope: DEFAULT })` annotations | Pure higher-order closure (`memoizeModule`) |
-| **Per-Request Overhead** | Milliseconds of reflection parsing + GC pressure | **Microsecond pure function execution** |
-| **Runtime Portability** | Tied to specific Node.js framework internals | **Universal across Node.js, Bun, Cloudflare Workers** |
+| Dimension                | Traditional Full-Stack (NestJS Scope.REQUEST)         | Path-IoC Production Pattern (Per-Request + Memoization) |
+| :----------------------- | :---------------------------------------------------- | :------------------------------------------------------ |
+| **Request Isolation**    | Reflection metadata scanning per request              | Native `requestContext` + lightweight container         |
+| **Heavy Singletons**     | Complex `@Injectable({ scope: DEFAULT })` annotations | Pure higher-order closure (`memoizeModule`)             |
+| **Per-Request Overhead** | Milliseconds of reflection parsing + GC pressure      | **Microsecond pure function execution**                 |
+| **Runtime Portability**  | Tied to specific Node.js framework internals          | **Universal across Node.js, Bun, Cloudflare Workers**   |
 
 Differentiating between client singletons and server request isolation is fundamental to building secure full-stack applications. By delegating request isolation to lightweight per-request containers and heavy resources to closure memoization, modern TypeScript engineers achieve peak safety and microsecond speed without concept bloat.

@@ -24,7 +24,8 @@
   --vp-c-border: #1e2738;
 
   --vp-home-hero-name-background: linear-gradient(135deg, #ffffff 15%, #fc6401 65%, #fab602 100%);
-  --vp-home-hero-image-filter: drop-shadow(0 0 50px rgba(252, 100, 1, 0.40)) drop-shadow(0 0 15px rgba(251, 84, 74, 0.25));
+  --vp-home-hero-image-filter: drop-shadow(0 0 50px rgba(252, 100, 1, 0.4))
+    drop-shadow(0 0 15px rgba(251, 84, 74, 0.25));
 }
 
 /* Custom Interactive Code Comparison Section (React.dev / Vite.dev inspired) */
@@ -68,7 +69,7 @@
   font-size: 0.92rem;
   letter-spacing: 0.02em;
   margin-bottom: 0.75rem;
-  box-shadow: 0 2px 14px rgba(252, 100, 1, 0.10);
+  box-shadow: 0 2px 14px rgba(252, 100, 1, 0.1);
 }
 
 .comparison-grid {
@@ -87,7 +88,9 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .comparison-card:hover {
@@ -156,14 +159,14 @@
   color: var(--vp-c-text-2);
 }
 
-.comparison-card div[class*='language-'] {
+.comparison-card div[class*="language-"] {
   margin: 0 !important;
   border-radius: 0 !important;
   border: none !important;
   background: transparent !important;
 }
 
-.comparison-card div[class*='language-'] pre {
+.comparison-card div[class*="language-"] pre {
   margin: 0 !important;
   padding: 1.25rem 1.5rem !important;
   background: transparent !important;
@@ -176,8 +179,9 @@
   margin: 3.5rem 0;
   padding: 2.25rem;
   border-radius: 16px;
-  background: radial-gradient(circle at 10% 20%, rgba(252, 100, 1, 0.10) 0%, transparent 45%),
-              var(--vp-c-bg-soft);
+  background:
+    radial-gradient(circle at 10% 20%, rgba(252, 100, 1, 0.1) 0%, transparent 45%),
+    var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-border);
 }
 
@@ -241,8 +245,9 @@
   margin: 3.5rem 0;
   padding: 2.5rem;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(252, 100, 1, 0.12) 0%, rgba(250, 182, 2, 0.08) 100%),
-              var(--vp-c-bg-soft);
+  background:
+    linear-gradient(135deg, rgba(252, 100, 1, 0.12) 0%, rgba(250, 182, 2, 0.08) 100%),
+    var(--vp-c-bg-soft);
   border: 1px solid rgba(252, 100, 1, 0.35);
   display: flex;
   justify-content: space-between;
@@ -290,7 +295,10 @@
   font-weight: 600;
   font-size: 0.95rem;
   text-decoration: none !important;
-  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   box-shadow: 0 4px 16px rgba(252, 100, 1, 0.35);
 }
 
@@ -307,7 +315,10 @@
   border-radius: 12px;
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-border);
-  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .article-card:hover {

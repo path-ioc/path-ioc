@@ -1,4 +1,4 @@
-declare module "virtual:modular-container" {
+declare module "full-test-app/modular-entry" {
   export const modules: Array<{
     key: string;
     module: {
@@ -11,7 +11,4 @@ declare module "virtual:modular-container" {
       skip?: boolean;
     };
   }>;
-  export function createModularContainer(
-    modularContainer?: ModularContainer,
-  ): Promise<ModularContainer>;
 }

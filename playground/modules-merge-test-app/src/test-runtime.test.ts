@@ -1,23 +1,23 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 
 // 模拟 DOM 环境进行真实的 JS 运行时逻辑断言
 if (typeof document === "undefined") {
-  // @ts-ignore
   const { JSDOM } = await import("jsdom");
   const dom = new JSDOM('<!DOCTYPE html><html><body><div id="app"></div></body></html>');
-  (globalThis as any).document = dom.window.document;
-  (globalThis as any).window = dom.window;
+  (globalThis as unknown as { document: unknown }).document = dom.window.document;
+  (globalThis as unknown as { window: unknown }).window = dom.window;
 }
 
-import { compileModuleGraph, instantiateModuleContainer } from "@path-ioc/core";
 import { modules as localModules } from "virtual:modular-container";
+import { compileModuleGraph, instantiateModuleContainer } from "@path-ioc/core";
+
 import { modules as remoteFullAppModules } from "full-test-app/modular-entry";
 
 describe("modules-merge-test-app Cross-App Merge Runtime Assertions", () => {
   test("should merge remote and local modules into a unified DAG graph and execute correctly", async () => {
     console.log("👉 [modules-merge-test-app] Executing real JS runtime merge test...");
     const compiledGraph = compileModuleGraph([...remoteFullAppModules, ...localModules]);
-    const container: any = {};
+    const container = {} as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
     await instantiateModuleContainer(compiledGraph, container);
 
     // 1. 跨包远程模块访问断言

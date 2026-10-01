@@ -25,7 +25,9 @@ In modern TypeScript development, client-side and server-side physical runtimes 
 Therefore, **server runtimes demand strictly isolated per-request containers**—instantiating a lightweight container for each incoming HTTP request (in Path-IoC, compiling the DAG once and reusing it yields per-request hydration in just **21.2 microseconds**).
 
 ### The New Challenge: Cross-Request Resource Reuse
+
 Request isolation guarantees security, but immediately triggers a resource paradox:
+
 - Database connection pools (`mysql2/promise` Pool, Prisma Client, TypeORM DataSource);
 - Redis connection clients;
 - Pre-computed AST models or heavy in-memory rule engines.
@@ -48,6 +50,7 @@ Facing this dilemma, legacy heavyweight IoC frameworks (Spring, NestJS, Inversif
 ```
 
 Maintaining this scope machinery carries severe penalties:
+
 1. **Prototype Chain & Proxy Lookup Overhead**: Every dependency resolution traverses complex scope checkers;
 2. **Catastrophic "Scope Bubbling"**: In NestJS, once a leaf dependency is marked `REQUEST` scope, **every upstream dependent is forcibly bubbled into REQUEST scope**, forcing massive subgraphs to recreate on every request and crashing performance;
 3. **Blackbox Framework Lock-in**: Developers must master framework-specific scope inheritance edge cases.
@@ -62,7 +65,9 @@ The container's sole responsibility is **lock-free topological dependency resolu
 To ensure a heavy module factory executes only once across requests, we wrap it in a higher-order closure function: `memoizeModule`.
 
 ### Phase 1: The Naive Implementation (Falsy Value Stampede)
+
 A beginner might write:
+
 ```typescript
 // ❌ Naive Implementation: Broken for falsy return values
 export const memoizeModule = (main: Function) => {
@@ -74,18 +79,23 @@ export const memoizeModule = (main: Function) => {
   };
 };
 ```
+
 > **Critical Flaw**: If the factory legitimately returns a falsy value (`undefined` for pure side-effect modules, `null`, or `false`), `if (cached)` fails on every request, causing the factory to re-execute repeatedly!
 
 ---
 
 ### Phase 2: Independent State Flag & Transparent Signatures
+
 We decouple state tracking with an explicit `initialized` boolean and preserve TypeScript typing:
+
 ```typescript
 // ⚠️ Basic Implementation: State-aware
 export const memoizeModule = <
   Result,
-  T extends (modularContainer: ModularContainer, moduleDeclarationNames: string[]) => Result
->(main: T): T => {
+  T extends (modularContainer: ModularContainer, moduleDeclarationNames: string[]) => Result,
+>(
+  main: T,
+): T => {
   let result: Result;
   let initialized = false;
 
@@ -98,7 +108,9 @@ export const memoizeModule = <
   }) as T;
 };
 ```
+
 > **Design Principles**:
+>
 > 1. **Boolean Flag Prevents Stampedes**: `let initialized = false` tracks completion independently, solving the falsy value issue;
 > 2. **Transparent Sync/Async**: Never force-wraps synchronous functions in `Promise`, keeping local AST/dictionary initialization out of the V8 microtask queue.
 
@@ -130,20 +142,14 @@ Cold Start Poisoning Breakdown:
  */
 export const memoizeModule = <
   Result,
-  T extends (
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => Result
+  T extends (modularContainer: ModularContainer, moduleDeclarationNames: string[]) => Result,
 >(
-  main: T
+  main: T,
 ): T => {
   let result: Result;
   let initialized = false;
 
-  return ((
-    modularContainer: ModularContainer,
-    moduleDeclarationNames: string[]
-  ) => {
+  return ((modularContainer: ModularContainer, moduleDeclarationNames: string[]) => {
     if (!initialized) {
       const val = main(modularContainer, moduleDeclarationNames);
 
@@ -168,6 +174,7 @@ export const memoizeModule = <
 ## 4. Production Patterns Across Environments
 
 ### Pattern A: Node.js Long-Running Processes (Environment-Driven)
+
 In standard Node.js/Docker runtimes, database credentials reside in `process.env`. The module is entirely autonomous:
 
 ```typescript
@@ -194,6 +201,7 @@ export const main = memoizeModule(async (): Promise<Pool> => {
 ---
 
 ### Pattern B: Cloudflare Workers & Serverless Edge (First-Request Seeded)
+
 In Cloudflare Workers, environment bindings arrive via `c.env` on each request. However, infrastructure configs within the same Worker isolate remain immutable. Initializing the pool once during the first request and caching it across subsequent requests is the idiomatic edge pattern:
 
 ```typescript
@@ -205,12 +213,12 @@ export const dependencies = [];
 
 export const main = memoizeModule(async (container: ModularContainer): Promise<RedisClientType> => {
   const { requestContext } = container;
-  
+
   // Extract immutable configuration from first request; persist client in isolate closure
   const client = createClient({
     url: requestContext.env.REDIS_URL,
   });
-  
+
   await client.connect();
   console.log("[Edge Infrastructure] Redis connected successfully in Worker isolate.");
   return client;
@@ -242,6 +250,7 @@ export const main = memoizeModule(() => {
 ```
 
 ### Production Checklist:
+
 1. **Reserve `memoizeModule` for Heavy Infrastructure**: Connection pools, shared HTTP clients, static AST models;
 2. **Keep Business Services Purely Request-Scoped**: Services (`orderService`, `userService`) remain per-request (~21.2µs), ensuring zero cross-tenant bleeding;
 3. **Division of Responsibility**: `memoizeModule` prevents Promise cache poisoning; native drivers (MySQL2/ioredis) handle transport-level heartbeats and auto-reconnection.
