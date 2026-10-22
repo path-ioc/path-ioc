@@ -12,7 +12,7 @@
     <a href="https://www.npmjs.com/package/@path-ioc/core"><img src="https://img.shields.io/npm/v/@path-ioc/core.svg" alt="NPM version"></a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License"></a>
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
-    <a href="https://path-ioc.dev/benchmarks/"><img src="https://img.shields.io/badge/Instantiate-21.2_µs-orange.svg" alt="Benchmark"></a>
+    <a href="https://path-ioc.dev/benchmarks/"><img src="https://img.shields.io/badge/Instantiate-7.6_µs-orange.svg" alt="Benchmark"></a>
     <a href="https://github.com/sponsors/path-ioc"><img src="https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-EA4AAA.svg" alt="Sponsor"></a>
   </p>
 
@@ -54,10 +54,10 @@ In large-scale web applications and monorepos, codebases accumulate thousands of
 Path-IoC introduces **"Physical Path as Logical Contract"**—a dynamic language architecture that replaces explicit import coupling with topological graph resolution:
 
 1. **Application-Level Mesh Module System**: Counterparts native ESM to replace fragile relative imports in business layers. The host only executes a single line of ignition (`createModularContainer()`), while business modules circulate and self-organize 100% autonomously within the mesh without host lock-in;
-2. **DFS Topological Sorting & Reactive Promise Stream**: Powered by DFS post-order stack topological sorting and a Promise memoized reactive stream, 50 interdependent modules assemble in **`21.2 microseconds (µs)`**;
+2. **DFS Topological Sorting & Reactive Promise Stream**: Powered by DFS post-order stack topological sorting and a Promise memoized reactive stream, 50 interdependent modules assemble in **`7.6 microseconds (µs)`**;
 3. **Physical Path as Feature & Short-Name Mesh ID**: File paths serve as abstract feature labels, while short names act as Mesh IDs for direct destructuring and zero-overhead lookup;
 4. **Zero Decorators, Pure Closures**: Modules export a simple `main(container)` factory function. No class decorators, no reflect-metadata, zero framework intrusion;
-5. **Compiler-Runtime Co-design & Zero-Config Types**: AST watcher generates complete `ModularContainer` types in 0.04ms on file save; single-graph compile cache boots in 1.72ms and ignites in 21.2µs;
+5. **Compiler-Runtime Co-design & Zero-Config Types**: AST watcher generates complete `ModularContainer` types in 0.04ms on file save; single-graph compile cache boots in 0.49ms and ignites in 7.6µs;
 6. **Universal Ecosystem & Serverless Ready**: Built on `unplugin` for Vite, Rolldown, Webpack 5, Rspack, Rollup, and Node.js, natively fulfilling strict Edge/Serverless CPU constraints.
 
 ---
@@ -68,11 +68,12 @@ Tested on Apple M5 (arm64-darwin) under Node.js v24 (`pnpm bench`):
 
 | Target Function                  | Complexity      | Mean Duration | Evaluation                                               |
 | :------------------------------- | :-------------- | :------------ | :------------------------------------------------------- |
-| **`instantiateModuleContainer`** | **50 Nodes**    | **`21.2 µs`** | Microsecond direct resolution; zero request-time latency |
-| **`compileModuleGraph`**         | **50 Nodes**    | **`90.8 µs`** | Sub-millisecond cycle validation                         |
-| **`instantiateModuleContainer`** | **500 Nodes**   | **`227 µs`**  | Ultra-large module graphs resolve with negligible cost   |
-| **`compileModuleGraph`**         | **500 Nodes**   | **`1.72 ms`** | Executed once on process cold boot, cached permanently   |
-| **`compileModuleGraph`**         | **2,000 Nodes** | **`15.5 ms`** | Industrial-grade deep topology limit                     |
+| **`instantiateModuleContainer`** | **50 Nodes**    | **`7.6 µs`**  | Microsecond direct resolution; zero request-time latency |
+| **`compileModuleGraph`**         | **50 Nodes**    | **`24.2 µs`** | Sub-millisecond cycle validation                         |
+| **`instantiateModuleContainer`** | **500 Nodes**   | **`87.1 µs`** | Ultra-large module graphs resolve with negligible cost   |
+| **`compileModuleGraph`**         | **500 Nodes**   | **`496 µs`**  | Executed once on process cold boot, cached permanently   |
+| **`instantiateModuleContainer`** | **2,000 Nodes** | **`428 µs`**  | Sub-millisecond direct resolution at extreme scale       |
+| **`compileModuleGraph`**         | **2,000 Nodes** | **`4.76 ms`** | Industrial-grade deep topology limit                     |
 
 ---
 

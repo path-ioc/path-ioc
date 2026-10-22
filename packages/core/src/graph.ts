@@ -74,7 +74,6 @@ export const compileModuleGraph = (
       if (parts.length > 0) {
         folderName = parts.pop()!;
       } else {
-        console.log("THROWING FOR KEY:", key, "PARTS:", parts, "FOLDERNAME:", folderName);
         throw new Error(`Could not parse module name from key: ${key}`);
       }
     }

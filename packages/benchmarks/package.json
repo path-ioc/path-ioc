@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "bench": "tsx src/index.ts"
+    "bench": "node --experimental-strip-types src/index.ts"
   },
   "devDependencies": {
     "@path-ioc/core": "workspace:*",

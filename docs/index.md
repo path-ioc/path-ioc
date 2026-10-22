@@ -27,8 +27,8 @@ features:
     details: Counterparts native ESM to replace fragile relative imports in business layers. One-line host ignition boots an autonomous Mesh universe where lifecycles and business logic circulate 100% internally.
   - title: Physical Path as Contract
     details: Eliminate thousands of fragile relative import lines. File paths map directly to logical contracts with mathematical certainty, preventing circular dependency deadlocks.
-  - title: 21.2 µs Lock-Free DAG
-    details: Pure synchronous topological scheduling. 50 nodes assembled in 21.2 microseconds, 500 nodes compiled in 1.72 milliseconds. Zero overhead during HTTP request lifecycles.
+  - title: 7.6 µs Lock-Free DAG
+    details: Pure synchronous topological scheduling. 50 nodes assembled in 7.6 microseconds, 500 nodes compiled in 496 microseconds. Zero overhead during HTTP request lifecycles.
   - title: Zero-Config Type Generation
     details: AST scanning paired with virtual modules generates complete TypeScript interfaces on file save. Enjoy 100% accurate IDE auto-completion with zero manual typing.
   - title: Native Functional AOP
@@ -159,12 +159,12 @@ export const main = (container: ModularContainer) => {
   <div class="benchmark-stats-grid">
     <div class="benchmark-stat-card">
       <div class="stat-label">50-Node Instantiation</div>
-      <div class="stat-value green">21.2 µs</div>
+      <div class="stat-value green">7.6 µs</div>
       <div class="stat-desc">Microsecond-level direct container resolution. Zero request-time latency in serverless runtimes.</div>
     </div>
     <div class="benchmark-stat-card">
       <div class="stat-label">500-Node Graph Compilation</div>
-      <div class="stat-value purple">1.72 ms</div>
+      <div class="stat-value purple">496 µs</div>
       <div class="stat-desc">Single cold-boot topological cycle validation, then 100% cached across high-frequency requests.</div>
     </div>
     <div class="benchmark-stat-card">

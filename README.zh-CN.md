@@ -12,7 +12,7 @@
     <a href="https://www.npmjs.com/package/@path-ioc/core"><img src="https://img.shields.io/npm/v/@path-ioc/core.svg" alt="NPM 版本"></a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="开源协议"></a>
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
-    <a href="https://path-ioc.dev/zh/benchmarks/"><img src="https://img.shields.io/badge/Instantiate-21.2_µs-orange.svg" alt="压测指标"></a>
+    <a href="https://path-ioc.dev/zh/benchmarks/"><img src="https://img.shields.io/badge/Instantiate-7.6_µs-orange.svg" alt="压测指标"></a>
     <a href="https://github.com/sponsors/path-ioc"><img src="https://img.shields.io/badge/赞助支持-GitHub%20Sponsors-EA4AAA.svg" alt="赞助支持"></a>
   </p>
 
@@ -54,10 +54,10 @@
 Path-IoC 带来全新的 **“物理路径即逻辑契约”** 架构设计：
 
 1. **应用级自组织模块系统（Application-Level Mesh Module System）**：对标原生 ESM，作为业务层自组织网格。宿主（Hono、Express、Koa、Next.js API、Workers、CLI 等）只做一行代码点火（`createModularContainer()`），业务模块在网格内自闭环运转，不挑宿主，零框架锁死；
-2. **基于 DFS 拓扑排序与 Promise 反应式并发流**：依托深度优先搜索（DFS）后序遍历压栈拓扑排序与 Promise.all 记忆化反应式并发流，50 节点依赖装配仅需 **`21.2 微秒 (µs)`**；
+2. **基于 DFS 拓扑排序与 Promise 反应式并发流**：依托深度优先搜索（DFS）后序遍历压栈拓扑排序与 Promise.all 记忆化反应式并发流，50 节点依赖装配仅需 **`7.6 微秒 (µs)`**；
 3. **物理路径即特征（Feature）与短名称 Mesh ID**：物理路径前缀（如 `/infra/`、`/biz/`）作为特征标签（类比元数据注解），静态依赖直接使用极简短名称（如 `dependencies = ["logger", "db"]`），直接解构并享受全局类型推导；
 4. **零装饰器与纯函数闭包**：无需任何类装饰器与元数据反射，纯函数工厂 `main(container)` 导出，依托动态语言函数一等公民实现纯正无侵入的面向切面编程；
-5. **编译器-运行时协同设计（Compiler-Runtime Co-design）**：`@path-ioc/unplugin` 维护单图编译缓存闭包（冷启动单次编译 1.72ms，后续点火仅 21.2µs），AST 监听器实现 0.04ms 实时类型生成；
+5. **编译器-运行时协同设计（Compiler-Runtime Co-design）**：`@path-ioc/unplugin` 维护单图编译缓存闭包（冷启动单次编译 0.49ms，后续点火仅 7.6µs），AST 监听器实现 0.04ms 实时类型生成；
 6. **全构建工具生态适配**：基于 `unplugin` 规范，一套配置原生适配 Vite、Rolldown、Webpack 5、Rspack、Rollup 与 Node.js，完美契合 Edge/Serverless CPU 纳秒级响应限制。
 
 ---
@@ -68,11 +68,12 @@ Path-IoC 带来全新的 **“物理路径即逻辑契约”** 架构设计：
 
 | 压测指标 (Benchmark Item)        | 复杂度规模                  | 平均耗时 (Avg Time) | 性能表现说明                              |
 | :------------------------------- | :-------------------------- | :------------------ | :---------------------------------------- |
-| **`instantiateModuleContainer`** | **50 节点** 容器实例化      | **`21.2 µs`**       | 微秒级直通，Serverless HTTP 请求期 0 延迟 |
-| **`compileModuleGraph`**         | **50 节点** 静态图编译      | **`90.8 µs`**       | 亚毫秒级完成全拓扑环路校验                |
-| **`instantiateModuleContainer`** | **500 节点** 容器实例化     | **`227 µs`**        | 超大型项目依然近乎零开销                  |
-| **`compileModuleGraph`**         | **500 节点** 复杂交叉依赖   | **`1.72 ms`**       | 进程冷启动仅需 1 次，随后全量缓存复用     |
-| **`compileModuleGraph`**         | **2,000 节点** 超大规模拓扑 | **`15.5 ms`**       | 工业级深层拓扑解析极限                    |
+| **`instantiateModuleContainer`** | **50 节点** 容器实例化      | **`7.6 µs`**        | 微秒级直通，Serverless HTTP 请求期 0 延迟 |
+| **`compileModuleGraph`**         | **50 节点** 静态图编译      | **`24.2 µs`**       | 亚毫秒级完成全拓扑环路校验                |
+| **`instantiateModuleContainer`** | **500 节点** 容器实例化     | **`87.1 µs`**       | 超大型项目依然近乎零开销                  |
+| **`compileModuleGraph`**         | **500 节点** 复杂交叉依赖   | **`496 µs`**        | 进程冷启动仅需 1 次，随后全量缓存复用     |
+| **`instantiateModuleContainer`** | **2,000 节点** 超大容器装配 | **`428 µs`**        | 极限规模亚毫秒直通                        |
+| **`compileModuleGraph`**         | **2,000 节点** 超大规模拓扑 | **`4.76 ms`**       | 工业级深层拓扑解析极限                    |
 
 ---
 

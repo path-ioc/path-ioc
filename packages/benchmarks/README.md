@@ -47,11 +47,12 @@ pnpm run bench
 
 | Target Benchmark             | Complexity  | Mean Duration | Evaluation                                         |
 | :--------------------------- | :---------- | :------------ | :------------------------------------------------- |
-| `instantiateModuleContainer` | 50 Nodes    | **21.2 µs**   | Microsecond direct pass; zero request-time latency |
-| `compileModuleGraph`         | 50 Nodes    | **90.8 µs**   | Sub-millisecond cycle validation                   |
-| `instantiateModuleContainer` | 500 Nodes   | **227 µs**    | Negligible cost even at enterprise scale           |
-| `compileModuleGraph`         | 500 Nodes   | **1.72 ms**   | Executed once per process boot, cached permanently |
-| `compileModuleGraph`         | 2,000 Nodes | **15.5 ms**   | Extreme industrial topology limit                  |
+| `instantiateModuleContainer` | 50 Nodes    | **7.6 µs**    | Microsecond direct pass; zero request-time latency |
+| `compileModuleGraph`         | 50 Nodes    | **24.2 µs**   | Sub-millisecond cycle validation                   |
+| `instantiateModuleContainer` | 500 Nodes   | **87.1 µs**   | Negligible cost even at enterprise scale           |
+| `compileModuleGraph`         | 500 Nodes   | **496 µs**    | Executed once per process boot, cached permanently |
+| `instantiateModuleContainer` | 2,000 Nodes | **428 µs**    | Sub-millisecond direct pass at extreme scale       |
+| `compileModuleGraph`         | 2,000 Nodes | **4.76 ms**   | Extreme industrial topology limit                  |
 
 ---
 
