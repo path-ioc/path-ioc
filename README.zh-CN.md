@@ -3,8 +3,8 @@
     <img src="https://cdn.path-ioc.dev/path-ioc/logo.svg" width="120" height="129" alt="Path-IoC Logo">
   </a>
   <h1>Path-IoC</h1>
-  <p><b>为 Serverless TypeScript 打造的最快、无装饰器 DI 容器</b></p>
-  <p>基于物理文件目录路径的无反射、零装饰器、微秒级拓扑依赖查找与 DAG 调度引擎</p>
+  <p><b>按名字装配 TypeScript 模块，告别相对路径 import</b></p>
+  <p>无需装饰器与 reflect-metadata，避开传统 DI 容器的痛点。50 个模块 7.6µs 装配完成，连 Serverless 冷启动也几乎无感。</p>
 
   <p>
     <a href="https://path-ioc.dev/zh/"><img src="https://img.shields.io/badge/docs-path--ioc.dev-8A2BE2.svg" alt="文档中心"></a>

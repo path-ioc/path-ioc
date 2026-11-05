@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: "Path-IoC"
-  text: "Spring 有 Bean，Nest 有 Provider，Path-IoC 有 Mesh"
-  tagline: "向经典 Spring 致敬的 TypeScript 原生控制反转架构。告别繁琐装饰器与元数据包袱，以纯函数闭包与物理路径契约，实现微秒级极速冷启动的现代拓扑依赖查找引擎。"
+  text: "按名字装配 TypeScript 模块，告别相对路径 import"
+  tagline: "无需装饰器与 reflect-metadata，避开传统 DI 容器的痛点。50 个模块 7.6µs 装配完成，连 Serverless 冷启动也几乎无感。"
   image:
     src: https://cdn.path-ioc.dev/path-ioc/logo.svg
     alt: Path-IoC 品牌标识
@@ -39,7 +39,7 @@ features:
 
 <div class="comparison-container">
 <div class="comparison-header">
-<div class="slogan-pill">Spring 有 Bean · Nest 有 Provider · Path-IoC 有 Mesh</div>
+<div class="slogan-pill">告别相对路径 · 零装饰器 · 零 reflect-metadata</div>
 <h2>控制反转的三代演进：异步初始化与装配依赖实测</h2>
 <p><b>真实工业场景</b>：模块 A (<code>remoteConfig</code>) 启动时需基于秘钥异步发起网络请求拉取配置数据包，对外暴露<b>纯同步函数</b> <code>isEnabled(feature)</code>；模块 B (<code>orderService</code>) 在自身初始化装配期，必须<b>同步调用模块 A 的函数</b>决定是否启用特性（模块 B 强物理依赖模块 A 的初始化先决条件）。</p>
 </div>

@@ -3,8 +3,8 @@
     <img src="https://cdn.path-ioc.dev/path-ioc/logo.svg" width="120" height="129" alt="Path-IoC Logo">
   </a>
   <h1>Path-IoC</h1>
-  <p><b>The Fastest Zero-Decorator DI Container for Serverless TypeScript</b></p>
-  <p>Blazingly fast (7.6µs cold start), zero metadata, perfectly built for Hono & Cloudflare Workers.</p>
+  <p><b>Wire your TypeScript modules by name, not by relative path.</b></p>
+  <p>No decorators, no reflect-metadata: the pain points of traditional DI containers, gone. Wires 50 modules in 7.6µs, so even serverless cold starts barely notice it.</p>
 
   <p>
     <a href="https://path-ioc.dev"><img src="https://img.shields.io/badge/docs-path--ioc.dev-8A2BE2.svg" alt="Documentation"></a>

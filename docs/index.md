@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: "Path-IoC"
-  text: "The Fastest Zero-Decorator DI Container for Serverless TypeScript"
-  tagline: "Blazingly fast (7.6µs cold start), zero metadata, perfectly built for Hono & Cloudflare Workers."
+  text: "Wire your TypeScript modules by name, not by relative path."
+  tagline: "No decorators, no reflect-metadata: the pain points of traditional DI containers, gone. Wires 50 modules in 7.6µs, so even serverless cold starts barely notice it."
   image:
     src: https://cdn.path-ioc.dev/path-ioc/logo.svg
     alt: Path-IoC Logo
@@ -39,7 +39,7 @@ features:
 
 <div class="comparison-container">
 <div class="comparison-header">
-<div class="slogan-pill">Zero decorators · Zero metadata · 7.6µs cold start</div>
+<div class="slogan-pill">No relative imports · No decorators · No reflect-metadata</div>
 <h2>Three Generations of IoC: Async Initialization & Assembly Prerequisite</h2>
 <p><b>Real-World Architecture</b>: Module A (<code>remoteConfig</code>) performs an async HTTP handshake on startup to fetch encrypted configuration, exposing a <b>pure synchronous function</b> <code>isEnabled(feature)</code>. Module B (<code>orderService</code>) must <b>synchronously invoke Module A's function</b> during its own instantiation to enable or disable features (Module B has an unnegotiable initialization prerequisite on Module A).</p>
 </div>
