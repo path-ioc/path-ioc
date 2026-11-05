@@ -129,7 +129,7 @@ gtag('config', 'G-ZK9F76DH0Z');`,
           { text: "Pro Boilerplate", link: "/templates/pro-boilerplate" },
           { text: "Sponsor", link: "/sponsor" },
           {
-            text: "v0.1.8",
+            text: "v1.0.0",
             items: [
               {
                 text: "Changelog",
@@ -284,7 +284,7 @@ gtag('config', 'G-ZK9F76DH0Z');`,
           { text: "商业脚手架", link: "/zh/templates/pro-boilerplate" },
           { text: "赞助支持", link: "/zh/sponsor" },
           {
-            text: "v0.1.5",
+            text: "v1.0.0",
             items: [
               {
                 text: "更新日志",
