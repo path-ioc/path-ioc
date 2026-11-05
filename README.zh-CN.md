@@ -3,7 +3,7 @@
     <img src="https://cdn.path-ioc.dev/path-ioc/logo.svg" width="120" height="129" alt="Path-IoC Logo">
   </a>
   <h1>Path-IoC</h1>
-  <p><b>对标原生 ESM 的应用级自组织模块系统与纯依赖查找 (IoC-DL) 拓扑引擎</b></p>
+  <p><b>为 Serverless TypeScript 打造的最快、无装饰器 DI 容器</b></p>
   <p>基于物理文件目录路径的无反射、零装饰器、微秒级拓扑依赖查找与 DAG 调度引擎</p>
 
   <p>

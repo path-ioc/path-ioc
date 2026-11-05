@@ -3,8 +3,8 @@
     <img src="https://cdn.path-ioc.dev/path-ioc/logo.svg" width="120" height="129" alt="Path-IoC Logo">
   </a>
   <h1>Path-IoC</h1>
-  <p><b>Application-Level Self-Organizing Mesh Module System & Pure Dependency Lookup (IoC-DL) Engine for TypeScript</b></p>
-  <p>Zero-reflection, zero-decorator dependency lookup based on physical file paths.</p>
+  <p><b>The Fastest Zero-Decorator DI Container for Serverless TypeScript</b></p>
+  <p>Blazingly fast (7.6µs cold start), zero metadata, perfectly built for Hono & Cloudflare Workers.</p>
 
   <p>
     <a href="https://path-ioc.dev"><img src="https://img.shields.io/badge/docs-path--ioc.dev-8A2BE2.svg" alt="Documentation"></a>

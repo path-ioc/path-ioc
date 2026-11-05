@@ -1,5 +1,16 @@
 # @path-ioc/container
 
+## 1.0.0
+
+### Major Changes
+
+- 1.0.0 stable release. Repositioned as the fastest zero-decorator DI container for Serverless TypeScript (Hono & Cloudflare Workers), with refreshed README and docs homepage.
+
+### Patch Changes
+
+- Updated dependencies
+  - @path-ioc/core@1.0.0
+
 ## 0.1.8
 
 ### Patch Changes

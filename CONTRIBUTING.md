@@ -84,6 +84,13 @@ pnpm changeset
 3. Enter a concise summary of the change.
 4. Commit the generated markdown file under `.changeset/` along with your code.
 
+### Releasing (maintainers)
+
+Pushing to `main` triggers the Release workflow (`.github/workflows`), which requires the `NPM_TOKEN` secret:
+
+- **Pending changesets exist:** the workflow opens a "chore(release): version packages" PR. Merging it publishes to NPM.
+- **Bump locally instead:** run `pnpm changeset version` (updates `package.json` versions and `CHANGELOG.md`, and consumes the changeset files), commit, and push. With no pending changesets, the workflow publishes directly.
+
 ---
 
 ## Commit Conventions
